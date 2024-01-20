@@ -1,0 +1,3 @@
+[submodule "web3-reverse-proxy-admin"]
+	path = web3-reverse-proxy-admin
+	url = https://github.com/jimmyisthis/web3-reverse-proxy-admin.git
