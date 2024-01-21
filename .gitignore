@@ -161,4 +161,4 @@ cython_debug/
 
 
 # Application data
-app_data/
+.w3appdata/
