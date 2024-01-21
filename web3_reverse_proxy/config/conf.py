@@ -28,8 +28,11 @@ QOS_BASE_FREQUENCY = 200
 ETH0_BACKEND_ADDR = "http://geth-1.local:8545/"
 ETH0_BACKEND_NAME = "rpi4 geth1"
 
-ETH1_BACKEND_ADDR = "http://geth-2.local:8545/"
-ETH1_BACKEND_NAME = "rpi4 geth2"
+# more endpoints (if available)
+# ETH1_BACKEND_ADDR = "http://geth-2.local:8545/"
+# ETH1_BACKEND_NAME = "rpi4 geth2"
+# ETH2_BACKEND_ADDR = "http://geth-3.local:8545/"
+# ETH2_BACKEND_NAME = "rpi4 geth3"
 
 # TODO: use a valid Infura key here
 INFURA_ADDR = "https://mainnet.infura.io/v3/<YOUR_INFURA_KEY>"
