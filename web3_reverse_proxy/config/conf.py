@@ -23,17 +23,13 @@ BLOCKING_ACCEPT_TIMEOUT = 5
 
 QOS_BASE_FREQUENCY = 200
 
-# endpoints
+# Endpoints
 # FIXME: bring back
-# ETH0_BACKEND_ADDR = "http://geth-1.local:8545/"
-# ETH0_BACKEND_NAME = "rpi4 geth1"
+ETH0_BACKEND_ADDR = "http://geth-1.local:8545/"
+ETH0_BACKEND_NAME = "rpi4 geth1"
 
 ETH1_BACKEND_ADDR = "http://geth-2.local:8545/"
 ETH1_BACKEND_NAME = "rpi4 geth2"
-
-# FIXME: remove
-ETH0_BACKEND_ADDR = "http://rpi5c:9187/"
-ETH0_BACKEND_NAME = "rpi5c geth"
 
 # TODO: use a valid Infura key here
 INFURA_ADDR = "https://mainnet.infura.io/v3/<YOUR_INFURA_KEY>"
@@ -61,5 +57,5 @@ SERVICE_VER = "0.0.1"
 PROXY_NAME = "Web3 RPC Reverse Proxy - RPI4 Edition"
 PROXY_VER = "0.0.1"
 
-# convenience default users
+# convenience flag - default users creation
 FORCE_REGISTER_DEFAULT_USERS = True
