@@ -1,0 +1,3 @@
+urllib3~=2.1.0
+WhatIsMyIP~=2022.7.10
+upnpclient~=1.0.3
