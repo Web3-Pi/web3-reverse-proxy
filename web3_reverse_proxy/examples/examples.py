@@ -42,16 +42,3 @@ def example_test_load_balancing_multi_device_setup(runner: ExampleRunner):
     ]
 
     runner.start_example_8(endpoints)
-
-
-def example_test():
-    runner = ExampleRunner()
-
-    example_pass_through_single_device_setup(runner)
-    example_single_endpoint_multiple_priorities_setup(runner, 50, 10)
-    example_method_based_qos_setup(runner)
-    example_load_balancing_qos_setup(runner)
-    example_multi_endpoint_with_infura_priorities_setup(runner, 50, 10)
-    example_multi_endpoint_with_infura_priorities_complex_setup(runner)
-    example_multi_endpoint_with_arch_infura_and_priorities_setup(runner)
-    example_test_load_balancing_multi_device_setup(runner)
