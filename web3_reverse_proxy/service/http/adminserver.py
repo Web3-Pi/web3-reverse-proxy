@@ -89,10 +89,10 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
 
 
 class AdminHTTPServer(socketserver.TCPServer):
+    allow_reuse_address = True
 
     def __init__(self, admin: RPCServiceAdmin, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        super().allow_reuse_address = True
 
         self.admin = admin
         self.auth_token = '/' + ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(32))
