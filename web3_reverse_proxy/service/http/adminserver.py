@@ -111,7 +111,7 @@ class AdminHTTPServerThread(threading.Thread):
 
     def start(self) -> None:
         print(f"HTTP Admin server listening on: {self.server.server_address[0]}:{self.server.server_address[1]}")
-        print(f"HTTP Admin server access url: "
+        print(f"HTTP Admin server url: "
               f"http://<IP addr>:{self.server.server_address[1]}/6a5d70f03252a227a6b8292ac80b33d4b1740833a65e31175")
         super().start()
 
