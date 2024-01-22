@@ -1,6 +1,7 @@
 import json
 import random
 import re
+import socket
 import socketserver
 import string
 import threading
@@ -91,9 +92,14 @@ class AdminHTTPServer(socketserver.TCPServer):
 
     def __init__(self, admin: RPCServiceAdmin, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        super().allow_reuse_address = True
 
         self.admin = admin
         self.auth_token = '/' + ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(32))
+
+    # def server_bind(self) -> None:
+    #     self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    #     self.socket.bind(self.server_address)
 
 
 class AdminHTTPServerThread(threading.Thread):
