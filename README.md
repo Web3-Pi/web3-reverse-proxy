@@ -160,6 +160,9 @@ Almost every element in the admin page can be clicked to fetch stats or change s
 ## TODO
 - Improving the application's stability (i.e., ensuring responsiveness when running).
 - Preparing a separate examples directory based on the `rproxy-examples.py`
+- Warnings
+  - Request parser was implemented for testing purposes only and may fail in a scenario with multiple different RPC queries that were not tested
+  - Response parser may fail (only rudimentary parsing)
 - Documentation
   - Including architecture
   - User management
