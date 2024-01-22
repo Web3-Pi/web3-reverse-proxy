@@ -1,3 +1,9 @@
+import os
+import sys
+
+if os.path.dirname(os.path.dirname(os.path.abspath(__file__))) not in sys.path:
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from examples.examplerunner import ExampleRunner
 from examples.examples import example_pass_through_single_device_setup, \
     example_single_endpoint_multiple_priorities_setup, example_method_based_qos_setup, \
