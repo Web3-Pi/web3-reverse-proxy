@@ -129,7 +129,7 @@ With a properly configured virtual environment, running the application still re
   ```bash
   nano web3_reverse_proxy/config/conf.py
   ```
-  And set `ETH0_BACKEND_ADDR` and `ETH0_BACKEND_NAME` (lines 28 and 29) to the endpoints you want to connect via the proxy.
+  And set `ETH0_BACKEND_ADDR` and `ETH0_BACKEND_NAME` (lines 28 and 29) that correspond to the endpoins you want to connect via the proxy.
 - Run the proxy
   ```bash
   python web3_reverse_proxy/rproxy.py
