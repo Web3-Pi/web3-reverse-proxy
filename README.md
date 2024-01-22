@@ -1,5 +1,5 @@
 # Web3 Reverse Proxy
-Unstable POC implementation of a Web3 reverse proxy.
+Unstable PoC implementation of a Web3 reverse proxy.
 
 It was originally developed on **Windows 10 Pro** with **PyCharm 2022.3.1 (Community Edition)** and **Python 3.11**.
 
