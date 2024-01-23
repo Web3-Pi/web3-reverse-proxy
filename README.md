@@ -129,7 +129,7 @@ With a properly configured virtual environment, running the application still re
   ```bash
   nano web3_reverse_proxy/config/conf.py
   ```
-  And set `ETH0_BACKEND_ADDR` and `ETH0_BACKEND_NAME` (lines 28 and 29) that correspond to the endpoins you want to connect via the proxy.
+  And set `ETH0_BACKEND_ADDR` and `ETH0_BACKEND_NAME` (lines 28 and 29) that correspond to the endpoints you want to connect via the proxy.
 - Run the proxy
   ```bash
   python web3_reverse_proxy/rproxy.py
@@ -138,6 +138,11 @@ With a properly configured virtual environment, running the application still re
 
 ## Misc Quirks and Tips
 As this a work-in-progress project, it may only be stable in its original development environment (**Windows 10 Pro**, **PyCharm 2022.3.1 (Community Edition)** and **Python 3.11**). In its original environment, the proxy was verified to operate correctly for three days. 
+
+#### Examples
+There are a few different example cases provided for reference. To run them, follow the original instruction, but call the `rproxy-examples.py` file instead of `rproxy.py`.
+
+Some of the examples require more than a single device (e.g., _example_test_load_balancing_multi_device_setup_), and others require access to the Infura endpoint (adding a valid **INFURA API KEY** to the `INFURA_ADDR` variable in the file `conf.py`).
 
 #### Stability issues on Ubuntu
 - There may be connection problems right after the first run of the project
