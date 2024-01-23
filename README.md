@@ -142,7 +142,7 @@ As this a work-in-progress project, it may only be stable in its original develo
 #### Examples
 There are a few different example cases provided for reference. To run them, follow the original instruction, but call the `rproxy-examples.py` file instead of `rproxy.py`.
 
-Some of the examples require more than a single device (e.g., _example_test_load_balancing_multi_device_setup_), and others require access to the Infura endpoint (adding a valid **INFURA API KEY** to the `INFURA_ADDR` variable in the file `conf.py`).
+Some of the examples require more than a single device (e.g., _example_test_load_balancing_multi_device_setup_), and others require access to the Infura endpoint (which means adding a valid **INFURA API KEY** to the `INFURA_ADDR` variable in the file `conf.py`).
 
 #### Stability issues on Ubuntu
 - There may be connection problems right after the first run of the project
