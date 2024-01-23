@@ -104,9 +104,9 @@ Before the first run, you have to create a virtual environment (**venv** in this
   ```bash
   source venv/bin/activate
   ```
-- Install required modules
-  ```bash
-  (venv) python -m pip install -r requirements.txt
+- Install required modules (console prompt should start with **(venv)**)
+  ```bash  
+  python -m pip install -r requirements.txt
   ```
 - Deactivate the virtual environment
   ```bash
