@@ -37,7 +37,7 @@ class ResponseReceiverGeth(ResponseReceiver):
             raw_response += data
             print(f"Raw response conc {raw_response}")
 
-            # FIXME: this part requires a reliable approach
+            # FIXME: this part requires a reliable approach & may fail in unexpected ways
             response_received = RPCResponse.hack_is_complete_raw_response(raw_response)
 
             print(f"Post RPCResponse.hack_is_complete_raw_response(raw_response)")

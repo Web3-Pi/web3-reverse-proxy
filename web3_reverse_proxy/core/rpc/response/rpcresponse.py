@@ -10,6 +10,7 @@ class RPCResponse:
     END_OF_CHUNKED_TRANSMISSION = b'0\r\n\r\n'
     END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER = b'}\n'
     END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER_ERROR = b'}}'
+    END_OF_PABLITO_HACK = b'tsaoken\n'
 
     data: bytearray
 
@@ -19,4 +20,5 @@ class RPCResponse:
         return _bytes.endswith(cls.END_OF_GZIP_TRANSMISSION_WITH_LEN_HEADER) or \
             _bytes.endswith(cls.END_OF_CHUNKED_TRANSMISSION) or \
             _bytes.endswith(cls.END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER) or \
-            _bytes.endswith(cls.END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER_ERROR)
+            _bytes.endswith(cls.END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER_ERROR) or \
+            _bytes.endswith(cls.END_OF_PABLITO_HACK)
