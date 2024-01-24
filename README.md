@@ -5,7 +5,7 @@ It was originally developed on **Windows 10 Pro** with **PyCharm 2022.3.1 (Commu
 
 ## Running on Ubuntu
 Tested on two setups
-- Raspberry Pi 4 and Ubuntu 20.04.6 LTS ([Ethereun On Raspberry Pi](https://github.com/jimmyisthis/Ethereum-On-Raspberry-Pi) image)
+- Raspberry Pi 4 and Ubuntu 20.04.6 LTS ([Ethereum On Raspberry Pi](https://github.com/jimmyisthis/Ethereum-On-Raspberry-Pi) image)
 - Raspberry Pi 5 and Ubuntu 23.10
 
 The description below was **tested only on** these two versions of **Ubuntu**, namely **20.04.6 LTS and 23.10**.
