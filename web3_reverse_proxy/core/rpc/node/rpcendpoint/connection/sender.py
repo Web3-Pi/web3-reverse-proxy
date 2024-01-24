@@ -18,6 +18,7 @@ class RequestSender:
 
     def send_request(self, req: RPCRequest) -> bytearray:
         req_data = req.as_bytearray(self.post_request_line, self.host_header_last)
+        print(f"Sending request: {req_data}")
 
         assert self.socket.is_ready_write()
         self.socket.send_all(req_data)

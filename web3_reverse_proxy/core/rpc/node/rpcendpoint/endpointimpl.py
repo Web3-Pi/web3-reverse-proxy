@@ -29,7 +29,9 @@ class RPCEndpoint:
     def handle_request_response_roundtrip(self, req: RPCRequest) -> RPCResponse:
         try:
             res = self.conn.send_recv_roundtrip(req)
+            print(f"Received response: {res}")
         except IOError:
+            print(f"IOError, trying to reconnect")
             self.conn.reconnect()
             res = self.conn.send_recv_roundtrip(req)
         except Exception:
