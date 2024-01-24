@@ -24,10 +24,14 @@ class ResponseReceiverGeth(ResponseReceiver):
         response_received = False
         raw_response = bytearray()
 
+        print(f"Pre LOOP")
         while not response_received:
             assert self.socket.is_ready_read()
 
+            print(f"Pre RECV")
             data = self.socket.recv()
+            print(f"Post RECV")
+
             raw_response += data
 
             # FIXME: this part requires a reliable approach
