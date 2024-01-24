@@ -10,7 +10,7 @@ class RPCResponse:
     END_OF_CHUNKED_TRANSMISSION = b'0\r\n\r\n'
     END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER = b'}\n'
     END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER_ERROR = b'}}'
-    END_OF_PABLITO_HACK = b'tsaoken\n'
+    END_OF_PABLITO_HACK = b'token\n'
 
     data: bytearray
 
