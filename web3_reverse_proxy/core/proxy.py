@@ -57,6 +57,7 @@ class Web3RPCProxy:
             # Handle incoming requests
             self.request_manager.handle_requests(ready_read_connections)
 
+            print(f"Handler passed")
             # Handle request sockets used in this iteration
             processed_requests_num = self.request_manager.get_num_processed_requests()
 
