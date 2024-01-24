@@ -47,6 +47,7 @@ class EndpointConnection:
         req_bytes = self.req_sender.send_request(req)
         print(f"Pre self.res_receiver.recv_response()")
         res_bytes = self.res_receiver.recv_response()
+        print(f"Pre stats update")
 
         self.stats.update(req_bytes, res_bytes)
 
