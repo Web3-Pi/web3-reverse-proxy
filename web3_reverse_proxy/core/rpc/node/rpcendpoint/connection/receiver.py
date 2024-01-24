@@ -24,14 +24,21 @@ class ResponseReceiverGeth(ResponseReceiver):
         response_received = False
         raw_response = bytearray()
 
+        print(f"recv_response: pre loop")
         while not response_received:
             assert self.socket.is_ready_read()
+            print(f"recv_response: is_ready_read OK")
 
+            print(f"recv_response: pre raw_resp == {raw_response}")
             data = self.socket.recv()
+            print(f"recv_response: post data == {data}")
+
             raw_response += data
+            print(f"recv_response: post raw_resp == {raw_response}")
 
             # FIXME: this part requires a reliable approach
             response_received = RPCResponse.hack_is_complete_raw_response(raw_response)
+            print(f"recv_response: resp_received_flag == {response_received}")
 
         return raw_response
 
