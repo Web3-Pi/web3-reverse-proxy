@@ -30,6 +30,9 @@ class ResponseReceiverGeth(ResponseReceiver):
             data = self.socket.recv()
             raw_response += data
 
+            if not raw_response:
+                raise IOError
+
             # FIXME: this part requires a reliable approach
             response_received = RPCResponse.hack_is_complete_raw_response(raw_response)
 
