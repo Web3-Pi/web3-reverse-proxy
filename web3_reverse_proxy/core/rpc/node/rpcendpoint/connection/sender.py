@@ -23,6 +23,8 @@ class RequestSender:
         assert self.socket.is_ready_write()
         self.socket.send_all(req_data)
 
+        print(f"Request sent: {req_data}")
+
         return req_data
 
     @classmethod
