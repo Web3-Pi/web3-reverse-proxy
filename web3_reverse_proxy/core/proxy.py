@@ -48,8 +48,11 @@ class Web3RPCProxy:
     def main_loop(self) -> None:
         while True:
             # Handle incoming connections
+            print("New connections - START")
             incoming_connections_num = self.inbound_srv.accept_incoming_connections()
+            print(f"New connections {incoming_connections_num}")
             ready_read_connections = self.inbound_srv.remove_ready_read_connections()
+            print(f"Ready connections {ready_read_connections}")
 
             # Handle incoming requests
             self.request_manager.handle_requests(ready_read_connections)
