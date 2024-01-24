@@ -5,7 +5,7 @@ It was originally developed on **Windows 10 Pro** with **PyCharm 2022.3.1 (Commu
 
 ## Running on Ubuntu
 Tested on two setups
-- Raspberry Pi 4 and Ubuntu 20.04.6 LTS ([Ethereun On Raspberry Pi](https://github.com/jimmyisthis/Ethereum-On-Raspberry-Pi) image)
+- Raspberry Pi 4 and Ubuntu 20.04.6 LTS ([Ethereum On Raspberry Pi](https://github.com/jimmyisthis/Ethereum-On-Raspberry-Pi) image)
 - Raspberry Pi 5 and Ubuntu 23.10
 
 The description below was **tested only on** these two versions of **Ubuntu**, namely **20.04.6 LTS and 23.10**.
@@ -142,7 +142,7 @@ As this a work-in-progress project, it may only be stable in its original develo
 #### Examples
 There are a few different example cases provided for reference. To run them, follow the original instruction, but call the `rproxy-examples.py` file instead of `rproxy.py`.
 
-Some of the examples require more than a single device (e.g., _example_test_load_balancing_multi_device_setup_), and others require access to the Infura endpoint (adding a valid **INFURA API KEY** to the `INFURA_ADDR` variable in the file `conf.py`).
+Some of the examples require more than a single device (e.g., _example_test_load_balancing_multi_device_setup_), and others require access to the Infura endpoint (which means adding a valid **INFURA API KEY** to the `INFURA_ADDR` variable in the file `conf.py`).
 
 #### Stability issues on Ubuntu
 - There may be connection problems right after the first run of the project
@@ -164,7 +164,9 @@ Almost every element in the admin page can be clicked to fetch stats or change s
 
 ## TODO
 - Improving the application's stability (i.e., ensuring responsiveness when running).
-- Preparing a separate examples directory based on the `rproxy-examples.py`
+- Preparing a separate examples directory
+  - Include all the examples from the file `rproxy-examples.py`
+  - Add more examples during the project development
 - Warnings
   - Request parser was implemented for testing purposes only and may fail in a scenario with multiple different RPC queries that were not tested
   - Response parser may fail (only rudimentary parsing)
