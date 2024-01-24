@@ -43,10 +43,14 @@ class EndpointConnection:
         self.res_receiver.update_socket(self.socket)
 
     def send_recv_roundtrip(self, req: RPCRequest) -> RPCResponse:
+        print(f"Pre self.req_sender.send_request(req)")
         req_bytes = self.req_sender.send_request(req)
+        print(f"Pre self.res_receiver.recv_response()")
         res_bytes = self.res_receiver.recv_response()
 
         self.stats.update(req_bytes, res_bytes)
+
+        print(f"DONE: send_recv_roundtrip")
 
         return RPCResponse(res_bytes)
 
