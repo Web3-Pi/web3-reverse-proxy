@@ -76,10 +76,15 @@ class RPCProxyRequestManager:
     def handle_requests(self, client_sockets: Iterable[ClientSocket]) -> None:
         self.clear_state()
 
+        print(f"Pre Read")
         self.read_requests(client_sockets)
+        print(f"Pre Process")
         self.process_requests()
+        print(f"Pre handle resp")
         self.handle_responses()
+        print(f"Pre errors")
         self.handle_errors()
+        print(f"Post handle errors")
 
     def get_num_processed_requests(self):
         return self.no_current_responses
