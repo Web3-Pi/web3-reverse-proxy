@@ -45,6 +45,7 @@ class RPCProxyRequestManager:
             # FIXME: implicit assumption that endpoints are 100% reliable -> it may not be true
             self.endpoints_handler.add_request(cs, request)
 
+        print(f"Pre has_pending()")
         if self.endpoints_handler.has_pending_requests():
             responses_dict = self.endpoints_handler.process_pending_requests()
             for cs, response in responses_dict.items():
