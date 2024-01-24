@@ -31,16 +31,19 @@ class ResponseReceiverGeth(ResponseReceiver):
 
             print(f"recv_response: pre raw_resp == {raw_response}")
             data = self.socket.recv()
+
             print(f"recv_response: post data == {data}")
 
             raw_response += data
+
+            if len(raw_response) == 0:
+                raise IOError
+
             print(f"recv_response: post raw_resp == {raw_response}")
 
             # FIXME: this part requires a reliable approach
             response_received = RPCResponse.hack_is_complete_raw_response(raw_response)
             print(f"recv_response: resp_received_flag == {response_received}")
-            import sys
-            sys.exit(1)
         return raw_response
 
     def update_socket(self, sock: BaseSocket) -> None:
