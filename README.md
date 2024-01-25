@@ -129,7 +129,12 @@ With a properly configured virtual environment, running the application still re
   ```bash
   nano web3_reverse_proxy/config/conf.py
   ```
-  And set `ETH0_BACKEND_ADDR` and `ETH0_BACKEND_NAME` (lines 28 and 29) that correspond to the endpoints you want to connect via the proxy.
+  And set ETH0_BACKEND_ADDR and ETH0_BACKEND_NAME (lines 28 and 29) that correspond to the endpoint(s) you want to connect via the proxy. Double-check the ports. By default, the web3 RPC is available via the port **8545**, so the example configuration may look like 
+  this:
+  ```python
+  ETH0_BACKEND_ADDR = "http://geth-1.local:8545"
+  ETH0_BACKEND_NAME = "rpi4 geth-1"
+  ```
 - Run the proxy
   ```bash
   python web3_reverse_proxy/rproxy.py
