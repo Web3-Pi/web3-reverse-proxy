@@ -150,10 +150,10 @@ There are a few different example cases provided for reference. To run them, fol
 Some of the examples require more than a single device (e.g., _example_test_load_balancing_multi_device_setup_), and others require access to the Infura endpoint (which means adding a valid **INFURA API KEY** to the `INFURA_ADDR` variable in the file `conf.py`).
 
 #### Stability issues on Ubuntu
-- There may be connection problems right after the first run of the project
-  - **Restart to the rescue**
-- If the proxy is up and running for an extended period without any incoming RPC calls, it may stop accepting new connections
-  - **Restart to the rescue**
+- ~~There may be connection problems right after the first run of the project~~
+  - ~~**Restart to the rescue**~~
+- ~~If the proxy is up and running for an extended period without any incoming RPC calls, it may stop accepting new connections~~
+  - ~~**Restart to the rescue**~~
 
 #### HTTP Admin Server
 By default, the proxy hosts an HTTP server to make monitoring the Proxy status and updating user data easier.
