@@ -20,7 +20,7 @@ There are multiple options for configuring GitHub access to a private repository
   git config --global user.name 'your username'
   git config --global user.email 'email address'
   ```
-- Generate a [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with repo:status permission.
+- Generate a [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with **repo:status** permission.
 - Set up automatic token authorization
   ```bash
   MY_GIT_TOKEN=xxxxxxxxxxxxxxxx # token generated in the previous step
