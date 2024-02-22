@@ -42,3 +42,12 @@ def example_test_load_balancing_multi_device_setup(runner: ExampleRunner):
     ]
 
     runner.start_example_8(endpoints)
+
+def example_test_bowsers_big_bean_burrito(runner: ExampleRunner):
+    # List the available devices to test
+    endpoints = [
+        (ETH0_BACKEND_ADDR, ETH0_BACKEND_NAME),
+        (ETH1_BACKEND_ADDR, ETH1_BACKEND_NAME),
+    ]
+
+    runner.start_example_9(endpoints)

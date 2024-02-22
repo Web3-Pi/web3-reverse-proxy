@@ -130,3 +130,21 @@ class ExampleRunner:
         handler = ExampleHandlerMiddlewareFactory.create_multi_device_load_balancing_qos(endpoints, self.updater)
 
         self.runner_service.run_forever(handler)
+
+    @capture_stdout
+    def start_example_9(self, endpoints: List[Tuple[str, str]], name_infura=INFURA_NAME, addr_infura=INFURA_ADDR):
+        print(f"Starting EXAMPLE 9 - Multiple physical backends with additional Infura | "
+              "request are processed according to their priorities")
+        print(f"  priority 0 - full speed with two endpoints; the first one handles: net_version, and the second one "
+              f"all other methods")
+        print(f"  priority 1 - basic pass-through for all requests routed to the remote geth endpoint")
+        print(f"  priority 2 - basic pass-through for all requests routed to infura endpoint")
+        print(f"Provided endpoint addresses:")
+        for addr, name in endpoints:
+            print(f"    {name} @ {addr}")
+        print(f"    {name_infura} @ {addr_infura}")
+
+        handler = ExampleHandlerMiddlewareFactory.create_bowsers_big_bean_burrito(endpoints, addr_infura,
+                                                                                  name_infura, self.updater)
+
+        self.runner_service.run_forever(handler)

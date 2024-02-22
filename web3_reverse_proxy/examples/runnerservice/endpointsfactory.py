@@ -13,6 +13,7 @@ from web3_reverse_proxy.examples.endpointshandlers.multilocalqosmethod import Mu
 from web3_reverse_proxy.examples.endpointshandlers.priorityendpointhandler import PriorityEndpointHandler
 from web3_reverse_proxy.examples.endpointshandlers.multiinfuraarchhandler import MultiInfuraArchEndpointHandler
 from web3_reverse_proxy.examples.endpointshandlers.multiprioritycomplexhandler import MultiPriorityComplexEndpointHandler
+from web3_reverse_proxy.examples.endpointshandlers.bowsersbigbeanburrito import BowsersBigBeanBurritoHandler
 
 
 class ExampleHandlerMiddlewareFactory:
@@ -75,3 +76,10 @@ class ExampleHandlerMiddlewareFactory:
         descriptors = [(name, cls._conn_descr(addr)) for addr, name in endpoints]
 
         return MultiDeviceLocalLoadBalancingQoSHandler(descriptors, state_updater)
+
+    @classmethod
+    def create_bowsers_big_bean_burrito(cls, endpoints: List[Tuple[str, str]], url_infura: str, name_infura: str,
+                                           state_updater: StateUpdater):
+        print(url_infura)
+        descriptors = [(name, cls._conn_descr(addr)) for addr, name in endpoints] + [(name_infura, cls._conn_descr(url_infura))]
+        return BowsersBigBeanBurritoHandler.create(descriptors, state_updater)
