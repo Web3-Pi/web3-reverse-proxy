@@ -51,3 +51,6 @@ def example_test_bowsers_big_bean_burrito(runner: ExampleRunner):
     ]
 
     runner.start_example_9(endpoints)
+
+def example_multi_endpoint_with_infura_priorities_cache_setup(runner: ExampleRunner):
+    runner.start_example_10()

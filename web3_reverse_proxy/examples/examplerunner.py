@@ -148,3 +148,17 @@ class ExampleRunner:
                                                                                   name_infura, self.updater)
 
         self.runner_service.run_forever(handler)
+
+    @capture_stdout
+    def start_example_10(self, name_eth=ETH0_BACKEND_NAME, addr_eth=ETH0_BACKEND_ADDR,
+                        name_infura=INFURA_NAME, addr_infura=INFURA_ADDR):
+        print(f"Starting EXAMPLE 10 - complex priorities handler with cache | request are processed according to their priorities")
+        print(f"  priority 0 - full speed with two endpoints; the first one handles: net_version with cache, and the second one "
+              f"all other methods")
+        print(f"  priority 1 - basic pass-through for all requests routed to the local geth endpoint")
+        print(f"  priority 2 - basic pass-through for all requests routed to infura endpoint")
+
+        handler = ExampleHandlerMiddlewareFactory.create_multi_infura_cached_endpoint_prio(addr_eth, name_eth,
+                                                                                            addr_infura, name_infura,
+                                                                                            self.updater)
+        self.runner_service.run_forever(handler)

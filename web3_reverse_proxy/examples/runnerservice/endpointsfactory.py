@@ -13,6 +13,7 @@ from web3_reverse_proxy.examples.endpointshandlers.multilocalqosmethod import Mu
 from web3_reverse_proxy.examples.endpointshandlers.priorityendpointhandler import PriorityEndpointHandler
 from web3_reverse_proxy.examples.endpointshandlers.multiinfuraarchhandler import MultiInfuraArchEndpointHandler
 from web3_reverse_proxy.examples.endpointshandlers.multiprioritycomplexhandler import MultiPriorityComplexEndpointHandler
+from web3_reverse_proxy.examples.endpointshandlers.multiprioritycachedhandler import MultiPriorityCachedEndpointHandler
 from web3_reverse_proxy.examples.endpointshandlers.bowsersbigbeanburrito import BowsersBigBeanBurritoHandler
 
 
@@ -83,3 +84,11 @@ class ExampleHandlerMiddlewareFactory:
         print(url_infura)
         descriptors = [(name, cls._conn_descr(addr)) for addr, name in endpoints] + [(name_infura, cls._conn_descr(url_infura))]
         return BowsersBigBeanBurritoHandler.create(descriptors, state_updater)
+
+    @classmethod
+    def create_multi_infura_cached_endpoint_prio(cls, url_eth: str, name_eth: str, url_infura: str, name_infura: str,
+                                                  state_updater: StateUpdater):
+        descr_eth = cls._conn_descr(url_eth)
+        descr_inf = cls._conn_descr(url_infura)
+
+        return MultiPriorityCachedEndpointHandler.create(name_eth, descr_eth, name_infura, descr_inf, state_updater)

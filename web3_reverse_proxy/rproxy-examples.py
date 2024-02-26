@@ -10,7 +10,7 @@ from examples.examples import example_pass_through_single_device_setup, \
     example_load_balancing_qos_setup, example_multi_endpoint_with_infura_priorities_setup, \
     example_multi_endpoint_with_infura_priorities_complex_setup, \
     example_multi_endpoint_with_arch_infura_and_priorities_setup, example_test_load_balancing_multi_device_setup, \
-    example_test_bowsers_big_bean_burrito
+    example_test_bowsers_big_bean_burrito, example_multi_endpoint_with_infura_priorities_cache_setup
 
 
 def example_test():
@@ -26,7 +26,8 @@ def example_test():
     
     # example_multi_endpoint_with_arch_infura_and_priorities_setup(runner)
     # example_test_load_balancing_multi_device_setup(runner)
-    example_test_bowsers_big_bean_burrito(runner)
+    # example_test_bowsers_big_bean_burrito(runner)
+    example_multi_endpoint_with_infura_priorities_cache_setup(runner)
 
 
 if __name__ == '__main__':
