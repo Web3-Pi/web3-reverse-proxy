@@ -24,19 +24,11 @@ BLOCKING_ACCEPT_TIMEOUT = 5
 QOS_BASE_FREQUENCY = 200
 
 # Endpoints
-# FIXME: bring back
-ETH0_BACKEND_ADDR = "http://geth-1.local:8545/"
-ETH0_BACKEND_NAME = "rpi4 geth1"
-
-# more endpoints (if available)
-# ETH1_BACKEND_ADDR = "http://geth-2.local:8545/"
-# ETH1_BACKEND_NAME = "rpi4 geth2"
-# ETH2_BACKEND_ADDR = "http://geth-3.local:8545/"
-# ETH2_BACKEND_NAME = "rpi4 geth3"
-
-# TODO: use a valid Infura key here
-INFURA_ADDR = "https://mainnet.infura.io/v3/<YOUR_INFURA_KEY>"
-INFURA_NAME = "infura"
+ETH_ENDPOINTS = [
+    ("rpi4 geth1", "http://geth-1.local:8545/"),
+    ("rpi4 geth2", "http://geth-2.local:8545/" ),
+    ("infura-1", "https://mainnet.infura.io/v3/<YOUR_INFURA_KEY>")
+]
 
 # rudimentary stats update conf
 STATS_UPDATE_DELTA = 12

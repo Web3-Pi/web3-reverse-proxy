@@ -24,3 +24,7 @@ def example_test():
     # example_multi_endpoint_with_infura_priorities_complex_setup(runner)
     # example_multi_endpoint_with_arch_infura_and_priorities_setup(runner)
     # example_test_load_balancing_multi_device_setup(runner)
+
+
+if __name__ == '__main__':
+    example_test()
