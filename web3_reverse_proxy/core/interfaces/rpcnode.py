@@ -30,3 +30,9 @@ class EndpointsHandler(ABC):
     @abstractmethod
     def get_endpoints(self) -> Iterable[RPCEndpoint]:
         pass
+
+
+class LoadBalancer(ABC):
+    @abstractmethod
+    def get_queue_for_request(self, endpoint_handler: EndpointsHandler, req: RPCRequest, ) -> int:
+        pass
