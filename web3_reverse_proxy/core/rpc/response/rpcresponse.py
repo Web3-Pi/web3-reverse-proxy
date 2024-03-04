@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
+
 
 # FIXME: this class requires implementation from scratch
 @dataclass
@@ -12,6 +14,7 @@ class RPCResponse:
     END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER_ERROR = b'}}'
 
     data: bytearray
+    request: RPCRequest
 
     @classmethod
     # FIXME: parse response headers to correctly receive the whole response

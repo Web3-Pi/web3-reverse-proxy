@@ -48,7 +48,7 @@ class EndpointConnection:
 
         self.stats.update(req_bytes, res_bytes)
 
-        return RPCResponse(res_bytes)
+        return RPCResponse(res_bytes, req)
 
     @classmethod
     def create(cls, conn_descr: EndpointConnectionDescriptor) -> EndpointConnection:

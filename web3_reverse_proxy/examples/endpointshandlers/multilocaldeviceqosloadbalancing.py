@@ -45,13 +45,13 @@ class MultiDeviceLocalLoadBalancingQoSHandler(EndpointsHandler):
         self.no_pending_requests = 0
 
     @classmethod
-    def get_chain_id_response(cls) -> RPCResponse:
+    def get_chain_id_response(cls, req: RPCRequest) -> RPCResponse:
         date = formatdate(timeval=None, localtime=False, usegmt=True).encode("utf-8")
-        return RPCResponse(cls.RES_CID_0 + date + cls.RES_CID_1)
+        return RPCResponse(cls.RES_CID_0 + date + cls.RES_CID_1, req)
 
     def add_request(self, cs: ClientSocket, req: RPCRequest) -> None:
         if req.method == "eth_chainId":
-            res = self.get_chain_id_response()
+            res = self.get_chain_id_response(req)
             self.chain_id_responses[cs] = res
         else:
             best_candidate_queue = min(self.counter, key=self.counter.get)
