@@ -1,7 +1,10 @@
-from web3_reverse_proxy.config.conf import ETH0_BACKEND_NAME, ETH0_BACKEND_ADDR
-from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
+from typing import List, Tuple
+
+from web3_reverse_proxy.config.conf import ETH_ENDPOINTS
+from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler, LoadBalancer
 from web3_reverse_proxy.core.interfaces.rpcresponse import RPCResponseHandler
 from web3_reverse_proxy.core.proxy import Web3RPCProxy
+from web3_reverse_proxy.core.rpc.node.rpcendpointhandlers.loadbalancers import simpleloadbalancers
 from web3_reverse_proxy.core.rpc.request.middleware.requestmiddlewaredescr import RequestMiddlewareDescr
 
 from web3_reverse_proxy.service.factories.endpointshandlermiddlewarefactory import RPCEndpointsHandlerMiddlewareFactory
@@ -25,6 +28,20 @@ class ServiceComponentsProvider:
         updater = ssm.get_service_state_updater_instance()
 
         return RPCEndpointsHandlerMiddlewareFactory.create_pass_through(url, name, updater)
+
+    @classmethod
+    def create_default_multi_threaded_endpoint_handler(
+        cls,
+        endpoint_config: List[Tuple[str, str]],
+        ssm:SampleStateManager,
+    ):
+        updater = ssm.get_service_state_updater_instance()
+
+        return RPCEndpointsHandlerMiddlewareFactory.create_multi_thread(
+            endpoint_config,
+            updater,
+            simpleloadbalancers.PriorityLoadBalancer,
+        )
 
     @classmethod
     def create_default_response_handler(cls) -> RPCResponseHandler:
@@ -51,7 +68,7 @@ class ServiceComponentsProvider:
     @classmethod
     def create_default_web3_rpc_proxy(cls, ssm: SampleStateManager, proxy_listen_port) -> Web3RPCProxy:
         # Create default components
-        endpoint_handler = cls.create_default_endpoint_handler(ssm, ETH0_BACKEND_NAME, ETH0_BACKEND_ADDR)
+        endpoint_handler = cls.create_default_multi_threaded_endpoint_handler(ETH_ENDPOINTS, ssm)
 
         return cls.create_web3_rpc_proxy(ssm, endpoint_handler, proxy_listen_port)
 

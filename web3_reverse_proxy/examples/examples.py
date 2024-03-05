@@ -1,5 +1,9 @@
-from config.conf import ETH0_BACKEND_ADDR, ETH0_BACKEND_NAME, ETH1_BACKEND_ADDR, ETH1_BACKEND_NAME
+from config.conf import ETH_ENDPOINTS
 from examples.examplerunner import ExampleRunner
+
+
+ETH0_BACKEND_NAME, ETH0_BACKEND_ADDR = ETH_ENDPOINTS[0]
+ETH1_BACKEND_NAME, ETH1_BACKEND_ADDR = ETH_ENDPOINTS[1]
 
 
 def example_pass_through_single_device_setup(runner: ExampleRunner):
