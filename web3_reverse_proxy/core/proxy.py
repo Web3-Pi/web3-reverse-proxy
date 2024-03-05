@@ -10,19 +10,31 @@ from web3_reverse_proxy.core.interfaces.rpcresponse import RPCResponseHandler
 
 from web3_reverse_proxy.core.rpc.request.middleware.requestmiddlewaredescr import RequestMiddlewareDescr
 from web3_reverse_proxy.core.rpc.rpcrequestmanager import RPCProxyRequestManager
+from web3_reverse_proxy.core.rpc.cache.responsecacheservice import ResponseCacheService
 
 
 class Web3RPCProxy:
 
-    def __init__(self, proxy_listen_port: int, middlewares: RequestMiddlewareDescr,
-                 endpoints_handler: EndpointsHandler, response_handler: RPCResponseHandler) -> None:
+    def __init__(
+            self,
+            proxy_listen_port: int,
+            middlewares: RequestMiddlewareDescr,
+            endpoints_handler: EndpointsHandler,
+            response_handler: RPCResponseHandler,
+            cache_service: ResponseCacheService
+        ) -> None:
 
         request_reader = middlewares.instantiate()
 
         self.__print_pre_init_info(request_reader, endpoints_handler)
 
         self.inbound_srv = InboundServer(proxy_listen_port, BLOCKING_ACCEPT_TIMEOUT)
-        self.request_manager = RPCProxyRequestManager(request_reader, endpoints_handler, response_handler)
+        self.request_manager = RPCProxyRequestManager(
+            request_reader,
+            endpoints_handler,
+            response_handler,
+            cache_service,
+        )
 
         self.__print_post_init_info(proxy_listen_port)
 

@@ -14,7 +14,7 @@ class RequestReaderMiddleware(ABC):
     @staticmethod
     def failure(err_res: RPCResponse | bytes | None = None) -> ReturnType:
         if isinstance(err_res, bytes):
-            err_res = RPCResponse(bytearray(err_res))
+            err_res = RPCResponse(bytearray(err_res), err_res.request)
 
         return None, err_res
 

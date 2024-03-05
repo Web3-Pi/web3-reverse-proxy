@@ -30,6 +30,9 @@ ETH_ENDPOINTS = [
     ("infura-1", "https://mainnet.infura.io/v3/<YOUR_INFURA_KEY>")
 ]
 
+CACHE_ENABLED = True
+CACHE_EXPIRY_MS = 300000
+
 # rudimentary stats update conf
 STATS_UPDATE_DELTA = 12
 STATS_UPDATE_MIN_DELAY = 0.1
