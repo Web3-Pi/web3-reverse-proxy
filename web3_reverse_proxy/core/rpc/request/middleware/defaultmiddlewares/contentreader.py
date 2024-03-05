@@ -36,7 +36,7 @@ class ContentRequestReader(RequestReaderMiddleware):
                 break
 
         if method is None:
-            return self.failure(ErrorResponses.bad_request_missing_method())
+            return self.failure(ErrorResponses.bad_request_missing_method(), req)
 
         req.method = method
 

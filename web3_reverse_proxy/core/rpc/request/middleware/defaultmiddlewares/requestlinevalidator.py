@@ -17,13 +17,13 @@ class AcceptRequestLineReader(RequestReaderMiddleware):
                 return self.failure()
 
             if len(data) > self.MAX_LINE_LEN:
-                return self.failure(ErrorResponses.bad_request_invalid_request_format())
+                return self.failure(ErrorResponses.bad_request_invalid_request_format(), req)
 
             header = str(data, 'utf-8')
             words = header.split()
 
             if len(words) != 3 or words[0] != "POST":
-                return self.failure(ErrorResponses.bad_request_invalid_request_format())
+                return self.failure(ErrorResponses.bad_request_invalid_request_format(), req)
 
             req.user_api_key = words[1][1:].strip()
         except IOError:

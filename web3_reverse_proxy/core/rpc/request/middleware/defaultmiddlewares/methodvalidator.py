@@ -13,7 +13,7 @@ class AcceptMethodRequestReader(RequestReaderMiddleware):
 
     def read_request(self, cs: ClientSocket, req: RPCRequest) -> RequestReaderMiddleware.ReturnType:
         if not self.call_acceptor.is_allowed(req.user_api_key, req.method):
-            return self.failure(ErrorResponses.forbidden_payment_required())
+            return self.failure(ErrorResponses.forbidden_payment_required(), req)
 
         user_priority = self.call_acceptor.get_call_priority(req.user_api_key, req.method)
         req.priority = user_priority

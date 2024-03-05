@@ -26,8 +26,8 @@ QOS_BASE_FREQUENCY = 200
 # Endpoints
 ETH_ENDPOINTS = [
     ("rpi4 geth1", "http://geth-1.local:8545/"),
-    ("rpi4 geth2", "http://geth-2.local:8545/" ),
-    ("infura-1", "https://mainnet.infura.io/v3/<YOUR_INFURA_KEY>")
+    # ("rpi4 geth2", "http://geth-2.local:8545/" ),
+    # ("infura-1", "https://mainnet.infura.io/v3/<YOUR_INFURA_KEY>")
 ]
 
 CACHE_ENABLED = True

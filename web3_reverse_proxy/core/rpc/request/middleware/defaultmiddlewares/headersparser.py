@@ -21,7 +21,7 @@ class ParseHeadersRequestReader(RequestReaderMiddleware):
                 data = fd.readline(self.MAX_LINE_LEN + 1)
 
                 if len(data) > self.MAX_LINE_LEN:
-                    return self.failure(ErrorResponses.payload_too_large())
+                    return self.failure(ErrorResponses.payload_too_large(), req)
 
                 if data in (b'\r\n', b'\n', b''):
                     break
@@ -31,13 +31,13 @@ class ParseHeadersRequestReader(RequestReaderMiddleware):
 
                 no_headers += 1
                 if no_headers > self.MAX_NUM_HEADERS:
-                    return self.failure(ErrorResponses.bad_request_headers())
+                    return self.failure(ErrorResponses.bad_request_headers(), req)
 
                 if data.startswith(b"Content-Length:"):
                     content_len = int(data[16:])
 
             if content_len < 0:
-                return self.failure(ErrorResponses.bad_request_invalid_request_format())
+                return self.failure(ErrorResponses.bad_request_invalid_request_format(), req)
 
             req.content_len = content_len
             req.headers = raw_headers_data
