@@ -29,12 +29,15 @@ QOS_BASE_FREQUENCY = 200
 # Endpoints
 ETH_ENDPOINTS = [
     ("rpi4 geth1", "http://geth-1.local:8545/"),
-    # ("rpi4 geth2", "http://geth-2.local:8545/" ),
+    # ("rpi4 geth2", "http://geth-2.local:8545/"),
     # ("infura-1", "https://mainnet.infura.io/v3/<YOUR_INFURA_KEY>")
 ]
 
 CACHE_ENABLED = False
 CACHE_EXPIRY_MS = 300000
+
+# parser
+JSON_RPC_REQUEST_PARSER_ENABLED = True
 
 # rudimentary stats update conf
 STATS_UPDATE_DELTA = 12
