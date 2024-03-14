@@ -1,0 +1,25 @@
+specVersion: 0.0.4
+schema:
+  file: ./schema.graphql
+dataSources:
+  - name: LINK
+    kind: ethereum/contract
+    network: mainnet
+    source:
+      abi: ERC20
+      address: '0x514910771AF9Ca656af840dff83E8264EcF986CA'
+      startBlock: 4281611
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/token.ts
+      entities:
+        - TransferEvent
+        - Account
+      abis:
+        - name: ERC20
+          file: ERC20.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer

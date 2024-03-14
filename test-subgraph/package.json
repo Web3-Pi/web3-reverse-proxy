@@ -1,0 +1,21 @@
+{
+  "name": "web3-pi-reverse-proxy-test-subgraph",
+  "version": "1.0.0",
+  "description": "a test with subgraph for Web3-Pi reverse proxy",
+  "main": "index.js",
+  "scripts": {
+    "codegen": "graph codegen --output-dir src/types/",
+    "create": "graph create --node http://localhost:8020/ Web3-Pi/web3-pi-reverse-proxy-test-subgraph",
+    "deploy": "graph deploy --node http://localhost:8020/ --ipfs http://ipfs:5001/ Web3-Pi/web3-pi-reverse-proxy-test-subgraph"
+  },
+  "keywords": [
+    "subgraph",
+    "Web3-Pi"
+  ],
+  "author": "lukasz-glen",
+  "license": "MIT",
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "0.64.0",
+    "@graphprotocol/graph-ts": "0.32.0"
+  }
+}

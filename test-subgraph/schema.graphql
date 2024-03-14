@@ -1,0 +1,38 @@
+#
+# Provides information about an Ethereum account
+#
+type Account @entity {
+  " Equals to: <accountAddress>"
+  id: ID!
+
+  " Account address "
+  address: Bytes!
+
+  " Current account balance "
+  balance: BigInt!
+}
+
+type TransferEvent @entity {
+  id: ID!
+
+  " Quantity of tokens transferred "
+  amount: BigInt!
+
+  " Transaction sender address "
+  sender: Account!
+
+  " Address of source account "
+  source: Account
+
+  " Address of destination account "
+  destination: Account
+
+  " Block number "
+  block: BigInt!
+
+  " Event timestamp "
+  timestamp: BigInt!
+
+  " Transaction hash "
+  transaction: Bytes!
+}
