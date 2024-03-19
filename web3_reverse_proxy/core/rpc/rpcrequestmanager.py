@@ -48,16 +48,12 @@ class RPCProxyRequestManager:
                 self.errors[cs] = err
 
     def read_cache(self) -> None:
-        cs_to_remove = []
         for cs, request in list(self.requests.items()):
             if self.response_cache.is_writeable(request):
                 cached_response = self.response_cache.get(request.method)
                 if cached_response is not None:  
                     self.responses[cs] = cached_response
                     del self.requests[cs]
-        #             cs_to_remove.append(cs)
-        # for cs in cs_to_remove:
-        #     del self.requests[cs]
                 
     def process_requests(self) -> None:
         for cs, request in self.requests.items():
