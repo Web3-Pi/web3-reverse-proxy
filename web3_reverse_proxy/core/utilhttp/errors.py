@@ -37,7 +37,7 @@ class ErrorResponses:
                                'Basic realm="Auth failure, invalid authentication id"\r\nX-Content-Type-Options: ' \
                                'nosniff\r\n\r\n{}\n'
 
-    WEB3_JSON_TEMPLATE = '{{"jsonrpc":"2.0","id":{}}},"error":{{"code":{},"message":"{}"}}}}'
+    WEB3_JSON_TEMPLATE = '{{"jsonrpc":"2.0","id":{},"error":{{"code":{},"message":"{}"}}}}'
 
     @classmethod
     def to_bytes(cls, data: str) -> bytes:
