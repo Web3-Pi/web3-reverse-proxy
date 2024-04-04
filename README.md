@@ -125,21 +125,33 @@ With a properly configured virtual environment, running the application still re
   ```bash
   source venv/bin/activate
   ```
-- Edit the configuration file
-  ```bash
-  nano web3_reverse_proxy/config/conf.py
-  ```
-  And set `ETH0_BACKEND_ADDR` and `ETH0_BACKEND_NAME` (lines 28 and 29) that correspond to the endpoint(s) you want to connect via the proxy. Double-check the ports. By default, the web3 RPC is available via the port **8545**, so the example configuration may look like 
-  this:
-  ```python
-  ETH0_BACKEND_ADDR = "http://geth-1.local:8545"
-  ETH0_BACKEND_NAME = "rpi4 geth-1"
-  ```
+- Provide configuration, see Proxy Configuration below
 - Run the proxy
   ```bash
   python web3_reverse_proxy/rproxy.py
   ```
 - To terminate the proxy server (and release resources), press `Ctrl-c` and wait for the graceful server shutdown
+
+#### Proxy Configuration
+
+All possible config entries along with default values are listed in the file `web3_reverse_proxy/config/conf.py`.
+You may modify it for your convenience, but do not commit changes, and it is not recommended approach.
+`.env` and os env vars are supported. 
+Entries provided in `.env` file override default values from `conf.py`.
+Os env vars override `.env` and `conf.py` settings.
+
+An example of `.env` file
+```text
+PROXY_LISTEN_PORT=6513
+ETH_ENDPOINTS='[{"name": "rpi4 geth1", "url": "http://geth-1.local:8545/"},{"name": "rpi4 geth2", "url": "http://geth-2.local:8545/"}]'
+```
+
+An example of using os env vars
+```shell
+PROXY_LISTEN_PORT=6513 ETH_ENDPOINTS='[{"name": "rpi4 geth1", "url": "http://geth-1.local:8545/"},{"name": "rpi4 geth2", "url": "http://geth-2.local:8545/"}]' python web3_reverse_proxy/rproxy.py
+```
+
+Note that `ETH_ENDPOINTS` must be a JSON string of a structure like in the examples above.
 
 ## Misc Quirks and Tips
 As this a work-in-progress project, it may only be stable in its original development environment (**Windows 10 Pro**, **PyCharm 2022.3.1 (Community Edition)** and **Python 3.11**). In its original environment, the proxy was verified to operate correctly for three days. 

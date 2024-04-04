@@ -1,6 +1,6 @@
-from typing import List, Tuple
+from typing import List
 
-from web3_reverse_proxy.config.conf import ETH_ENDPOINTS, CACHE_ENABLED, CACHE_EXPIRY_MS
+from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
 from web3_reverse_proxy.core.interfaces.rpcresponse import RPCResponseHandler
 from web3_reverse_proxy.core.proxy import Web3RPCProxy
@@ -33,7 +33,7 @@ class ServiceComponentsProvider:
     @classmethod
     def create_default_multi_threaded_endpoint_handler(
         cls,
-        endpoint_config: List[Tuple[str, str]],
+        endpoint_config: List[dict],
         ssm:SampleStateManager,
     ):
         updater = ssm.get_service_state_updater_instance()
@@ -75,8 +75,8 @@ class ServiceComponentsProvider:
     @classmethod
     def create_default_web3_rpc_proxy(cls, ssm: SampleStateManager, proxy_listen_port) -> Web3RPCProxy:
         # Create default components
-        endpoint_handler = cls.create_default_multi_threaded_endpoint_handler(ETH_ENDPOINTS, ssm)
-        cache_service = StaticRequestResponseCacheService(CACHE_EXPIRY_MS) if CACHE_ENABLED else None
+        endpoint_handler = cls.create_default_multi_threaded_endpoint_handler(Config.ETH_ENDPOINTS, ssm)
+        cache_service = StaticRequestResponseCacheService(Config.CACHE_EXPIRY_MS) if Config.CACHE_ENABLED else None
 
         return cls.create_web3_rpc_proxy(ssm, endpoint_handler, cache_service, proxy_listen_port)
 

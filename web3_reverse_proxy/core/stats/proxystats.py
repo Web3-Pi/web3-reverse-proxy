@@ -1,11 +1,13 @@
 import time
 
-from web3_reverse_proxy.config.conf import STATS_UPDATE_DELTA, STATS_UPDATE_MIN_DELAY
+from web3_reverse_proxy.config.conf import Config
 
 
 class RPCProxyStats:
 
-    def __init__(self, stats_print_delta: int = STATS_UPDATE_DELTA, stats_delay: int = STATS_UPDATE_MIN_DELAY) -> None:
+    def __init__(
+            self, stats_print_delta: int = Config.STATS_UPDATE_DELTA, stats_delay: int = Config.STATS_UPDATE_MIN_DELAY
+    ) -> None:
         self.prev_stats_print_marker = 0
         self.last_update = time.time()
 

@@ -20,7 +20,12 @@ class RPCEndpointsHandlerMiddlewareFactory:
         return SingleEndpointHandler(name, connection_descr, state_updater)
 
     @classmethod
-    def create_multi_thread(cls, endpoint_config: List[Tuple[str, str]], state_updater: StateUpdater, load_balancer: LoadBalancer) -> EndpointsHandler:
-        descriptors = [(name, EndpointConnectionDescriptor.from_url(url)) for name, url in endpoint_config]
+    def create_multi_thread(
+            cls, endpoint_config: List[dict], state_updater: StateUpdater, load_balancer: LoadBalancer
+    ) -> EndpointsHandler:
+        descriptors = [
+            (entrypoint["name"], EndpointConnectionDescriptor.from_url(entrypoint["url"]))
+            for entrypoint in endpoint_config
+        ]
 
         return ThreadedEndpointHandler(descriptors, state_updater, load_balancer)

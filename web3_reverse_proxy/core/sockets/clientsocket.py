@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from web3_reverse_proxy.config.conf import DEFAULT_RECV_BUF_SIZE
+from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
 
 
@@ -15,7 +15,7 @@ class ClientSocket(BaseSocket):
         ready_read = self.is_ready_read()
         assert ready_read
 
-        self.socket.recv(DEFAULT_RECV_BUF_SIZE)
+        self.socket.recv(Config.DEFAULT_RECV_BUF_SIZE)
 
     def close(self) -> None:
         self.rfile.close()

@@ -1,4 +1,4 @@
-from web3_reverse_proxy.config.conf import UPNP_LEASE_TIME, USE_UPNP, UPNP_DISCOVERY_TIMEOUT, PUBLIC_SERVICE
+from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.core.upnp.ipgetter import my_public_ip
 
 from web3_reverse_proxy.core.upnp.upnpportmapper import BasicUPnPPortMapper
@@ -11,13 +11,13 @@ class BasicUPnPService:
         self.proxy_port = proxy_port
         self.admin_port = admin_port
 
-    def try_init_upnp(self, timeout: float = UPNP_DISCOVERY_TIMEOUT) -> bool:
+    def try_init_upnp(self, timeout: float = Config.UPNP_DISCOVERY_TIMEOUT) -> bool:
         assert self.upnp is None
 
         ip = None
         res = False
 
-        if USE_UPNP:
+        if Config.USE_UPNP:
             print("Initializing UPnP service")
             self.upnp = BasicUPnPPortMapper()
             self.upnp.initialize(timeout)
@@ -26,7 +26,7 @@ class BasicUPnPService:
 
             ports = [self.proxy_port, self.admin_port]
             rules = ["Web3 Proxy", "Proxy Admin"]
-            res = self.upnp.add_multiple_mappings(ports, rules, UPNP_LEASE_TIME)
+            res = self.upnp.add_multiple_mappings(ports, rules, Config.UPNP_LEASE_TIME)
 
             if not res:
                 print("UPnP service: port forwarding -> FAILURE")
@@ -35,7 +35,7 @@ class BasicUPnPService:
                 ip = self.upnp.get_external_ip_address()
 
         if ip is None:
-            if PUBLIC_SERVICE:
+            if Config.PUBLIC_SERVICE:
                 ip = my_public_ip()
             else:
                 ip = "127.0.0.1"
@@ -45,7 +45,7 @@ class BasicUPnPService:
         return res
 
     def close_upnp(self):
-        if USE_UPNP:
+        if Config.USE_UPNP:
             print("UPnP service: shutting down - closing all mapped ports")
 
             if self.upnp.is_upnp_available():
