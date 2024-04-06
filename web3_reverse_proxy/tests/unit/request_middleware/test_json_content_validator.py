@@ -29,8 +29,8 @@ class AcceptJSONRPCContentReaderTests(TestCase):
         for payload in RPCCalls.generate_missing_member_calls():
             with self.subTest(f'{payload.get("method")} -> {payload.get("params")}'):
                 _, response = self._pass_request(json_reader, payload)
-                self.assertIn(b'200 OK', response.data)
-                self.assertIn(b'Missing member', response.data)
+                self.assertIn(b'200 OK', response.raw)
+                self.assertIn(b'Missing member', response.raw)
 
     def test_requests_with_non_alphanumeric_characters_should_fail(self):
         json_reader = AcceptJSONRPCContentReader()
@@ -38,8 +38,8 @@ class AcceptJSONRPCContentReaderTests(TestCase):
         for payload in RPCCalls.generate_non_alphanumeric_input_calls():
             with self.subTest(f'{payload["method"]} -> {payload.get("params")}'):
                 _, response = self._pass_request(json_reader, payload)
-                self.assertIn(b'200 OK', response.data)
-                self.assertIn(b'Invalid characters', response.data)
+                self.assertIn(b'200 OK', response.raw)
+                self.assertIn(b'Invalid characters', response.raw)
 
     def test_should_pass_request_to_next_reader_if_available(self):
         next_reader = Mock(RequestReaderMiddleware)

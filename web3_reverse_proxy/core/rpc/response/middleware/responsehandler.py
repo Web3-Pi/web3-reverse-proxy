@@ -12,7 +12,7 @@ class DefaultRPCResponseHandler(RPCResponseHandler):
         assert cs.is_ready_write()
 
         try:
-            cs.send_all(response.data)
+            cs.send_all(response.raw)
         except IOError:
             return False
         except Exception:

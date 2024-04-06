@@ -93,7 +93,7 @@ class ServiceActivitySummary:
 
     def register_next_call(self, request: RPCRequest, response: RPCResponse) -> None:
         uas_entry = self._get_or_create_uas(request.user_api_key)
-        uas_entry.register_next_call(request.method, len(request.last_queried_bytes), len(response.data))
+        uas_entry.register_next_call(request.method, len(request.last_queried_bytes), len(response.raw))
 
     def to_dict(self) -> Dict[str, Any]:
         return {
