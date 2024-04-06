@@ -93,7 +93,7 @@ class ThreadedEndpointHandler(EndpointsHandler):
 
     def close(self) -> None:
         for endpoint in self.endpoints:
-            self._logger.debug("Closing endpoint {endpoint}")
+            self._logger.debug(f"Closing endpoint {endpoint}")
             endpoint.close()
 
     def get_endpoints(self) -> Iterable[RPCEndpoint]:
