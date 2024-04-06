@@ -19,7 +19,7 @@ class RPCProxyRequestManager:
 
         self.active_sockets = []
         self.requests = {}
-        self.responses = {}
+        self.responses = []
         self.errors = {}
 
         self.no_current_responses = 0
@@ -33,7 +33,7 @@ class RPCProxyRequestManager:
     def clear_state(self) -> None:
         self.active_sockets = []
         self.requests = {}
-        self.responses = {}
+        self.responses = []
         self.errors = {}
 
     def read_requests(self, client_sockets: Iterable[ClientSocket]) -> None:
@@ -52,28 +52,27 @@ class RPCProxyRequestManager:
             if self.response_cache.is_writeable(request):
                 cached_response = self.response_cache.get(request.method)
                 if cached_response is not None:  
-                    self.responses[cs] = cached_response
+                    self.responses.append((cs, cached_response))
                     del self.requests[cs]
                 
     def process_requests(self) -> None:
         for cs, request in self.requests.items():
-            # FIXME: implicit assumption that endpoints are 100% reliable -> it may not be true
             self.endpoints_handler.add_request(cs, request)
 
         if self.endpoints_handler.has_pending_requests():
-            responses_dict = self.endpoints_handler.process_pending_requests()
-            for cs, response in responses_dict.items():
+            responses = self.endpoints_handler.process_pending_requests()
+            for cs, response in responses:
                 if self.is_cache_available and \
                     self.response_cache.is_writeable(response.request) and \
                     self.response_cache.get(response.request.method) is None:
                         self.response_cache.store(response.request.method, response)
-                self.responses[cs] = response
+                self.responses.append((cs, response))
 
 
     def handle_responses(self) -> None:
         self.no_current_responses = 0
 
-        for cs, response in self.responses.items():
+        for cs, response in self.responses:
             if self.response_handler.handle_response(cs, response):
                 self.no_current_responses += 1
                 self.active_sockets.append(cs)
@@ -85,7 +84,7 @@ class RPCProxyRequestManager:
         for cs, err in self.errors.items():
             try:
                 if err is not None and cs.is_ready_write():
-                    cs.send_all(err.data)
+                    cs.send_all(err.raw)
             except IOError:
                 pass
             except Exception:
