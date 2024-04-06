@@ -4,18 +4,14 @@ Consider refactoring this for compatibility with a test runner.
 """
 import requests
 import time
-import logging
 import pytest
 
 from web3_reverse_proxy.tests.data.json_rpc import RPCCalls
+from web3_reverse_proxy.utils.logger import get_logger
 
 
+logger = get_logger("ParserE2ETest")
 pytest.skip("skipping incompatible E2E", allow_module_level=True)
-
-
-logging.basicConfig()
-logger = logging.getLogger("tester")
-logger.setLevel(logging.ERROR)
 
 
 URL = 'http://localhost:6512/aaa'

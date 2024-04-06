@@ -1,5 +1,7 @@
 import os
 
+LOG_LEVEL="INFO"
+
 # global socket conf
 DEFAULT_RECV_BUF_SIZE = 8192
 

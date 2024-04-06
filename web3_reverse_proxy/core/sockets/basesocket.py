@@ -7,6 +7,7 @@ import ssl
 import select
 
 from web3_reverse_proxy.config.conf import DEFAULT_RECV_BUF_SIZE
+from web3_reverse_proxy.utils.logger import logger
 
 
 class BaseSocket:
@@ -68,8 +69,11 @@ class BaseSocket:
 
         host_ip = cls.HOST_IP_MAPPING[host]
 
+        logger.debug("Creating socket")
         s_dst = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        logger.debug("Connecting socket")
         s_dst.connect((host_ip, port))
+        logger.debug("Finished connecting socket")
 
         if is_ssl:
             context = ssl.create_default_context()
