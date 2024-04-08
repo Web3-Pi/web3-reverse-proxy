@@ -1,5 +1,4 @@
 from abc import ABC
-import logging
 from typing import Any
 
 from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.conditions import \
