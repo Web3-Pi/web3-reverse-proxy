@@ -18,8 +18,9 @@ class RPCResponse:
 
     @classmethod
     # FIXME: parse response headers to correctly receive the whole response
-    def hack_is_complete_raw_response(cls, _bytes: bytearray) -> bool:
+    def hack_is_complete_raw_response(cls, _bytes: bytearray, _chunked: bool = False) -> bool:
+        if _chunked:
+            return _bytes.endswith(cls.END_OF_CHUNKED_TRANSMISSION)
         return _bytes.endswith(cls.END_OF_GZIP_TRANSMISSION_WITH_LEN_HEADER) or \
-            _bytes.endswith(cls.END_OF_CHUNKED_TRANSMISSION) or \
             _bytes.endswith(cls.END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER) or \
             _bytes.endswith(cls.END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER_ERROR)

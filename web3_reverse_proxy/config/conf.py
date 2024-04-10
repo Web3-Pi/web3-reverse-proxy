@@ -17,6 +17,9 @@ PROXY_LISTEN_ADDRESS = "0.0.0.0"
 PROXY_LISTEN_PORT = 6512
 MAX_CONCURRENT_CONNECTIONS = 21
 MAX_SATURATED_ITERATIONS_LISTEN_PARAM = 2
+SSL_ENABLED = False
+SSL_CERT_FILE = "cert.pem"
+SSL_KEY_FILE = "key.pem"
 
 LISTEN_BACKLOG_PARAM = 21
 BLOCKING_ACCEPT_TIMEOUT = 5
@@ -26,12 +29,15 @@ QOS_BASE_FREQUENCY = 200
 # Endpoints
 ETH_ENDPOINTS = [
     ("rpi4 geth1", "http://geth-1.local:8545/"),
-    # ("rpi4 geth2", "http://geth-2.local:8545/" ),
+    # ("rpi4 geth2", "http://geth-2.local:8545/"),
     # ("infura-1", "https://mainnet.infura.io/v3/<YOUR_INFURA_KEY>")
 ]
 
-CACHE_ENABLED = True
+CACHE_ENABLED = False
 CACHE_EXPIRY_MS = 300000
+
+# parser
+JSON_RPC_REQUEST_PARSER_ENABLED = True
 
 # rudimentary stats update conf
 STATS_UPDATE_DELTA = 12

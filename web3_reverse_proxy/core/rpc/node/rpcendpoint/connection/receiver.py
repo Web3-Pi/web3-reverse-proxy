@@ -23,6 +23,7 @@ class ResponseReceiverGeth(ResponseReceiver):
     def recv_response(self) -> bytearray:
         response_received = False
         raw_response = bytearray()
+        chunked = False
 
         while not response_received:
             assert self.socket.is_ready_read()
@@ -33,8 +34,11 @@ class ResponseReceiverGeth(ResponseReceiver):
             if not raw_response:
                 raise IOError
 
+            if b"Transfer-Encoding: chunked" in data:
+                chunked = True
+
             # FIXME: this part requires a reliable approach
-            response_received = RPCResponse.hack_is_complete_raw_response(raw_response)
+            response_received = RPCResponse.hack_is_complete_raw_response(raw_response, chunked)
 
         return raw_response
 
