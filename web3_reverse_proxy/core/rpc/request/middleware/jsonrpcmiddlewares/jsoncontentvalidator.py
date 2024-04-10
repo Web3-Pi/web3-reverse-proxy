@@ -6,6 +6,7 @@ from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.validators import \
     JSONRPCFormatValidator, JSONRPCContentValidator, JSONRPCMethodValidator
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
+from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.errors import JSONRPCError
 
 
 class AcceptJSONRPCContentReader(RequestReaderMiddleware):
@@ -15,15 +16,17 @@ class AcceptJSONRPCContentReader(RequestReaderMiddleware):
         JSONRPCMethodValidator,
     ]
 
-    def __init__(self, next_reader: RequestReaderMiddleware = None):
+    def __init__(self, next_reader: RequestReaderMiddleware = None) -> None:
         self.next_reader = next_reader
 
     def read_request(self, cs: ClientSocket, req: RPCRequest) -> RequestReaderMiddleware.ReturnType:
+        jsonrpc_content = req.content
+
         try:
-            jsonrpc_content = req.content
             json_content = json.loads(jsonrpc_content.decode("utf-8"))
         except:
             return self.failure(ErrorResponses.parse_error(req.id), req)
+
         try:
             for validator in self.VALIDATORS:
                 validator.validate(json_content)

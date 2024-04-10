@@ -4,11 +4,13 @@ from typing import Any
 
 from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.conditions import \
     Type, Exact, In, Matches
+from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.errors import \
+    InvalidRequestError, InvalidParamsError, MethodNotFoundError
 
 
 class JSONValidator(ABC):
     @classmethod
-    def is_valid(cls, content: dict):
+    def validate(cls, content: dict) -> None:
         pass
 
 
@@ -27,12 +29,9 @@ class JSONRPCFormatValidator(JSONValidator):
         for key, condition in cls.RPC_PARAM_CONDITIONS.items():
             if not key in content:
                 if key != "params":
-                    logging.error(f"Missing member '{key}'")
-                    return False
+                    raise InvalidRequestError(f"Missing member '{key}'")
             elif not condition.validate(content[key]):
-                logging.error(f"Invalid value for member '{key}'")
-                return False
-        return True
+                raise InvalidRequestError(f"Invalid value for member '{key}'")
 
 
 class JSONRPCContentValidator(JSONValidator):
@@ -43,31 +42,25 @@ class JSONRPCContentValidator(JSONValidator):
         return f"Invalid characters at {label} '{value}' in params"
 
     @classmethod
-    def traverse_and_validate_params(cls, param_value: Any) -> bool:
+    def traverse_and_validate_params(cls, param_value: Any) -> None:
         if type(param_value) is dict:
             for key in param_value.keys():
                 if not cls.REGEX_CONDITION.validate(key):
                     error_message = cls.get_error_message("key", key)
                     raise InvalidParamsError(error_message)
             for sub_param_value in param_value.values():
-                if not cls.traverse_and_validate_params(sub_param_value):
-                    return False
-            return True
+                cls.traverse_and_validate_params(sub_param_value)
         elif type(param_value) is list:
             for sub_param_value in param_value:
-                if not cls.traverse_and_validate_params(sub_param_value):
-                    return False
-            return True
+                cls.traverse_and_validate_params(sub_param_value)
         else:
             if not cls.REGEX_CONDITION.validate(param_value):
                 error_message = cls.get_error_message("label", param_value)
                 raise InvalidParamsError(error_message)
 
     @classmethod
-    def is_valid(cls, content: dict) -> bool:
-        is_method_valid = cls.REGEX_CONDITION.validate(content.get("method", ""))
-        are_params_valid = cls.traverse_and_validate_params(content.get("params", []))
-        return is_method_valid and are_params_valid
+    def validate(cls, content: dict) -> None:
+        cls.traverse_and_validate_params(content.get("params", []))
 
 
 class JSONRPCMethodValidator(JSONValidator):
@@ -123,13 +116,16 @@ class JSONRPCMethodValidator(JSONValidator):
     }
 
     @classmethod
-    def is_valid(cls, content: dict) -> bool:
+    def validate(cls, content: dict) -> None:
         method_name = content.get("method")
         method_params = content.get("params", [])
         params_length = len(method_params)
 
-        try:
-            return cls.METHOD_PARAM_COUNT_CONDITIONS[method_name].validate(params_length)
-        except KeyError:
-            logging.error(f"Unsupported method '{method_name}'")
-            return False
+        method_condition = cls.METHOD_PARAM_COUNT_CONDITIONS.get(method_name)
+        if method_condition is None:
+            raise MethodNotFoundError(f"Unsupported method '{method_name}'")
+        if not method_condition.validate(params_length):
+            raise InvalidParamsError(
+                f"Number of parameters for method '{method_name}' {method_condition.description}, "
+                f"but {params_length} were given"
+            )

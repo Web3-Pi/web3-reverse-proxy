@@ -1,10 +1,15 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any, List
 import re
 
 
 class Condition(ABC):
     def validate(self, value: Any) -> bool:
+        pass
+
+    @property
+    @abstractmethod
+    def description(self) -> str:
         pass
 
 
@@ -15,6 +20,10 @@ class In(Condition):
     def validate(self, value: Any) -> bool:
         return value in self.values
 
+    @property
+    def description(self) -> str:
+        return f"is {', '.join([str(item) for item in self.values[:-1]])} or {self.values[-1]}"
+
 
 class Exact(Condition):
     def __init__(self, value: Any) -> None:
@@ -23,6 +32,9 @@ class Exact(Condition):
     def validate(self, value: Any) -> bool:
         return value == self.value
 
+    @property
+    def description(self) -> str:
+        return f"is {self.value}"
 
 class Matches(Condition):
     def __init__(self, regex: str) -> None:
@@ -31,26 +43,9 @@ class Matches(Condition):
     def validate(self, value: Any) -> bool:
         return bool(re.match(self.regex, str(value)))
 
-
-class Operator(Condition, ABC):
-    def __init__(self, *conditions: List[Condition]) -> None:
-        self.conditions = conditions
-
-
-class And(Operator):
-    def validate(self, value: Any) -> bool:
-        for condition in self.conditions:
-            if not condition.validate(value):
-                return False
-        return True
-
-
-class Or(Operator):
-    def validate(self, value: Any) -> bool:
-        for condition in self.conditions:
-            if condition.validate(value):
-                return True
-        return False
+    @property
+    def description(self) -> str:
+        return f"matches regex {self.regex}"
 
 
 class ConditionWrapper(Condition, ABC):
@@ -61,3 +56,7 @@ class ConditionWrapper(Condition, ABC):
 class Type(ConditionWrapper):
     def validate(self, value: Any) -> bool:
         return self.condition.validate(type(value))
+
+    @property
+    def description(self) -> str:
+        return f"type {self.condition.description}"

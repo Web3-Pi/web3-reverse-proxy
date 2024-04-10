@@ -1,6 +1,9 @@
+from web3_reverse_proxy.config.conf import JSON_RPC_REQUEST_PARSER_ENABLED
+
 from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
 from web3_reverse_proxy.core.utilhttp.errors import ErrorResponses
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
+from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.errors import MethodNotFoundError
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 
 
@@ -27,18 +30,22 @@ class ContentRequestReader(RequestReaderMiddleware):
         except Exception:
             raise
 
-        # FIXME: this can be passed over to the RPC endpoint to handle, but method needs to be read to keep track
-        # FIXME: of user calls for settlement purposes
-        method = None
-        for tok in raw_content.split(b","):
-            if tok.startswith(b'"method":') or tok.startswith(b' "method":'):
-                method = str(tok.split(b":")[1][1:-1], 'utf-8').replace('"', '').strip()
-                break
+        # TODO: Remove, once JSON parser is mandatory
+        # the method needs to be read to keep track
+        if not JSON_RPC_REQUEST_PARSER_ENABLED:
+            method = None
+            id = None
+            for tok in raw_content.split(b","):
+                if tok.startswith(b'"id":') or tok.startswith(b' "id":'):
+                    id = str(tok.split(b":")[1][1:-1], 'utf-8').replace('"', '').strip()
+                if tok.startswith(b'"method":') or tok.startswith(b' "method":'):
+                    method = str(tok.split(b":")[1][1:-1], 'utf-8').replace('"', '').strip()
 
-        if method is None:
-            return self.failure(ErrorResponses.bad_request_missing_method(), req)
+            if method is None:
+                return self.failure(ErrorResponses.bad_request_web3(200, -32600, "Missing method field"), req)
 
-        req.method = method
+            req.method = method
+            req.id = id
 
         if self.next_reader:
             return self.next_reader.read_request(cs, req)
