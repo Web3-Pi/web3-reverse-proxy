@@ -45,26 +45,17 @@ class ResponseReceiverGeth(ResponseReceiver):
             self._logger.debug(f"Raw response -> {raw_response}")
             # Chunked responses
             if chunked or RPCResponse.is_chunked(raw_response):
-                raw_response_array = raw_response.split(RPCResponse.CRLF_SEPARATOR)
-
                 if not chunked:
-                    content_sparator_index = raw_response_array.index(b'')
-                    headers = raw_response_array[:content_sparator_index]
-                    raw_response_array = raw_response_array[content_sparator_index + 1:]
+                    head, separator, body = raw_response.partition(RPCResponse.HEAD_SEPARATOR)
+                    head += separator
+                    raw_response = body
+                    self._logger.debug(f"Callback {head}")
+                    callback(head)
                     chunked = True
 
-                    headers_data = b""
-                    for header in headers:
-                        headers_data += header + RPCResponse.CRLF_SEPARATOR
-                    headers_data += RPCResponse.CRLF_SEPARATOR
-                    callback(headers_data)
-
-                if raw_response.endswith(RPCResponse.CRLF_SEPARATOR):
-                    # Remove extra empty element after split
-                    raw_response_array.pop(-1)
-
-                chunks, raw_response, buf_size, response_received = self._process_chunked_data(raw_response, raw_response_array)
+                chunks, raw_response, response_received = self._process_chunked_data(raw_response)
                 for chunk in chunks:
+                    self._logger.debug(f"Callback {chunk}")
                     callback(chunk)
 
             # Non-chunked responses
@@ -72,6 +63,7 @@ class ResponseReceiverGeth(ResponseReceiver):
                 response_received = RPCResponse.is_complete_raw_response(raw_response)
                 if response_received:
                     self._logger.debug("Response completed")
+                    self._logger.debug(f"Callback {raw_response}")
                     callback(raw_response)
 
 
@@ -79,42 +71,23 @@ class ResponseReceiverGeth(ResponseReceiver):
         self.socket = sock
 
     @staticmethod
-    def _process_chunked_data(raw_response: bytearray, chunked_elements: list) -> Tuple[list, bytearray, int, bool]:
+    def _process_chunked_data(raw_response: bytearray) -> Tuple[list, bytearray, int, bool]:
         response_completed = RPCResponse.is_complete_raw_response(raw_response)
-        target_chunk_content_length = 10 ** 6  # arbitrarily large number to compare against buffer size
-        current_chunk = bytearray()
-        current_chunk_content_length = 0
+        chunks = []
 
-        if not response_completed:
-            # full length/content pairs
-            if len(chunked_elements) % 2 == 0:
-                target_chunk_content_length = int(chunked_elements[-2], 16)
-                # incomplete last chunk
-                if len(chunked_elements[-1]) != target_chunk_content_length or \
-                        not raw_response.endswith(RPCResponse.CRLF_SEPARATOR) or \
-                        target_chunk_content_length == 0 and \
-                        not response_completed:
-                    current_chunk = chunked_elements[-2] + RPCResponse.CRLF_SEPARATOR + chunked_elements[-1]
-                    current_chunk_content_length = len(chunked_elements[-1])
-                    chunked_elements = chunked_elements[:-2]
-                # complete chunk, further length unknown
-                else:
-                    target_chunk_content_length = 10 ** 6
-            # missing last chunk content
-            elif raw_response.endswith(RPCResponse.CRLF_SEPARATOR):
-                target_chunk_content_length = int(chunked_elements[-1], 16)
-                current_chunk = chunked_elements.pop(-1) + RPCResponse.CRLF_SEPARATOR
-            # incomplete chunk length
-            else:
-                current_chunk = chunked_elements.pop(-1)
+        while True:
+            length, separator, content = raw_response.partition(RPCResponse.CRLF_SEPARATOR)
+            if separator == b"":
+                # incomplete length data
+                break
+            target_length = int(length, 16)
+            if len(content) < target_length + 2:
+                # incomplete chunk content
+                break
+            chunks.append(length + RPCResponse.CRLF_SEPARATOR + content[:target_length + 2])
+            raw_response = content[target_length + 2:]
 
-        complete_chunks = [
-            chunked_elements[i] + RPCResponse.CRLF_SEPARATOR + chunked_elements[i + 1] + RPCResponse.CRLF_SEPARATOR \
-                for i in range(len(chunked_elements) // 2)
-        ]
-        buf_size = min(DEFAULT_RECV_BUF_SIZE, target_chunk_content_length + len(RPCResponse.CRLF_SEPARATOR) - current_chunk_content_length)
-
-        return complete_chunks, current_chunk, buf_size, response_completed
+        return chunks, raw_response, response_completed
 
 
 class ResponseReceiverSSL(ResponseReceiver):
