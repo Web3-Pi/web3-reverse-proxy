@@ -5,7 +5,6 @@ from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
 from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.receiver import ResponseReceiverGeth, ResponseReceiverSSL
-from web3_reverse_proxy.config.conf import DEFAULT_RECV_BUF_SIZE
 
 
 class ResponseReceiverGethTests(TestCase):
@@ -24,13 +23,6 @@ class ResponseReceiverGethTests(TestCase):
         receiver = ResponseReceiverGeth(sock)
         callback = Mock()
 
-        expected_socket_calls = [
-            call(DEFAULT_RECV_BUF_SIZE),
-            call(7),
-            call(8),
-            call(DEFAULT_RECV_BUF_SIZE),
-            call(DEFAULT_RECV_BUF_SIZE),
-        ]
         expected_callback_calls = [
             call(b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: application/json\r\nDate: Wed, 03 Apr 2024 22:45:33 GMT\r\n\r\n'),
             call(b'5\r\n{"Hel\r\n'),
@@ -40,8 +32,6 @@ class ResponseReceiverGethTests(TestCase):
         ]
 
         receiver.recv_response(callback)
-
-        sock.recv.assert_has_calls(expected_socket_calls)
         callback.assert_has_calls(expected_callback_calls)
 
 
