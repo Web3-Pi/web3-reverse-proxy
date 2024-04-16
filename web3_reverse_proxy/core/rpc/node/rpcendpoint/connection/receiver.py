@@ -131,20 +131,25 @@ class ResponseReceiverSSL(ResponseReceiver):
         if content_len > 0:
             data = fd.read(content_len)
             response_data += data
+            self._logger.debug(f"Callback {response_data}")
             callback(response_data)
         else:
             assert chunked, response_data
+            self._logger.debug(f"Callback {response_data}")
             callback(response_data)
             response_data = bytearray()
 
             while True:
                 data = fd.readline(self.MAX_LINE_LEN + 1)
+                self._logger.debug(f"Read chunk length data: {data}")
                 chunk_len = int(data.decode("UTF-8"), 16)
                 response_data += data
 
                 data = fd.read(chunk_len + 2)  # +2 to read '/r/n'
+                self._logger.debug(f"Read chunk content data: {data}")
                 response_data += data
 
+                self._logger.debug(f"Callback {response_data}")
                 callback(response_data)
 
                 if chunk_len == 0:
