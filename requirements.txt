@@ -3,3 +3,5 @@ WhatIsMyIP~=2022.7.10
 upnpclient~=1.0.3
 pytest~=8.1.1
 requests~=2.31.0
+
+httptools~=0.6.1

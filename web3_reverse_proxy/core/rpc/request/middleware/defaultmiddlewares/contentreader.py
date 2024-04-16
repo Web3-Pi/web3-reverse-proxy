@@ -24,6 +24,8 @@ class ContentRequestReader(RequestReaderMiddleware):
                 raw_content = raw_content.replace(b'"{', b"'{")
                 raw_content = raw_content.replace(b'}"', b"}'")
 
+            req.append_raw_data(raw_content)
+
             req.content = raw_content
         except IOError:
             return self.failure()

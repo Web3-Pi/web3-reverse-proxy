@@ -1,5 +1,6 @@
 from typing import Iterable, List, Optional
 
+from core.rpc.tempimpl import RequestReaderTemp
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
 from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
@@ -16,6 +17,7 @@ class RPCProxyRequestManager:
         self.request_reader = request_reader
         self.endpoints_handler = endpoints_handler
         self.response_handler = response_handler
+        self.rrt = RequestReaderTemp()
 
         self.active_sockets = []
         self.requests = {}
@@ -40,8 +42,11 @@ class RPCProxyRequestManager:
         assert len(self.requests) == 0 and len(self.responses) == 0 and len(self.errors) == 0
 
         for cs in client_sockets:
-            req, err = self.request_reader.read_request(cs, RPCRequest())
-
+            # print("PR")
+            req, err = self.rrt.read_request(cs)
+            # req, err = self.request_reader.read_request(cs, RPCRequest())
+            # print("POR")
+            # print(req)
             if req is not None:
                 self.requests[cs] = req
             else:

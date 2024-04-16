@@ -22,7 +22,7 @@ class Web3RPCProxy:
             endpoints_handler: EndpointsHandler,
             response_handler: RPCResponseHandler,
             cache_service: ResponseCacheService
-        ) -> None:
+    ) -> None:
 
         request_reader = middlewares.instantiate()
 
