@@ -27,10 +27,19 @@ class EndpointConnectionStats:
     no_bytes_received = property(__get_no_bytes_received)
     no_requests_handled = property(__get_no_requests_handled)
 
+    def _update(self, no_bytes_received: int, no_bytes_sent: int, no_requests_handled: int) -> None:
+        self._no_requests_handled += no_requests_handled
+        self._no_bytes_sent += no_bytes_sent
+        self._no_bytes_received += no_bytes_received
+
     def update(self, req_data: bytearray, resp_data: bytearray) -> None:
-        self._no_requests_handled += 1
-        self._no_bytes_sent += len(resp_data)
-        self._no_bytes_received += len(req_data)
+        self._update(len(req_data), len(resp_data), 1)
+
+    def update_response_bytes(self, resp_data: bytearray) -> None:
+        self._update(0, len(resp_data), 0)
+
+    def append(self, conn_stats: "EndpointConnectionStats") -> None:
+        self._update(conn_stats.no_bytes_received, conn_stats.no_bytes_sent, conn_stats.no_requests_handled)
 
     def to_dict(self):
         return {

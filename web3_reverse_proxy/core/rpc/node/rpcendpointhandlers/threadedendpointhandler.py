@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from queue import Queue
-from typing import Dict, Iterable, Callable, List, Tuple
+from typing import Iterable, Callable, List, Tuple
 
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler, LoadBalancer
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import EndpointConnectionDescriptor
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3_reverse_proxy.core.rpc.node.rpcendpointhandlers.threadsgraph.graphimpl import ThreadsGraph, Queues
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
@@ -12,10 +13,11 @@ from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 
 from web3_reverse_proxy.interfaces.servicestate import StateUpdater
-
+from web3_reverse_proxy.utils.logger import get_logger
 
 
 class ThreadedEndpointHandler(EndpointsHandler):
+    _logger = get_logger("ThreadedEndpointHandler")
 
     def __init__(
             self,
@@ -49,34 +51,49 @@ class ThreadedEndpointHandler(EndpointsHandler):
         self.add_processing_thread(self.request_consumer, queue_in, self.queues_ids.OUT_0, endpoint)
 
     def add_request(self, cs: ClientSocket, req: RPCRequest) -> None:
+        self._logger.debug(f"Adding request {req} for {cs}")
         in_queue_index = self.load_balancer.get_queue_for_request(self, req)
 
         self.req_queues[in_queue_index].put((cs, req))
         self.no_pending_requests += 1
+        self._logger.debug(f"Added request with {self.no_pending_requests} pending requests")
 
-    def process_pending_requests(self) -> Dict[ClientSocket, RPCResponse]:
-        ret = {}
-
+    def process_pending_requests(self) -> List[Tuple[ClientSocket, RPCResponse]]:
+        ret = []
         while not self.res_queue.empty():
             cs, res = self.res_queue.get()
-            ret[cs] = res
+            ret.append((cs, res))
+
+            if res.chunked:
+                cs, res = self.res_queue.get()  # to omit header chunk
+                ret.append((cs, res))
+                while not RPCResponse.is_complete_raw_response(res.raw):
+                    cs, res = self.res_queue.get()
+                    ret.append((cs, res))
 
             self.no_pending_requests -= 1
-
         return ret
 
-    @staticmethod
-    def request_consumer(req_q: Queue, res_q: Queue, endpoint: RPCEndpoint) -> None:
+    @classmethod
+    def request_consumer(cls, req_q: Queue, res_q: Queue, endpoint: RPCEndpoint) -> None:
+        cls._logger.debug("Started consuming request")
         while True:
+            cls._logger.debug(f"Endpoint {endpoint} awaiting requests...")
             cs, req = req_q.get()
-            res = endpoint.handle_request_response_roundtrip(req)
-            res_q.put((cs, res))
+
+            cls._logger.debug(f"Endpoint {endpoint} accepted request {req} from client socket {cs}")
+            response_handler = lambda res: res_q.put((cs, res))
+
+            cls._logger.debug("Initiating request/response roundtrip")
+            endpoint.handle_request_response_roundtrip(req, response_handler)
+            cls._logger.debug("Request/response roundtrip ended")
 
     def has_pending_requests(self) -> bool:
         return self.no_pending_requests > 0
 
     def close(self) -> None:
         for endpoint in self.endpoints:
+            self._logger.debug(f"Closing endpoint {endpoint}")
             endpoint.close()
 
     def get_endpoints(self) -> Iterable[RPCEndpoint]:

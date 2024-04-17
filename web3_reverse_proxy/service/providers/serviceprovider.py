@@ -52,13 +52,12 @@ class ServiceComponentsProvider:
     def create_web3_rpc_proxy(
         cls,
         ssm: SampleStateManager,
-        handler: EndpointsHandler,
+        endpoints_handler: EndpointsHandler,
         cache_service: ResponseCacheService,
         proxy_port
     ) -> Web3RPCProxy:
         # Create default components
         middlewares = cls.configure_default_reader_middlewares(ssm)
-        endpoints_handler = handler
         response_handler = cls.create_default_response_handler()
 
         # Create proxy (do not launch it yet)

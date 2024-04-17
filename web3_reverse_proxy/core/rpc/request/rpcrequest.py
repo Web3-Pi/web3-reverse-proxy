@@ -8,6 +8,7 @@ class RPCRequest:
     content_len: int = -1
     content: bytearray | None = None
     method: str = ""
+    id: int | str | None = None
     priority: int = 0
     last_queried_bytes: bytearray | None = None
 

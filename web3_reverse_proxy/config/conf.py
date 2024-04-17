@@ -3,11 +3,14 @@ from typing import get_type_hints, Union, List
 from dotenv import dotenv_values
 import json
 
+
 def _parse_bool(val: Union[str, bool]) -> bool:
     return val if val is bool else val.lower() in ['true', 'yes', '1']
 
 
 class AppConfig:
+    LOG_LEVEL: str = "INFO"
+
     # global socket conf
     DEFAULT_RECV_BUF_SIZE: int = 8192
 
@@ -25,6 +28,9 @@ class AppConfig:
     PROXY_LISTEN_PORT: int = 6512
     MAX_CONCURRENT_CONNECTIONS: int = 21
     MAX_SATURATED_ITERATIONS_LISTEN_PARAM: int = 2
+    SSL_ENABLED: bool = False
+    SSL_CERT_FILE: str = "cert.pem"
+    SSL_KEY_FILE: str = "key.pem"
 
     LISTEN_BACKLOG_PARAM: int = 21
     BLOCKING_ACCEPT_TIMEOUT: int = 5
@@ -38,8 +44,11 @@ class AppConfig:
         # {"name": "infura-1", "url": "https://mainnet.infura.io/v3/<YOUR_INFURA_KEY>"}
     ]
 
-    CACHE_ENABLED: bool = True
+    CACHE_ENABLED: bool = False
     CACHE_EXPIRY_MS: int = 300000
+
+    # parser
+    JSON_RPC_REQUEST_PARSER_ENABLED: bool = True
 
     # rudimentary stats update conf
     STATS_UPDATE_DELTA: int = 12
