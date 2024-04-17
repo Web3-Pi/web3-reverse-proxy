@@ -10,15 +10,11 @@ from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
 
 
-class RPCEndpoint:
+class RPCEndpointHack:
 
-    def __init__(self, name, connection: EndpointConnection, state_updater: StateUpdater) -> None:
+    def __init__(self, name: str, connection: EndpointConnection) -> None:
         self.conn = connection
-        self.state_updater = state_updater
         self.name = name
-
-    def clone(self) -> RPCEndpoint:
-        return RPCEndpoint(self.name, self.conn, self.state_updater)
 
     def get_endpoint_addr(self) -> str:
         return f"{self.conn.host}:{self.conn.port}"
@@ -37,8 +33,6 @@ class RPCEndpoint:
             res = self.conn.send_recv_roundtrip(req)
         except Exception:
             raise
-
-        # self.state_updater.record_processed_rpc_call(req, res)
 
         return res
 

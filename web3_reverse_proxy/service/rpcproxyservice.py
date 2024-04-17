@@ -1,6 +1,7 @@
 from contextlib import redirect_stdout
 from io import StringIO
 
+from service.mtrproxyservice import HackMultiThreadedRPCProxyService
 from web3_reverse_proxy.config.conf import SERVICE_NAME, PROXY_LISTEN_PORT, SERVICE_VER, ADMIN_LISTEN_PORT, \
     FORCE_REGISTER_DEFAULT_USERS
 from web3_reverse_proxy.service.ioredirect.stdoutcapture import StdOutCaptureStreamTee
@@ -61,3 +62,7 @@ class DefaultRPCProxyService:
         with redirect_stdout(StdOutCaptureStreamTee()) as new_stdout:
             service = DefaultRPCProxyService(new_stdout)
             service.run_forever(proxy_port, admin_port)
+
+    @classmethod
+    def launch_hack_mt_service(cls, proxy_port, endpoint: str, endpoint_port: int, num_workers: int) -> None:
+        HackMultiThreadedRPCProxyService().run_forever(proxy_port, endpoint, endpoint_port, num_workers)

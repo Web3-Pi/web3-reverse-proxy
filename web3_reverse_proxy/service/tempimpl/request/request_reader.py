@@ -80,21 +80,17 @@ class ParserTemp:
         return self.need_more_data_
 
 
-class RequestReaderTemp:
+def read_request(cs: ClientSocket) -> RPCRequest | None:
+    pt = ParserTemp()
+    parser = HttpRequestParser(pt)
 
-    def __init__(self):
-        pass
+    while pt.need_more_data():
+        data = cs.recv()
+        if data is None or data == b'':
+            cs.close()
+            return None
 
-    def read_request(self, cs: ClientSocket) -> [RPCRequest | None, RPCResponse | None]:
-        pt = ParserTemp()
-        parser = HttpRequestParser(pt)
+        # print(data)
+        parser.feed_data(data)
 
-        while pt.need_more_data():
-            data = cs.recv()
-            if data is None or data == b'':
-                return None, None
-
-            # print(data)
-            parser.feed_data(data)
-
-        return pt.get_request(), None
+    return pt.get_request()

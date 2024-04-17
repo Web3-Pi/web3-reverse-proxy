@@ -6,7 +6,8 @@ from web3_reverse_proxy.core.interfaces.rpcresponse import RPCResponseHandler
 from web3_reverse_proxy.core.proxy import Web3RPCProxy
 from web3_reverse_proxy.core.rpc.node.rpcendpointhandlers.loadbalancers import simpleloadbalancers
 from web3_reverse_proxy.core.rpc.request.middleware.requestmiddlewaredescr import RequestMiddlewareDescr
-from web3_reverse_proxy.core.rpc.cache.responsecacheservice import ResponseCacheService, StaticRequestResponseCacheService
+from web3_reverse_proxy.core.rpc.cache.responsecacheservice import ResponseCacheService, \
+    StaticRequestResponseCacheService
 
 from web3_reverse_proxy.service.factories.endpointshandlermiddlewarefactory import RPCEndpointsHandlerMiddlewareFactory
 from web3_reverse_proxy.service.factories.requestmiddlewarefactory import RPCRequestMiddlewareFactory
@@ -32,9 +33,9 @@ class ServiceComponentsProvider:
 
     @classmethod
     def create_default_multi_threaded_endpoint_handler(
-        cls,
-        endpoint_config: List[Tuple[str, str]],
-        ssm:SampleStateManager,
+            cls,
+            endpoint_config: List[Tuple[str, str]],
+            ssm: SampleStateManager,
     ):
         updater = ssm.get_service_state_updater_instance()
 
@@ -50,11 +51,11 @@ class ServiceComponentsProvider:
 
     @classmethod
     def create_web3_rpc_proxy(
-        cls,
-        ssm: SampleStateManager,
-        handler: EndpointsHandler,
-        cache_service: ResponseCacheService,
-        proxy_port
+            cls,
+            ssm: SampleStateManager,
+            handler: EndpointsHandler,
+            cache_service: ResponseCacheService,
+            proxy_port
     ) -> Web3RPCProxy:
         # Create default components
         middlewares = cls.configure_default_reader_middlewares(ssm)

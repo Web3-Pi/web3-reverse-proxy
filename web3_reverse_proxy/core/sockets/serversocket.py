@@ -26,7 +26,7 @@ class ServerSocket:
             try:
                 s_src, _ = self.socket.accept()
                 res = ClientSocket.from_socket(s_src)
-            except(ssl.SSLError) as ssl_err:
+            except ssl.SSLError as ssl_err:
                 logging.error(ssl_err)
                 res = None
 

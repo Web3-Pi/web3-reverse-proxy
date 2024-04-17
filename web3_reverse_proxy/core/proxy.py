@@ -1,3 +1,4 @@
+from service.tempimpl.request.request_reader import read_request
 from web3_reverse_proxy.config.conf import PROXY_LISTEN_ADDRESS, PROXY_NAME, PROXY_VER, BLOCKING_ACCEPT_TIMEOUT
 
 from web3_reverse_proxy.core.inbound.server import InboundServer
@@ -58,7 +59,16 @@ class Web3RPCProxy:
         print("Proxy initialized and listening on {}".format(f"{PROXY_LISTEN_ADDRESS}:{proxy_listen_port}"))
 
     def main_loop(self) -> None:
+        srv_socket = self.inbound_srv.server_s
+
         while True:
+            next_cli_sock = None
+            while next_cli_sock is None:
+                next_cli_sock = srv_socket.accept(BLOCKING_ACCEPT_TIMEOUT)
+
+            req, err = read_request(next_cli_sock)
+
+            srv_socket.socket.listen()
             # Handle incoming connections
             incoming_connections_num = self.inbound_srv.accept_incoming_connections()
             ready_read_connections = self.inbound_srv.remove_ready_read_connections()

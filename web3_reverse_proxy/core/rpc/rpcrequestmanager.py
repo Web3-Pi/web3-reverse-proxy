@@ -1,9 +1,8 @@
 from typing import Iterable, List, Optional
 
-from core.rpc.tempimpl import RequestReaderTemp
+from service.tempimpl.request.request_reader import read_request
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
 from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
-from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.rpc.cache.responsecacheservice import ResponseCacheService
 from web3_reverse_proxy.core.interfaces.rpcresponse import RPCResponseHandler
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
@@ -17,7 +16,6 @@ class RPCProxyRequestManager:
         self.request_reader = request_reader
         self.endpoints_handler = endpoints_handler
         self.response_handler = response_handler
-        self.rrt = RequestReaderTemp()
 
         self.active_sockets = []
         self.requests = {}
@@ -43,7 +41,7 @@ class RPCProxyRequestManager:
 
         for cs in client_sockets:
             # print("PR")
-            req, err = self.rrt.read_request(cs)
+            req, err = read_request(cs)
             # req, err = self.request_reader.read_request(cs, RPCRequest())
             # print("POR")
             # print(req)
@@ -56,10 +54,10 @@ class RPCProxyRequestManager:
         for cs, request in list(self.requests.items()):
             if self.response_cache.is_writeable(request):
                 cached_response = self.response_cache.get(request.method)
-                if cached_response is not None:  
+                if cached_response is not None:
                     self.responses[cs] = cached_response
                     del self.requests[cs]
-                
+
     def process_requests(self) -> None:
         for cs, request in self.requests.items():
             # FIXME: implicit assumption that endpoints are 100% reliable -> it may not be true
@@ -69,11 +67,10 @@ class RPCProxyRequestManager:
             responses_dict = self.endpoints_handler.process_pending_requests()
             for cs, response in responses_dict.items():
                 if self.is_cache_available and \
-                    self.response_cache.is_writeable(response.request) and \
-                    self.response_cache.get(response.request.method) is None:
-                        self.response_cache.store(response.request.method, response)
+                        self.response_cache.is_writeable(response.request) and \
+                        self.response_cache.get(response.request.method) is None:
+                    self.response_cache.store(response.request.method, response)
                 self.responses[cs] = response
-
 
     def handle_responses(self) -> None:
         self.no_current_responses = 0
