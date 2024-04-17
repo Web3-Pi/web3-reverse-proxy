@@ -12,7 +12,6 @@ class AcceptRequestLineReader(RequestReaderMiddleware):
     def read_request(self, cs: ClientSocket, req: RPCRequest) -> RequestReaderMiddleware.ReturnType:
         try:
             data = cs.get_read_fd().readline(self.MAX_LINE_LEN + 1)
-            req.append_raw_data(data)
 
             if len(data) == 0:
                 return self.failure()

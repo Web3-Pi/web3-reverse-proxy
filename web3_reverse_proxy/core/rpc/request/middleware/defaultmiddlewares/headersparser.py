@@ -19,7 +19,6 @@ class ParseHeadersRequestReader(RequestReaderMiddleware):
 
             while True:
                 data = fd.readline(self.MAX_LINE_LEN + 1)
-                req.append_raw_data(data)
 
                 if len(data) > self.MAX_LINE_LEN:
                     return self.failure(ErrorResponses.payload_too_large(req.id), req)

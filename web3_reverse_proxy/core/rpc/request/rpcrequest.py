@@ -62,13 +62,6 @@ class RPCRequest:
     id: int | str | None = None
     priority: int = 0
     last_queried_bytes: bytearray | None = None
-    proto: ParserProto = ParserProto()
-    parser: HttpRequestParser = HttpRequestParser(proto)
-
-    def append_raw_data(self, data: bytes) -> None:
-        pass
-        # self.parser.feed_data(data)
-        # print(self.parser.get_method())
 
     def as_bytearray(self, request_line: bytearray, host_header: bytearray) -> bytearray:
         self.last_queried_bytes = request_line + self.headers + host_header + self.content
