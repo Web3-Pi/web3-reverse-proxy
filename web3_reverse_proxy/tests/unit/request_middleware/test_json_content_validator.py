@@ -37,7 +37,6 @@ class AcceptJSONRPCContentReaderTests(TestCase):
 
         for payload in RPCCalls.generate_non_alphanumeric_input_calls():
             with self.subTest(f'{payload["method"]} -> {payload.get("params")}'):
-                # import pytest; pytest.set_trace()
                 _, response = self._pass_request(json_reader, payload)
                 self.assertIn(b'200 OK', response.raw)
                 self.assertIn(b'Invalid characters', response.raw)

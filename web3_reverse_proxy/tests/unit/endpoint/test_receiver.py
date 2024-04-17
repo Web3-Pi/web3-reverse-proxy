@@ -64,7 +64,7 @@ class ResponseReceiverGethTests(TestCase):
     def test_receive_rpc_error_response(self):
         sock = self.socket_mock()
         sock.recv.side_effect = [
-            b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Wed, 03 Apr 2024 22:41:40 GMT\r\nContent-Length: 79\r\n\r\n{"jsonrpc":"2.0",',
+            b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Wed, 03 Apr 2024 22:41:40 GMT\r\nContent-Length: 77\r\n\r\n{"jsonrpc":"2.0",',
             b'"id":0,"error":{"code":35000,"message":"An error occurred"}}',
         ]
         receiver = ResponseReceiverGeth(sock)
@@ -72,7 +72,7 @@ class ResponseReceiverGethTests(TestCase):
 
         receiver.recv_response(callback)
 
-        callback.assert_called_once_with(b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Wed, 03 Apr 2024 22:41:40 GMT\r\nContent-Length: 79\r\n\r\n{"jsonrpc":"2.0","id":0,"error":{"code":35000,"message":"An error occurred"}}')
+        callback.assert_called_once_with(b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Wed, 03 Apr 2024 22:41:40 GMT\r\nContent-Length: 77\r\n\r\n{"jsonrpc":"2.0","id":0,"error":{"code":35000,"message":"An error occurred"}}')
 
 
 class ResponseReceiverSSLTests(TestCase):
@@ -168,7 +168,7 @@ class ResponseReceiverSSLTests(TestCase):
             b'HTTP/1.1 200 OK\r\n',
             b'Content-Type: application/json\r\n',
             b'Date: Wed, 03 Apr 2024 22:41:40 GMT\r\n',
-            b'Content-Length: 79\r\n',
+            b'Content-Length: 77\r\n',
             b'\r\n',
         ]
         self.rfile_mock.read.side_effect = [b'{"jsonrpc":"2.0","id":0,"error":{"code":35000,"message":"An error occurred"}}']
@@ -178,5 +178,5 @@ class ResponseReceiverSSLTests(TestCase):
         receiver.recv_response(callback_mock)
 
         self.rfile_mock.readline.assert_called()
-        self.rfile_mock.read.assert_called_once_with(79)
-        callback_mock.assert_called_once_with(b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Wed, 03 Apr 2024 22:41:40 GMT\r\nContent-Length: 79\r\n\r\n{"jsonrpc":"2.0","id":0,"error":{"code":35000,"message":"An error occurred"}}')
+        self.rfile_mock.read.assert_called_once_with(77)
+        callback_mock.assert_called_once_with(b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Wed, 03 Apr 2024 22:41:40 GMT\r\nContent-Length: 77\r\n\r\n{"jsonrpc":"2.0","id":0,"error":{"code":35000,"message":"An error occurred"}}')

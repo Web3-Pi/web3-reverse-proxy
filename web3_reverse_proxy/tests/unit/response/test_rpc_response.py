@@ -100,14 +100,14 @@ class RPCResponseTests(TestCase):
                 "content": ""
             },
             "rpc_error_response": {
-                "raw": b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Wed, 03 Apr 2024 22:41:40 GMT\r\nContent-Length: 79\r\n\r\n{"jsonrpc":"2.0","id":0,"error":{"code":35000,"message":"An error occurred"}}',
+                "raw": b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Wed, 03 Apr 2024 22:41:40 GMT\r\nContent-Length: 77\r\n\r\n{"jsonrpc":"2.0","id":0,"error":{"code":35000,"message":"An error occurred"}}',
                 "status_code": 200,
                 "status": "OK",
                 "protocol": "HTTP/1.1",
                 "headers": {
                     "Content-Type": "application/json",
                     "Date": "Wed, 03 Apr 2024 22:41:40 GMT",
-                    "Content-Length": '79',
+                    "Content-Length": '77',
                 },
                 "content": {"jsonrpc":"2.0","id":0,"error":{"code": 35000, "message": "An error occurred"}}
             }
