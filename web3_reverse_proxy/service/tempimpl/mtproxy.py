@@ -21,7 +21,7 @@ class Web3RPCProxyHackMT:
         self.pool = RequestHandlerPool(endpoint, endpoint_port, "pass_thru")
 
         print(f"Launching hack MT proxy on port {proxy_listen_port} with {num_workers} worker threads")
-        print(f"Using local geth  endpoint {endpoint}:{endpoint_port}")
+        print(f"Using local geth endpoint {endpoint}:{endpoint_port}")
 
     def handle_client(self, handler: RequestHandler, cs: ClientSocket) -> RequestHandler:
         handler.handle_request(cs)

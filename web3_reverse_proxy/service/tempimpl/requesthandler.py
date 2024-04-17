@@ -6,7 +6,6 @@ from service.tempimpl.request.response_reader import recv_response
 
 class RequestHandler:
 
-    POST_REQUEST_LINE = 'POST /{} HTTP/1.1\r\n'
     HOST_LAST_HEADER = "Host: {}\r\n\r\n"
     NUM_REQ = 0
 

@@ -1,5 +1,4 @@
 from config.conf import ADMIN_LISTEN_PORT
-from service.providers.serviceprovider import ServiceComponentsProvider
 from service.providers.upnpserviceprovider import UPnPServiceProvider
 from service.tempimpl.mtproxy import Web3RPCProxyHackMT
 

@@ -1,6 +1,6 @@
 from typing import Iterable, List, Optional
 
-from service.tempimpl.request.request_reader import read_request
+from core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
 from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
 from web3_reverse_proxy.core.rpc.cache.responsecacheservice import ResponseCacheService
@@ -40,11 +40,8 @@ class RPCProxyRequestManager:
         assert len(self.requests) == 0 and len(self.responses) == 0 and len(self.errors) == 0
 
         for cs in client_sockets:
-            # print("PR")
-            req, err = read_request(cs)
-            # req, err = self.request_reader.read_request(cs, RPCRequest())
-            # print("POR")
-            # print(req)
+            req, err = self.request_reader.read_request(cs, RPCRequest())
+
             if req is not None:
                 self.requests[cs] = req
             else:
