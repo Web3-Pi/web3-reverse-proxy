@@ -1,56 +1,5 @@
 from dataclasses import dataclass
 
-from httptools import HttpRequestParser
-
-no_messages = 0
-
-
-class ParserProto:
-
-    def on_message_begin(self):
-        pass
-        # print("On Mesg Begin")
-
-    def on_url(self, url: bytes):
-        print(f"On URL {url}")
-
-    def on_header(self, name: bytes, value: bytes):
-        pass
-        # print(f"On Header {name}: {value}")
-
-    def on_headers_complete(self):
-        pass
-        # print(f"On Headers complete")
-
-    def on_body(self, body: bytes):
-        pass
-        # print(f"On Body {body}")
-
-    def on_message_complete(self):
-        global no_messages
-
-        no_messages += 1
-
-        if no_messages % 500 == 0:
-            print()
-            print(f"Intermediary parsed {no_messages} messages")
-            print()
-
-        pass
-        # print(f"On Message Complete")
-
-    def on_chunk_header(self):
-        pass
-        # print(f"On Chunk Header")
-
-    def on_chunk_complete(self):
-        pass
-        # print(f"On Chunk Complete")
-
-    def on_status(self, status: bytes):
-        pass
-        # print(f"On Status {status}")
-
 
 @dataclass
 class RPCRequest:
