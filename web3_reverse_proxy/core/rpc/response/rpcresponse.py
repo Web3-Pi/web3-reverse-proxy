@@ -1,17 +1,14 @@
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Tuple, Optional
 
 
 # FIXME: this class requires implementation from scratch
 class RPCResponse:
     # FIXME: parse response headers to correctly receive the whole response
     START_OF_TRANSMISSION = b'HTTP'
-    END_OF_GZIP_TRANSMISSION_WITH_LEN_HEADER = b'\x00\x00'
     END_OF_CHUNKED_TRANSMISSION = b'0\r\n\r\n'
-    END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER = b'}\n'
-    END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER_ERROR = b'}}'
 
     HEAD_SEPARATOR = b"\r\n\r\n"
     CRLF_SEPARATOR = b"\r\n"
@@ -19,10 +16,10 @@ class RPCResponse:
 
     raw: bytearray
     request: RPCRequest
-    status_code: int | None = None
-    status: str | None = None
-    protocol: str | None = None
-    headers: Dict[str, str] | None = None
+    status_code: Optional[int] = None
+    status: Optional[str] = None
+    protocol: Optional[str] = None
+    headers: Optional[Dict[str, str]] = None
     content: Any = ""
 
     def __init__(self, data: bytearray, request: RPCRequest):
@@ -39,6 +36,10 @@ class RPCResponse:
     def compressed(self) -> bool:
         return self._is_compressed(self.headers)
 
+    @property
+    def is_complete(self) -> bool:
+        return type(self.content) is dict or self._verify_completion(self.content, self.headers)
+
     @staticmethod
     def _is_compressed(headers: Dict[str, str]) -> bool:
         return headers is not None and headers.get("Content-Encoding") == "gzip"
@@ -46,6 +47,13 @@ class RPCResponse:
     @staticmethod
     def _is_chunked(headers: Dict[str, str]) -> bool:
         return headers is None or headers.get("Transfer-Encoding") == "chunked"
+
+    @classmethod
+    def _separate_head_from_body(cls, raw_data: bytearray) -> Tuple[Optional[bytearray], bytearray]:
+        if not raw_data.startswith(cls.START_OF_TRANSMISSION):
+            return None, raw_data
+        head, _, body = raw_data.partition(cls.HEAD_SEPARATOR)
+        return head, body
 
     @classmethod
     def _parse_headers(cls, headers_data: bytearray) -> Dict[str, str]:
@@ -64,39 +72,48 @@ class RPCResponse:
         return self._is_chunked(self.get_headers(raw_response))
 
     @classmethod
-    def get_headers(cls, raw_data: bytearray) -> Dict[str, str] | None:
-        if not raw_data.startswith(cls.START_OF_TRANSMISSION):
+    def get_headers(cls, raw_data: bytearray) -> Optional[Dict[str, str]]:
+        head, _ = cls._separate_head_from_body(raw_data)
+        if head is None:
             return None
-        head, _, _ = raw_data.partition(cls.HEAD_SEPARATOR)
         return cls._parse_headers(head.partition(cls.CRLF_SEPARATOR)[2])
 
     @classmethod
-    def _verify_completion(cls, raw_data: bytearray, headers: Dict[str, str] | None) -> bool:
+    def is_complete_raw_response(cls, raw_data: bytearray) -> bool:
+        head, body = cls._separate_head_from_body(raw_data)
+        headers = cls._parse_headers(head.partition(cls.CRLF_SEPARATOR)[2]) \
+            if head is not None \
+            else None
+        return cls._verify_completion(body, headers)
+
+    @classmethod
+    def _verify_completion(cls, body: bytearray, headers: Optional[Dict[str, str]]) -> bool:
         if cls._is_chunked(headers):
-            return raw_data.endswith(cls.END_OF_CHUNKED_TRANSMISSION)
-        # TODO: Gzip might require content length check
-        if cls._is_compressed(headers):
-            return raw_data.endswith(cls.END_OF_GZIP_TRANSMISSION_WITH_LEN_HEADER)
-        return raw_data.endswith(cls.END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER) or \
-            raw_data.endswith(cls.END_OF_REGULAR_TRANSMISSION_WITH_LEN_HEADER_ERROR)
+            return body.endswith(cls.END_OF_CHUNKED_TRANSMISSION)
+        assert headers is not None
+        content_length = headers.get("Content-Length", 0)
+        return len(body) == int(content_length)
+
+    def _process_content(self, body: bytearray) -> None:
+        if self.compressed:
+            self.content = body
+        else:
+            self.content = body.decode(self.RAW_ENCODING)
+            if len(self.content) > 0 and not self.chunked and self._verify_completion(body, self.headers):
+                self.content = json.loads(self.content)
 
     def _parse_response(self, raw_data: bytearray) -> None:
-        head, _, body = raw_data.partition(self.HEAD_SEPARATOR)
+        assert raw_data is not None
+        head, body = self._separate_head_from_body(raw_data)
         status_line, _, headers = head.partition(self.CRLF_SEPARATOR)
         protocol, _, status = status_line.partition(b" ")
         self.status_code = int(status[:3])
         self.status = status[4:].decode(self.RAW_ENCODING)
         self.protocol = protocol.decode(self.RAW_ENCODING)
         self.headers = self._parse_headers(headers)
-        if self.compressed:
-            self.content = body
-        else:
-            self.content = body.decode(self.RAW_ENCODING)
-            if not self.chunked and self._verify_completion(raw_data, self.headers):
-                self.content = json.loads(self.content)
+        self._process_content(body)
 
-    @classmethod
-    def is_complete_raw_response(cls, raw_data: bytearray) -> bool:
-        headers = cls.get_headers(raw_data)
-        return cls._verify_completion(raw_data, headers)
-
+    def append(self, raw_data: bytearray):
+        self.raw += raw_data
+        _, body = self._separate_head_from_body(self.raw)
+        self._process_content(body)
