@@ -3,7 +3,7 @@ from typing import Callable, Tuple
 
 from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
 from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
-from web3_reverse_proxy.config.conf import DEFAULT_RECV_BUF_SIZE
+from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.utils.logger import get_logger
 
 
@@ -30,7 +30,7 @@ class ResponseReceiverGeth(ResponseReceiver):
         chunked = False
 
         chunked = False
-        buf_size = DEFAULT_RECV_BUF_SIZE
+        buf_size = Config.DEFAULT_RECV_BUF_SIZE
 
         self._logger.debug("Loop starting")
         while not response_received:

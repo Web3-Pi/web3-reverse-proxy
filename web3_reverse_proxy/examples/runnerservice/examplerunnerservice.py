@@ -2,7 +2,7 @@ from contextlib import redirect_stdout
 
 from io import StringIO
 
-from web3_reverse_proxy.config.conf import SERVICE_NAME, SERVICE_VER, PROXY_LISTEN_PORT, ADMIN_LISTEN_PORT
+from web3_reverse_proxy.config.conf import Config
 
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
 
@@ -27,12 +27,12 @@ class ExampleRunnerService:
 
     @classmethod
     def __print_pre_init_info(cls):
-        print(f"Starting {SERVICE_NAME}, version {SERVICE_VER} - EXAMPLE MODE (pickle DB is not active)")
+        print(f"Starting {Config.SERVICE_NAME}, version {Config.SERVICE_VER} - EXAMPLE MODE (pickle DB is not active)")
 
     @classmethod
     def _init_test_accounts(cls, admin):
         # FIXME: default users added for testing purposes
-        if SERVICE_VER == "0.0.1":
+        if Config.SERVICE_VER == "0.0.1":
             if not admin.is_user_registered("aaa"):
                 admin.register_user_flat("aaa", 1000000, 15 * 1024 ** 3, 0)
 
@@ -43,11 +43,15 @@ class ExampleRunnerService:
                 admin.register_user_flat("ccc", 1000000, 1 * 1024 ** 3, 2)
 
     def run_forever(self, handler: EndpointsHandler):
-        upnp_service = UPnPServiceProvider.create_basic_upnp_service(PROXY_LISTEN_PORT, ADMIN_LISTEN_PORT)
+        upnp_service = UPnPServiceProvider.create_basic_upnp_service(Config.PROXY_LISTEN_PORT, Config.ADMIN_LISTEN_PORT)
         upnp_service.try_init_upnp()
 
-        admin_thread = ServiceComponentsProvider.create_admin_http_server_thread(self.state_manager, ADMIN_LISTEN_PORT)
-        proxy_server = ServiceComponentsProvider.create_web3_rpc_proxy(self.state_manager, handler, PROXY_LISTEN_PORT)
+        admin_thread = ServiceComponentsProvider.create_admin_http_server_thread(
+            self.state_manager, Config.ADMIN_LISTEN_PORT
+        )
+        proxy_server = ServiceComponentsProvider.create_web3_rpc_proxy(
+            self.state_manager, handler, Config.PROXY_LISTEN_PORT
+        )
 
         admin_thread.start()
         proxy_server.run_forever()

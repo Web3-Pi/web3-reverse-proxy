@@ -2,7 +2,7 @@ import os
 import pickle
 from io import StringIO
 
-from web3_reverse_proxy.config.conf import STATE_STORAGE_FILE, USE_PICKLE_DB
+from web3_reverse_proxy.config.conf import Config
 
 from web3_reverse_proxy.state.statemanager import SampleStateManager
 
@@ -14,8 +14,8 @@ class StateManagerProvider:
 
     @classmethod
     def create_state_manager(cls, console_buffer: StringIO,
-                             skip_persistent_db=False, db_fn=STATE_STORAGE_FILE) -> SampleStateManager:
-        if os.path.exists(db_fn) and USE_PICKLE_DB and not skip_persistent_db:
+                             skip_persistent_db=False, db_fn=Config.STATE_STORAGE_FILE) -> SampleStateManager:
+        if os.path.exists(db_fn) and Config.USE_PICKLE_DB and not skip_persistent_db:
             with open(db_fn, 'rb') as f:
                 print(f"Loading State Manager from basic pickle DB: {db_fn}")
                 res = pickle.load(f)
@@ -28,8 +28,10 @@ class StateManagerProvider:
         return res
 
     @classmethod
-    def close_state_manager(cls, ssm: SampleStateManager, skip_persistent_db=False, db_fn=STATE_STORAGE_FILE) -> None:
-        if USE_PICKLE_DB and not skip_persistent_db:
+    def close_state_manager(
+            cls, ssm: SampleStateManager, skip_persistent_db=False, db_fn=Config.STATE_STORAGE_FILE
+    ) -> None:
+        if Config.USE_PICKLE_DB and not skip_persistent_db:
             if not os.path.exists(db_fn):
                 os.makedirs(os.path.dirname(db_fn), exist_ok=True)
 

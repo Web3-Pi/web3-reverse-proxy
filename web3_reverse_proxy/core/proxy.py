@@ -1,4 +1,4 @@
-from web3_reverse_proxy.config.conf import PROXY_LISTEN_ADDRESS, PROXY_NAME, PROXY_VER, BLOCKING_ACCEPT_TIMEOUT
+from web3_reverse_proxy.config.conf import Config
 
 from web3_reverse_proxy.core.inbound.server import InboundServer
 from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
@@ -28,7 +28,7 @@ class Web3RPCProxy:
 
         self.__print_pre_init_info(request_reader, endpoints_handler)
 
-        self.inbound_srv = InboundServer(proxy_listen_port, BLOCKING_ACCEPT_TIMEOUT)
+        self.inbound_srv = InboundServer(proxy_listen_port, Config.BLOCKING_ACCEPT_TIMEOUT)
         self.request_manager = RPCProxyRequestManager(
             request_reader,
             endpoints_handler,
@@ -43,7 +43,7 @@ class Web3RPCProxy:
     @classmethod
     def __print_pre_init_info(cls, rr: RequestReaderMiddleware, eh: EndpointsHandler) -> None:
 
-        print(f'Starting {PROXY_NAME}, version {PROXY_VER}')
+        print(f'Starting {Config.PROXY_NAME}, version {Config.PROXY_VER}')
         print(f'Provided request middleware chain: {rr}')
 
         endpoints = list(eh.get_endpoints())
@@ -55,7 +55,7 @@ class Web3RPCProxy:
 
     @classmethod
     def __print_post_init_info(cls, proxy_listen_port: int) -> None:
-        print("Proxy initialized and listening on {}".format(f"{PROXY_LISTEN_ADDRESS}:{proxy_listen_port}"))
+        print("Proxy initialized and listening on {}".format(f"{Config.PROXY_LISTEN_ADDRESS}:{proxy_listen_port}"))
 
     def main_loop(self) -> None:
         while True:

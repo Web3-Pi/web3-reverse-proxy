@@ -2,7 +2,7 @@ from typing import List, Iterable, Set
 
 import select
 
-from web3_reverse_proxy.config.conf import QOS_BASE_FREQUENCY, MAX_CONCURRENT_CONNECTIONS, MAX_SATURATED_ITERATIONS_LISTEN_PARAM
+from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.core.utilhttp.errors import ErrorResponses
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 from web3_reverse_proxy.core.sockets.serversocket import ServerSocket
@@ -12,8 +12,8 @@ class InboundServer:
 
     def __init__(self, listen_port: int,
                  blocking_accept_timeout: int,
-                 max_concurrent_conn: int = MAX_CONCURRENT_CONNECTIONS,
-                 qos_frequency: float = QOS_BASE_FREQUENCY) -> None:
+                 max_concurrent_conn: int = Config.MAX_CONCURRENT_CONNECTIONS,
+                 qos_frequency: float = Config.QOS_BASE_FREQUENCY) -> None:
 
         self.accepted_connections = set()
         self.active_connections = set()
@@ -60,7 +60,7 @@ class InboundServer:
                     break
 
                 next_client_s = self.server_s.accept(0.0)
-        elif self.no_saturated_iterations > MAX_SATURATED_ITERATIONS_LISTEN_PARAM:
+        elif self.no_saturated_iterations > Config.MAX_SATURATED_ITERATIONS_LISTEN_PARAM:
             # In this case - reject all pending connections
             next_client_s = self.server_s.accept(0.0)
             while next_client_s is not None:

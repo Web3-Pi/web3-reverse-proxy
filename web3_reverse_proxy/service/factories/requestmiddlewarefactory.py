@@ -1,4 +1,4 @@
-from web3_reverse_proxy.config.conf import JSON_RPC_REQUEST_PARSER_ENABLED
+from web3_reverse_proxy.config.conf import Config
 
 from web3_reverse_proxy.interfaces.permissions import ClientPermissions, CallPermissions
 
@@ -29,7 +29,7 @@ class RPCRequestMiddlewareFactory:
         md.append(ParseHeadersRequestReader)
         md.append(ContentRequestReader)
         # TODO: Remove, once JSON parser is mandatory or consider more universal approach
-        if JSON_RPC_REQUEST_PARSER_ENABLED:
+        if Config.JSON_RPC_REQUEST_PARSER_ENABLED:
             md.append(AcceptJSONRPCContentReader)
         md.append(AcceptMethodRequestReader, call),
 

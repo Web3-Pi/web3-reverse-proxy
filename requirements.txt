@@ -1,5 +1,6 @@
 urllib3~=2.1.0
 WhatIsMyIP~=2022.7.10
 upnpclient~=1.0.3
+python-dotenv~=1.0.1
 pytest~=8.1.1
 requests~=2.31.0

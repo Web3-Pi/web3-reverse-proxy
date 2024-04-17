@@ -5,8 +5,7 @@ import select
 import ssl
 import logging
 
-from web3_reverse_proxy.config.conf import LISTEN_BACKLOG_PARAM, PROXY_LISTEN_ADDRESS, SSL_ENABLED, \
-    SSL_CERT_FILE, SSL_KEY_FILE
+from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 
 
@@ -35,16 +34,16 @@ class ServerSocket:
     @classmethod
     def create(cls,
                listen_port: int,
-               listen_backlog_param: int = LISTEN_BACKLOG_PARAM,
+               listen_backlog_param: int = Config.LISTEN_BACKLOG_PARAM,
                timeout=None) -> ServerSocket:
 
         s_srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s_srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s_srv.bind((PROXY_LISTEN_ADDRESS, listen_port))
+        s_srv.bind((Config.PROXY_LISTEN_ADDRESS, listen_port))
         s_srv.listen(listen_backlog_param)
-        if SSL_ENABLED:
+        if Config.SSL_ENABLED:
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-            context.load_cert_chain(SSL_CERT_FILE, SSL_KEY_FILE)
+            context.load_cert_chain(Config.SSL_CERT_FILE, Config.SSL_KEY_FILE)
             s_srv = context.wrap_socket(s_srv, server_side=True)
 
         if timeout:

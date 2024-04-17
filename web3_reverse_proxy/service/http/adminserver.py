@@ -8,7 +8,7 @@ import threading
 
 from http.server import BaseHTTPRequestHandler
 
-from web3_reverse_proxy.config.conf import ADMIN_HTML_FILE
+from web3_reverse_proxy.config.conf import Config
 
 from web3_reverse_proxy.service.admin.serviceadmin import RPCServiceAdmin
 
@@ -22,11 +22,11 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
         assert 'Host' in self.headers
         host = self.headers['Host']
 
-        with open(ADMIN_HTML_FILE, 'rb') as f:
+        with open(Config.ADMIN_HTML_FILE, 'rb') as f:
             # ip = "127.0.0.1"
             # port = self.server.server_address[1]
             #
-            # if PUBLIC_SERVICE:
+            # if Config.PUBLIC_SERVICE:
             #     ip = my_public_ip()
             raw_page = f.read().decode("utf-8")
             host = f'return "http://{host}/{self.server.auth_token}";'

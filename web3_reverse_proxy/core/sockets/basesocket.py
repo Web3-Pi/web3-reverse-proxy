@@ -6,7 +6,7 @@ import ssl
 
 import select
 
-from web3_reverse_proxy.config.conf import DEFAULT_RECV_BUF_SIZE
+from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.utils.logger import logger
 
 
@@ -20,7 +20,7 @@ class BaseSocket:
     def send_all(self, data):
         return self.socket.sendall(data)
 
-    def recv(self, buf_size=DEFAULT_RECV_BUF_SIZE):
+    def recv(self, buf_size=Config.DEFAULT_RECV_BUF_SIZE):
         return self.socket.recv(buf_size)
 
     def get_peer_name(self):

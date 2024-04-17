@@ -1,7 +1,7 @@
 from contextlib import redirect_stdout
 from typing import Callable, List, Tuple
 
-from web3_reverse_proxy.config.conf import ETH_ENDPOINTS
+from web3_reverse_proxy.config.conf import Config
 
 from web3_reverse_proxy.service.factories.endpointshandlermiddlewarefactory import RPCEndpointsHandlerMiddlewareFactory
 
@@ -10,8 +10,10 @@ from web3_reverse_proxy.examples.runnerservice.examplerunnerservice import Examp
 from web3_reverse_proxy.service.ioredirect.stdoutcapture import StdOutCaptureStreamTee
 
 
-ETH0_BACKEND_NAME, ETH0_BACKEND_ADDR = ETH_ENDPOINTS[0]
-INFURA_NAME, INFURA_ADDR = ETH_ENDPOINTS[2]
+ETH0_BACKEND_NAME = Config.ETH_ENDPOINTS[0]["name"]
+ETH0_BACKEND_ADDR = Config.ETH_ENDPOINTS[0]["url"]
+INFURA_NAME = Config.ETH_ENDPOINTS[2]["name"]
+INFURA_ADDR = Config.ETH_ENDPOINTS[2]["url"]
 
 
 class ExampleRunner:

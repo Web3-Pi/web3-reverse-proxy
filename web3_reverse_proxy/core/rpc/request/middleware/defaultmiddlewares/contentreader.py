@@ -1,5 +1,4 @@
-from web3_reverse_proxy.config.conf import JSON_RPC_REQUEST_PARSER_ENABLED
-
+from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
 from web3_reverse_proxy.core.utilhttp.errors import ErrorResponses
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
@@ -32,7 +31,7 @@ class ContentRequestReader(RequestReaderMiddleware):
 
         # TODO: Remove, once JSON parser is mandatory
         # the method needs to be read to keep track
-        if not JSON_RPC_REQUEST_PARSER_ENABLED:
+        if not Config.JSON_RPC_REQUEST_PARSER_ENABLED:
             method = None
             id = None
             for tok in raw_content.split(b","):
