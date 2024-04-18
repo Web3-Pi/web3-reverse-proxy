@@ -14,9 +14,9 @@ class RPCResponseTests(TestCase):
                 "status": "OK",
                 "protocol": "HTTP/1.1",
                 "headers": {
-                    "Content-Type": "application/json",
-                    "Date": "Wed, 03 Apr 2024 22:41:40 GMT",
-                    "Content-Length": "38",
+                    "content-type": "application/json",
+                    "date": "Wed, 03 Apr 2024 22:41:40 GMT",
+                    "content-length": "38",
                 },
                 "content": {"jsonrpc":"2.0","id":0,"result":"1"}
             },
@@ -26,10 +26,10 @@ class RPCResponseTests(TestCase):
                 "status": "OK",
                 "protocol": "HTTP/1.1",
                 "headers": {
-                    "Content-Encoding": "gzip",
-                    "Content-Type": "application/json",
-                    "Date": "Wed, 03 Apr 2024 22:45:33 GMT",
-                    "Content-Length": "62",
+                    "content-encoding": "gzip",
+                    "content-type": "application/json",
+                    "date": "Wed, 03 Apr 2024 22:45:33 GMT",
+                    "content-length": "62",
                 },
                 "content": b"\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\xaaV\xca*\xce\xcf+*HV\xb2R2\xd23P\xd2Q\xcaLQ\xb22\xd0Q*J-.\xcd)Q\xb2R2T\xaa\xe5\x02\x04\x00\x00\xff\xff\xbaeLj&\x00\x00\x00"
             },
@@ -39,9 +39,9 @@ class RPCResponseTests(TestCase):
                 "status": "OK",
                 "protocol": "HTTP/1.1",
                 "headers": {
-                    "Transfer-Encoding": "chunked",
-                    "Content-Type": "application/json",
-                    "Date": "Wed, 03 Apr 2024 22:45:33 GMT",
+                    "transfer-encoding": "chunked",
+                    "content-type": "application/json",
+                    "date": "Wed, 03 Apr 2024 22:45:33 GMT",
                 },
                 "content": '5\r\n{"Hel\r\nC\r\nlo":"World"}\r\n'
             },
@@ -51,9 +51,9 @@ class RPCResponseTests(TestCase):
                 "status": "OK",
                 "protocol": "HTTP/1.1",
                 "headers": {
-                    "Transfer-Encoding": "chunked",
-                    "Content-Type": "application/json",
-                    "Date": "Wed, 03 Apr 2024 22:45:33 GMT",
+                    "transfer-encoding": "chunked",
+                    "content-type": "application/json",
+                    "date": "Wed, 03 Apr 2024 22:45:33 GMT",
                 },
                 "content": '5\r\n{"Hel\r\nC\r\nlo":"World"}\r\n0\r\n\r\n'
             },
@@ -63,9 +63,9 @@ class RPCResponseTests(TestCase):
                 "status": "OK",
                 "protocol": "HTTP/1.1",
                 "headers": {
-                    "Transfer-Encoding": "chunked",
-                    "Content-Type": "application/json",
-                    "Date": "Wed, 03 Apr 2024 22:45:33 GMT",
+                    "transfer-encoding": "chunked",
+                    "content-type": "application/json",
+                    "date": "Wed, 03 Apr 2024 22:45:33 GMT",
                 },
                 "content": ""
             },
@@ -75,9 +75,9 @@ class RPCResponseTests(TestCase):
                 "status": "OK",
                 "protocol": "HTTP/1.1",
                 "headers": {
-                    "Transfer-Encoding": "chunked",
-                    "Content-Type": "application/json",
-                    "Date": "Wed, 03 Apr 2024 22:45:33 GMT",
+                    "transfer-encoding": "chunked",
+                    "content-type": "application/json",
+                    "date": "Wed, 03 Apr 2024 22:45:33 GMT",
                 },
                 "content": ""
             },
@@ -95,7 +95,7 @@ class RPCResponseTests(TestCase):
                 "status": "Internal Server Error",
                 "protocol": "HTTP/1.1",
                 "headers": {
-                    "Date": "Wed, 03 Apr 2024 22:41:40 GMT",
+                    "date": "Wed, 03 Apr 2024 22:41:40 GMT",
                 },
                 "content": ""
             },
@@ -105,12 +105,24 @@ class RPCResponseTests(TestCase):
                 "status": "OK",
                 "protocol": "HTTP/1.1",
                 "headers": {
-                    "Content-Type": "application/json",
-                    "Date": "Wed, 03 Apr 2024 22:41:40 GMT",
-                    "Content-Length": '77',
+                    "content-type": "application/json",
+                    "date": "Wed, 03 Apr 2024 22:41:40 GMT",
+                    "content-length": '77',
                 },
                 "content": {"jsonrpc":"2.0","id":0,"error":{"code": 35000, "message": "An error occurred"}}
-            }
+            },
+            "wonky_headers_response": {
+                "raw": b'HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ndATE:Wed, 03 Apr 2024 22:41:40 GMT\r\ncontent-LENGTH: 38 \r\n\r\n{"jsonrpc":"2.0","id":0,"result":"1"}\n',
+                "status_code": 200,
+                "status": "OK",
+                "protocol": "HTTP/1.1",
+                "headers": {
+                    "content-type": "application/json",
+                    "date": "Wed, 03 Apr 2024 22:41:40 GMT",
+                    "content-length": "38",
+                },
+                "content": {"jsonrpc":"2.0","id":0,"result":"1"}
+            },
         }
 
         self.request_mock = Mock(RPCRequest)
@@ -160,7 +172,7 @@ class RPCResponseTests(TestCase):
             (self.responses["normal_response"]['raw'], True),
             (self.responses["compressed_response"]['raw'], True),
             (self.responses["chunked_response_full"]['raw'], True),
-            # (self.responses["http_error_response"]['raw'], True),
+            (self.responses["http_error_response"]['raw'], True),
             (self.responses["rpc_error_response"]['raw'], True),
             (self.responses["chunked_response_header_only"]['raw'], False),
             (self.responses["chunked_response_shorter_header_only"]['raw'], False),
