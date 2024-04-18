@@ -12,7 +12,7 @@ from web3_reverse_proxy.service.rpcproxyservice import DefaultRPCProxyService
 
 def main():
     # DefaultRPCProxyService.launch_service()
-    DefaultRPCProxyService.launch_hack_mt_service(6512, "rpi5d.local", 8545, 50)
+    DefaultRPCProxyService.launch_hack_mt_service(6512, "rpi5d.local", 8545, 150)
 
 
 if __name__ == '__main__':
