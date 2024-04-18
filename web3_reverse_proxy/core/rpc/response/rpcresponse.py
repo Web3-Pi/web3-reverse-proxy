@@ -1,7 +1,7 @@
-from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
-
 import json
 from typing import Any, Dict, Tuple, Optional
+
+from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 
 
 # FIXME: this class requires implementation from scratch
@@ -42,11 +42,11 @@ class RPCResponse:
 
     @staticmethod
     def _is_compressed(headers: Dict[str, str]) -> bool:
-        return headers is not None and headers.get("Content-Encoding") == "gzip"
+        return headers is not None and "gzip" in headers.get("content-encoding", "")
 
     @staticmethod
     def _is_chunked(headers: Dict[str, str]) -> bool:
-        return headers is None or headers.get("Transfer-Encoding") == "chunked"
+        return headers is None or "chunked" in headers.get("transfer-encoding", "")
 
     @classmethod
     def _separate_head_from_body(cls, raw_data: bytearray) -> Tuple[Optional[bytearray], bytearray]:
@@ -63,8 +63,8 @@ class RPCResponse:
 
         headers = {}
         for raw_header in raw_headers_list:
-            name, value = raw_header.decode(cls.RAW_ENCODING).split(": ")
-            headers[name] = value
+            name, _, value = raw_header.decode(cls.RAW_ENCODING).partition(":")
+            headers[name.lower()] = value.strip()
         return headers
 
     @classmethod
@@ -91,7 +91,7 @@ class RPCResponse:
         if cls._is_chunked(headers):
             return body.endswith(cls.END_OF_CHUNKED_TRANSMISSION)
         assert headers is not None
-        content_length = headers.get("Content-Length", 0)
+        content_length = headers.get("content-length", 0)
         return len(body) == int(content_length)
 
     def _process_content(self, body: bytearray) -> None:

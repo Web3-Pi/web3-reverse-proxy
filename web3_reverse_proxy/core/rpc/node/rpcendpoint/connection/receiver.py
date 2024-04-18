@@ -119,7 +119,7 @@ class ResponseReceiverSSL(ResponseReceiver):
             if data in (b'\r\n', b'\n', b''):
                 break
 
-            if data.startswith(b'Content-Length:'):
+            if data.lower().startswith(b'content-length:'):
                 content_len = int(data[16:])
 
             if RPCResponse.is_chunked(response_data):
@@ -142,7 +142,7 @@ class ResponseReceiverSSL(ResponseReceiver):
             while True:
                 data = fd.readline(self.MAX_LINE_LEN + 1)
                 self._logger.debug(f"Read chunk length data: {data}")
-                chunk_len = int(data.decode("UTF-8"), 16)
+                chunk_len = int(data.decode(RPCResponse.RAW_ENCODING), 16)
                 response_data += data
 
                 data = fd.read(chunk_len + 2)  # +2 to read '/r/n'
