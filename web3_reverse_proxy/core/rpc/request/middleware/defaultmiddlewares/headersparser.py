@@ -26,14 +26,14 @@ class ParseHeadersRequestReader(RequestReaderMiddleware):
                 if data in (b'\r\n', b'\n', b''):
                     break
 
-                if not data.startswith(b"Host:"):
+                if not data.lower().startswith(b"host:"):
                     raw_headers_data += data
 
                 no_headers += 1
                 if no_headers > self.MAX_NUM_HEADERS:
                     return self.failure(ErrorResponses.bad_request_headers(req.id), req)
 
-                if data.startswith(b"Content-Length:"):
+                if data.lower().startswith(b"content-length:"):
                     content_len = int(data[16:])
 
             if content_len < 0:
