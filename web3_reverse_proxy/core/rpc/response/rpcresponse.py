@@ -60,17 +60,6 @@ class RPCResponse:
         return headers
 
     @classmethod
-    def is_chunked(self, raw_response: bytearray) -> bool:
-        return self._is_chunked(self.get_headers(raw_response))
-
-    @classmethod
-    def get_headers(cls, raw_data: bytearray) -> Dict[str, str] | None:
-        if not raw_data.startswith(cls.START_OF_TRANSMISSION):
-            return None
-        head, _, _ = raw_data.partition(cls.HEAD_SEPARATOR)
-        return cls._parse_headers(head.partition(cls.CRLF_SEPARATOR)[2])
-
-    @classmethod
     def _verify_completion(cls, raw_data: bytearray, headers: Dict[str, str] | None) -> bool:
         if cls._is_chunked(headers):
             return raw_data.endswith(cls.END_OF_CHUNKED_TRANSMISSION)
@@ -96,7 +85,13 @@ class RPCResponse:
                 self.content = json.loads(self.content)
 
     @classmethod
+    def get_headers(cls, raw_data: bytearray) -> Dict[str, str] | None:
+        if not raw_data.startswith(cls.START_OF_TRANSMISSION):
+            return None
+        head, _, _ = raw_data.partition(cls.HEAD_SEPARATOR)
+        return cls._parse_headers(head.partition(cls.CRLF_SEPARATOR)[2])
+
+    @classmethod
     def is_complete_raw_response(cls, raw_data: bytearray) -> bool:
         headers = cls.get_headers(raw_data)
         return cls._verify_completion(raw_data, headers)
-
