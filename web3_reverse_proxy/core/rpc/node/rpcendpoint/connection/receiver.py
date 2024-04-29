@@ -61,35 +61,3 @@ class ResponseReceiverGeth(ResponseReceiver):
 
     def update_socket(self, sock: BaseSocket) -> None:
         self.socket = sock
-
-
-class ResponseReceiverSSL(ResponseReceiver):
-    _logger = get_logger("ResponseReceiverSSL")
-
-    def __init__(self, sock: BaseSocket) -> None:
-        self.rfile = sock.socket.makefile('rb', -1)
-
-    def recv_response(self, callback: Callable) -> None:
-        fd = self.rfile
-        buf_size = Config.DEFAULT_RECV_BUF_SIZE
-
-        response_listener = HttpResponseParserListener()
-        response_parser = HttpResponseParser(response_listener)
-
-        self._logger.debug("Loop starting")
-        while response_listener.need_more_data:
-            assert fd.is_ready_read()
-            data = fd.recv(buf_size)
-            if not data:
-                raise IOError
-            response_parser.feed_data(data)
-            self._logger.debug(f"Raw response -> {data}")
-            callback(data)
-            if response_listener.chunk_completed and response_listener.need_more_data:  # chunked, expect a new response
-                response_listener = HttpResponseParserListener()
-                response_parser = HttpResponseParser(response_listener)
-
-        self._logger.debug("Response completed")
-
-    def update_socket(self, sock: BaseSocket) -> None:
-        self.rfile = sock.socket.makefile('rb', -1)

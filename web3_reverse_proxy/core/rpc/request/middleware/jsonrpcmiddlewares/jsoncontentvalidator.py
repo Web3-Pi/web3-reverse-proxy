@@ -56,7 +56,7 @@ class AcceptJSONRPCContentReader(RequestReaderMiddleware):
                 return self.failure(ErrorResponses.bad_request_web3(error.code, error.message, req.id), req)
             except:
                 self._logger.error(f"Internal error while parsing request {req}")
-                return self.failure(ErrorResponses.internal_server_error(), req)
+                return self.failure(ErrorResponses.http_internal_server_error(), req)
 
             req.method = json_content["method"]
             req.id = json_content["id"]
