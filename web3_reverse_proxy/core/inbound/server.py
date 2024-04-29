@@ -136,5 +136,5 @@ class InboundServer:
 
     def shutdown(self) -> None:
         # FIXME: unreliable, "best effort" error handling - 500 Internal Server Error
-        self._close_with_error_responses(self.active_connections, ErrorResponses.internal_server_error())
+        self._close_with_error_responses(self.active_connections, ErrorResponses.http_internal_server_error())
         self.server_s.close()

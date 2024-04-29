@@ -10,7 +10,7 @@ from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
 from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
 
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.receiver import ResponseReceiver, ResponseReceiverSSL, ResponseReceiverGeth
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.receiver import ResponseReceiver, ResponseReceiverGeth
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.sender import RequestSender
 
 from web3_reverse_proxy.utils.logger import get_logger
@@ -74,10 +74,8 @@ class EndpointConnection:
         req_sender = RequestSender(sock, conn_descr.host, conn_descr.auth_key)
 
         is_ssl = conn_descr.is_ssl
-        if is_ssl:
-            res_receiver = ResponseReceiverSSL(sock)
-        else:
-            res_receiver = ResponseReceiverGeth(sock)
+
+        res_receiver = ResponseReceiverGeth(sock)
 
         stats = EndpointConnectionStats()
 
