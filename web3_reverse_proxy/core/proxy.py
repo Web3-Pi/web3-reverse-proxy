@@ -25,6 +25,7 @@ class Web3RPCProxy:
     def __init__(
             self,
             proxy_listen_port: int,
+            num_proxy_workers: int,
             middlewares: RequestMiddlewareDescr,
             endpoints_handler: EndpointsHandler,
             connection_pool: EndpointConnectionPool,
@@ -49,7 +50,7 @@ class Web3RPCProxy:
 
         self.stats = RPCProxyStats()
 
-        self.num_workers = 100
+        self.num_workers = num_proxy_workers
 
     @classmethod
     def __print_pre_init_info(cls, rr: RequestReaderMiddleware, eh: EndpointsHandler) -> None:

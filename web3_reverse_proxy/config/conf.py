@@ -26,6 +26,7 @@ class AppConfig:
     # server socket conf
     PROXY_LISTEN_ADDRESS: str = "0.0.0.0"
     PROXY_LISTEN_PORT: int = 6512
+    NUM_PROXY_WORKERS: int = 150
     MAX_CONCURRENT_CONNECTIONS: int = 21
     MAX_SATURATED_ITERATIONS_LISTEN_PARAM: int = 2
     SSL_ENABLED: bool = False

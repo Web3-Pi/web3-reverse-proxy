@@ -74,14 +74,15 @@ class ServiceComponentsProvider:
         endpoints_handler: EndpointsHandler,
         connection_pool: EndpointConnectionPool,
         cache_service: ResponseCacheService,
-        proxy_port
+        proxy_port,
+        num_proxy_workers: int
     ) -> Web3RPCProxy:
         # Create default components
         middlewares = cls.configure_default_reader_middlewares(ssm)
         response_handler = cls.create_default_response_handler()
 
         # Create proxy (do not launch it yet)
-        proxy = Web3RPCProxy(proxy_port, middlewares, endpoints_handler, connection_pool, response_handler, cache_service)
+        proxy = Web3RPCProxy(proxy_port, num_proxy_workers, middlewares, endpoints_handler, connection_pool, response_handler, cache_service)
 
         # Pass proxy stats to StateManager, so that it may be queried
         ssm.register_proxy_stats(proxy.stats)
@@ -92,13 +93,13 @@ class ServiceComponentsProvider:
         return proxy
 
     @classmethod
-    def create_default_web3_rpc_proxy(cls, ssm: SampleStateManager, proxy_listen_port) -> Web3RPCProxy:
+    def create_default_web3_rpc_proxy(cls, ssm: SampleStateManager, proxy_listen_port, num_proxy_workers: int) -> Web3RPCProxy:
         # Create default components
         endpoint_handler = cls.create_default_multi_threaded_endpoint_handler(Config.ETH_ENDPOINTS, ssm)
         connection_pool = cls.create_default_connection_pool(Config.ETH_ENDPOINTS, ssm)
         cache_service = StaticRequestResponseCacheService(Config.CACHE_EXPIRY_MS) if Config.CACHE_ENABLED else None
 
-        return cls.create_web3_rpc_proxy(ssm, endpoint_handler, connection_pool, cache_service, proxy_listen_port)
+        return cls.create_web3_rpc_proxy(ssm, endpoint_handler, connection_pool, cache_service, proxy_listen_port, num_proxy_workers)
 
     @classmethod
     def create_admin_http_server_thread(cls, state_manager: SampleStateManager, listen_port):

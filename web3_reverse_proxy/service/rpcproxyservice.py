@@ -39,12 +39,12 @@ class DefaultRPCProxyService:
                 admin.register_user_flat("ccc", 1000000, 1 * 1024 ** 3, 2)
                 print(f"  Adding user: ccc, free calls: 1000000, free bytes: {1 * 1024 ** 3:11}, priority: 2")
 
-    def run_forever(self, proxy_port=Config.PROXY_LISTEN_PORT, admin_port=Config.ADMIN_LISTEN_PORT):
+    def run_forever(self, proxy_port=Config.PROXY_LISTEN_PORT, admin_port=Config.ADMIN_LISTEN_PORT, num_proxy_workers=Config.NUM_PROXY_WORKERS):
         upnp_service = UPnPServiceProvider.create_basic_upnp_service(proxy_port, admin_port)
         upnp_service.try_init_upnp()
 
         admin_thread = ServiceComponentsProvider.create_admin_http_server_thread(self.state_manager, admin_port)
-        proxy_server = ServiceComponentsProvider.create_default_web3_rpc_proxy(self.state_manager, proxy_port)
+        proxy_server = ServiceComponentsProvider.create_default_web3_rpc_proxy(self.state_manager, proxy_port, num_proxy_workers)
 
         admin_thread.start()
         proxy_server.run_forever()
@@ -56,7 +56,7 @@ class DefaultRPCProxyService:
         StateManagerProvider.close_state_manager(self.state_manager)
 
     @classmethod
-    def launch_service(cls, proxy_port=Config.PROXY_LISTEN_PORT, admin_port=Config.ADMIN_LISTEN_PORT):
+    def launch_service(cls, proxy_port=Config.PROXY_LISTEN_PORT, admin_port=Config.ADMIN_LISTEN_PORT, num_proxy_workers=Config.NUM_PROXY_WORKERS):
         with redirect_stdout(StdOutCaptureStreamTee()) as new_stdout:
             service = DefaultRPCProxyService(new_stdout)
-            service.run_forever(proxy_port, admin_port)
+            service.run_forever(proxy_port, admin_port, num_proxy_workers)
