@@ -1,3 +1,5 @@
+import select
+
 from web3_reverse_proxy.config.conf import Config
 
 from web3_reverse_proxy.core.inbound.server import InboundServer
@@ -65,51 +67,81 @@ class Web3RPCProxy:
 
         print('\nInitializing proxy...')
 
-    def handle_client(self, endpoint_connection_handler: ConnectionHandler, cs: ClientSocket) -> None:
-        req, err = self.request_reader.read_request(cs, RPCRequest())
+    def handle_client(self, endpoint_connection_handler: ConnectionHandler, cs: ClientSocket, client_poller: select.epoll, active_client_connections) -> None:
+        try:
+            # TODO detect closed by a client cs connection and close it by our side?
+            req, err = self.request_reader.read_request(cs, RPCRequest())  # TODO close connection if fatal error i.e. non http request
 
-        if err is not None:
-            pass  # TODO errors
-        # if self.is_cache_available:  # TODO cache
-        #     self.read_cache()
-        endpoint_req_bytes = endpoint_connection_handler.get_sender().send_request(req)  # TODO reconnect?
-        # self.stats.update(endpoint_req_bytes, res_bytes)  # TODO stats
-
-        def response_handler(res):
-            cs.send_all(res)  # TODO errors
+            if err is not None:  # TODO also check req == None?
+                # TODO send err to the client
+                del active_client_connections[cs.socket.fileno()]
+                client_poller.unregister(cs.socket.fileno())
+                cs.close()
+                return
+            # if self.is_cache_available:  # TODO cache
+            #     self.read_cache()
+            endpoint_req_bytes = endpoint_connection_handler.get_sender().send_request(req)  # TODO reconnect?
             # self.stats.update(endpoint_req_bytes, res_bytes)  # TODO stats
 
-        endpoint_connection_handler.get_receiver().recv_response(response_handler)  # TODO errors
-        # if self.is_cache_available and \  # TODO cache
-        #         self.response_cache.is_writeable(response.request) and \
-        #         self.response_cache.get(response.request.method) is None:
-        #     self.response_cache.store(response.request.method, response)
+            def response_handler(res):
+                cs.send_all(res)  # TODO errors
+                # self.stats.update(endpoint_req_bytes, res_bytes)  # TODO stats
 
-        cs.close()  # TODO keep alive management
+            endpoint_connection_handler.get_receiver().recv_response(response_handler)  # TODO errors
+            # if self.is_cache_available and \  # TODO cache
+            #         self.response_cache.is_writeable(response.request) and \
+            #         self.response_cache.get(response.request.method) is None:
+            #     self.response_cache.store(response.request.method, response)
 
-        endpoint_connection_handler.release()
+            # keep alive management
+            if req.keep_alive:
+                client_poller.modify(cs.socket, select.EPOLLIN | select.EPOLLONESHOT)  # TODO hangup? errors?
+                # cs.close()  # TODO if this is commented out, rpc-tests are 30% faster, why?
+            else:
+                del active_client_connections[cs.socket.fileno()]
+                client_poller.unregister(cs.socket.fileno())
+                cs.close()
 
-        #     # Basic bookkeeping  # TODO stats
-        #     self.stats.update(incoming_connections_num, processed_requests_num, closed_connections_num)
-        #     if self.stats.is_ready_to_update_display():
-        #         self.stats.display_rudimentary_stats()
+            endpoint_connection_handler.release()
+
+            #     # Basic bookkeeping  # TODO stats
+            #     self.stats.update(incoming_connections_num, processed_requests_num, closed_connections_num)
+            #     if self.stats.is_ready_to_update_display():
+            #         self.stats.display_rudimentary_stats()
+        except Exception as e:
+            print(f"Error while handling the client request {e}")  # TODO is this a good error handling?
+            del active_client_connections[cs.socket.fileno()]
+            client_poller.unregister(cs.socket.fileno())
+            cs.close()
 
     @classmethod
     def __print_post_init_info(cls, proxy_listen_port: int) -> None:
         print("Proxy initialized and listening on {}".format(f"{Config.PROXY_LISTEN_ADDRESS}:{proxy_listen_port}"))
 
     def main_loop(self) -> None:
-        srv_socket = self.inbound_srv.server_s
+        client_poller = select.epoll()
+        srv_socket = self.inbound_srv.server_s  # TODO async?
+        client_poller.register(srv_socket.socket, select.EPOLLIN)  # TODO EPOLLHUP? EPOLLERR? EPOLLRDHUP?
+        # TODO Implement Keep-Alive http header
+        active_client_connections = {}  # TODO close stale connections
 
         with ThreadPoolExecutor(self.num_workers) as executor:
             while True:
-                cs = None
-                while cs is None:
-                    cs = srv_socket.accept(Config.BLOCKING_ACCEPT_TIMEOUT)
-
-                executor.submit(self.handle_client, self.connection_pool.get(), cs)
+                events = client_poller.poll(Config.BLOCKING_ACCEPT_TIMEOUT)
+                for fd, flag in events:
+                    if fd == srv_socket.socket.fileno():
+                        cs = srv_socket.accept(0)  # TODO connection hang up? errors?
+                        active_client_connections[cs.socket.fileno()] = cs
+                        client_poller.register(cs.socket, select.EPOLLIN | select.EPOLLONESHOT)  # TODO hangup? errors?
+                    else:
+                        cs = active_client_connections[fd]  # TODO what if does not exist
+                        # TODO connection hang up?
+                        executor.submit(self.handle_client, self.connection_pool.get(), cs, client_poller,
+                                        active_client_connections)
 
         # TODO when close the connection pool?
+        # TODO clean up active client connections, where?
+        # TODO clients poller close, where?
 
     def cleanup(self) -> None:
         print()

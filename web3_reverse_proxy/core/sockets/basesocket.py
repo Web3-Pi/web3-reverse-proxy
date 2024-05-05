@@ -14,7 +14,7 @@ class BaseSocket:
 
     HOST_IP_MAPPING = {}
 
-    def __init__(self, _socket) -> None:
+    def __init__(self, _socket: socket.socket) -> None:
         self.socket = _socket
 
     def send_all(self, data):

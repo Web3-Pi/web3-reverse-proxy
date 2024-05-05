@@ -19,7 +19,11 @@ class HttpRequestParserListener:
         self.req.user_api_key = str(url[1:], 'utf-8')  # TODO is it utf-8? TODO do we need str?
 
     def on_header(self, name: bytes, value: bytes):
-        if name.lower() != b'host':
+        if name.lower() == b'host':
+            pass
+        elif name.lower() == b'connection':
+            self.req.keep_alive = value != b'close'  # TODO is value already trimmed? TODO value is case sensitive?
+        else:
             self.req.headers = self.req.headers + name + b': ' + value + b'\r\n'
 
     def on_body(self, body: bytes):
