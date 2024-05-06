@@ -16,6 +16,7 @@ from web3_reverse_proxy.core.rpc.request.middleware.requestmiddlewaredescr impor
 from web3_reverse_proxy.core.rpc.rpcrequestmanager import RPCProxyRequestManager
 from web3_reverse_proxy.core.rpc.cache.responsecacheservice import ResponseCacheService
 from web3_reverse_proxy.core.rpc.node.endpoint_connection_pool import EndpointConnectionPool
+from web3_reverse_proxy.core.rpc.node.client_socket_pool import ClientSocketPool
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connection_handler import ConnectionHandler
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 
@@ -67,14 +68,14 @@ class Web3RPCProxy:
 
         print('\nInitializing proxy...')
 
-    def handle_client(self, endpoint_connection_handler: ConnectionHandler, cs: ClientSocket, client_poller: select.epoll, active_client_connections) -> None:
+    def handle_client(self, endpoint_connection_handler: ConnectionHandler, cs: ClientSocket, client_poller: select.epoll, active_client_connections: ClientSocketPool) -> None:
         try:
             # TODO detect closed by a client cs connection and close it by our side?
             req, err = self.request_reader.read_request(cs, RPCRequest())  # TODO close connection if fatal error i.e. non http request
 
             if err is not None:  # TODO also check req == None?
                 # TODO send err to the client
-                del active_client_connections[cs.socket.fileno()]
+                active_client_connections.del_cs_in_use(cs.socket.fileno())
                 client_poller.unregister(cs.socket.fileno())
                 cs.close()
                 return
@@ -95,10 +96,11 @@ class Web3RPCProxy:
 
             # keep alive management
             if req.keep_alive:
+                active_client_connections.set_cs_pending(cs.socket.fileno())
                 client_poller.modify(cs.socket, select.EPOLLIN | select.EPOLLONESHOT)  # TODO hangup? errors?
                 # cs.close()  # TODO if this is commented out, rpc-tests are 30% faster, why?
             else:
-                del active_client_connections[cs.socket.fileno()]
+                active_client_connections.del_cs_in_use(cs.socket.fileno())
                 client_poller.unregister(cs.socket.fileno())
                 cs.close()
 
@@ -110,7 +112,7 @@ class Web3RPCProxy:
             #         self.stats.display_rudimentary_stats()
         except Exception as e:
             print(f"Error while handling the client request {e}")  # TODO is this a good error handling?
-            del active_client_connections[cs.socket.fileno()]
+            active_client_connections.del_cs_in_use(cs.socket.fileno())
             client_poller.unregister(cs.socket.fileno())
             cs.close()
 
@@ -123,7 +125,7 @@ class Web3RPCProxy:
         srv_socket = self.inbound_srv.server_s  # TODO async?
         client_poller.register(srv_socket.socket, select.EPOLLIN)  # TODO EPOLLHUP? EPOLLERR? EPOLLRDHUP?
         # TODO Implement Keep-Alive http header
-        active_client_connections = {}  # TODO close stale connections
+        active_client_connections = ClientSocketPool()  # TODO close stale connections
 
         with ThreadPoolExecutor(self.num_workers) as executor:
             while True:
@@ -131,10 +133,10 @@ class Web3RPCProxy:
                 for fd, flag in events:
                     if fd == srv_socket.socket.fileno():
                         cs = srv_socket.accept(0)  # TODO connection hang up? errors?
-                        active_client_connections[cs.socket.fileno()] = cs
+                        active_client_connections.add_cs_pending(cs)
                         client_poller.register(cs.socket, select.EPOLLIN | select.EPOLLONESHOT)  # TODO hangup? errors?
                     else:
-                        cs = active_client_connections[fd]  # TODO what if does not exist
+                        cs = active_client_connections.get_cs_and_set_in_use(fd)  # TODO what if does not exist
                         # TODO connection hang up?
                         executor.submit(self.handle_client, self.connection_pool.get(), cs, client_poller,
                                         active_client_connections)
