@@ -8,7 +8,6 @@ from web3_reverse_proxy.core.rpc.node.rpcendpointhandlers.loadbalancers import s
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import EndpointConnectionDescriptor
 from web3_reverse_proxy.core.rpc.node.endpoint_connection_pool import EndpointConnectionPool
 from web3_reverse_proxy.core.rpc.request.middleware.requestmiddlewaredescr import RequestMiddlewareDescr
-from web3_reverse_proxy.core.rpc.cache.responsecacheservice import ResponseCacheService, StaticRequestResponseCacheService
 
 from web3_reverse_proxy.service.factories.endpointshandlermiddlewarefactory import RPCEndpointsHandlerMiddlewareFactory
 from web3_reverse_proxy.service.factories.requestmiddlewarefactory import RPCRequestMiddlewareFactory
@@ -73,16 +72,14 @@ class ServiceComponentsProvider:
         ssm: SampleStateManager,
         endpoints_handler: EndpointsHandler,
         connection_pool: EndpointConnectionPool,
-        cache_service: ResponseCacheService,
         proxy_port,
         num_proxy_workers: int
     ) -> Web3RPCProxy:
         # Create default components
         middlewares = cls.configure_default_reader_middlewares(ssm)
-        response_handler = cls.create_default_response_handler()
 
         # Create proxy (do not launch it yet)
-        proxy = Web3RPCProxy(proxy_port, num_proxy_workers, middlewares, endpoints_handler, connection_pool, response_handler, cache_service)
+        proxy = Web3RPCProxy(proxy_port, num_proxy_workers, middlewares, endpoints_handler, connection_pool)
 
         # Pass proxy stats to StateManager, so that it may be queried
         ssm.register_proxy_stats(proxy.stats)
@@ -97,9 +94,8 @@ class ServiceComponentsProvider:
         # Create default components
         endpoint_handler = cls.create_default_multi_threaded_endpoint_handler(Config.ETH_ENDPOINTS, ssm)
         connection_pool = cls.create_default_connection_pool(Config.ETH_ENDPOINTS, ssm)
-        cache_service = StaticRequestResponseCacheService(Config.CACHE_EXPIRY_MS) if Config.CACHE_ENABLED else None
 
-        return cls.create_web3_rpc_proxy(ssm, endpoint_handler, connection_pool, cache_service, proxy_listen_port, num_proxy_workers)
+        return cls.create_web3_rpc_proxy(ssm, endpoint_handler, connection_pool, proxy_listen_port, num_proxy_workers)
 
     @classmethod
     def create_admin_http_server_thread(cls, state_manager: SampleStateManager, listen_port):
