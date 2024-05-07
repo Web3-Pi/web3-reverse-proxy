@@ -1,4 +1,6 @@
 import select
+import threading
+import queue
 
 from web3_reverse_proxy.config.conf import Config
 
@@ -120,6 +122,12 @@ class Web3RPCProxy:
     def __print_post_init_info(cls, proxy_listen_port: int) -> None:
         print("Proxy initialized and listening on {}".format(f"{Config.PROXY_LISTEN_ADDRESS}:{proxy_listen_port}"))
 
+    def closing_cs(self, client_poller: select.epoll, queue_cs_for_close: queue.Queue):
+        while True:
+            cs = queue_cs_for_close.get()
+            client_poller.unregister(cs.socket.fileno())
+            cs.close()
+
     def main_loop(self) -> None:
         client_poller = select.epoll()
         srv_socket = self.inbound_srv.server_s  # TODO async?
@@ -127,8 +135,18 @@ class Web3RPCProxy:
         # TODO Implement Keep-Alive http header
         active_client_connections = ClientSocketPool()  # TODO close stale connections
 
+        queue_cs_for_close = queue.Queue()
+        t = threading.Thread(target=self.closing_cs, args=(client_poller, queue_cs_for_close), daemon=True)
+        t.start()
+
         with ThreadPoolExecutor(self.num_workers) as executor:
             while True:
+                pending_cs_size = active_client_connections.get_size()
+                while pending_cs_size > Config.MAX_PENDING_CLIENT_SOCKETS:
+                    cs = active_client_connections.pop_cs_pending_from_tail()
+                    queue_cs_for_close.put(cs)
+                    pending_cs_size = pending_cs_size - 1
+
                 events = client_poller.poll(Config.BLOCKING_ACCEPT_TIMEOUT)
                 for fd, flag in events:
                     if fd == srv_socket.socket.fileno():
