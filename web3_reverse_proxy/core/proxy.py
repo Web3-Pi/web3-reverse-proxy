@@ -6,26 +6,22 @@ from web3_reverse_proxy.config.conf import Config
 
 from web3_reverse_proxy.core.inbound.server import InboundServer
 from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
-
 from web3_reverse_proxy.core.stats.proxystats import RPCProxyStats
-
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
-from web3_reverse_proxy.core.interfaces.rpcresponse import RPCResponseHandler
-
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
-
 from web3_reverse_proxy.core.rpc.request.middleware.requestmiddlewaredescr import RequestMiddlewareDescr
-from web3_reverse_proxy.core.rpc.rpcrequestmanager import RPCProxyRequestManager
-from web3_reverse_proxy.core.rpc.cache.responsecacheservice import ResponseCacheService
-from web3_reverse_proxy.core.rpc.node.endpoint_connection_pool import EndpointConnectionPool
 from web3_reverse_proxy.core.rpc.node.client_socket_pool import ClientSocketPool
+from web3_reverse_proxy.core.rpc.node.connection_pool import ConnectionPool
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connection_handler import ConnectionHandler
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
+
+from web3_reverse_proxy.utils.logger import get_logger
 
 from concurrent.futures import ThreadPoolExecutor
 
 
 class Web3RPCProxy:
+    _logger = get_logger('Web3RPCProxy')
 
     def __init__(
             self,
@@ -33,9 +29,7 @@ class Web3RPCProxy:
             num_proxy_workers: int,
             middlewares: RequestMiddlewareDescr,
             endpoints_handler: EndpointsHandler,
-            connection_pool: EndpointConnectionPool,
-            response_handler: RPCResponseHandler,
-            cache_service: ResponseCacheService
+            connection_pool: ConnectionPool,
         ) -> None:
 
         self.request_reader = middlewares.instantiate()
@@ -43,12 +37,6 @@ class Web3RPCProxy:
         self.__print_pre_init_info(self.request_reader, endpoints_handler)
 
         self.inbound_srv = InboundServer(proxy_listen_port, Config.BLOCKING_ACCEPT_TIMEOUT)
-        self.request_manager = RPCProxyRequestManager(
-            self.request_reader,
-            endpoints_handler,
-            response_handler,
-            cache_service,
-        )
         self.connection_pool = connection_pool
 
         self.__print_post_init_info(proxy_listen_port)
@@ -70,17 +58,31 @@ class Web3RPCProxy:
 
         print('\nInitializing proxy...')
 
+    def __close_client_socket(self, cs: ClientSocket) -> None:
+        try:
+            self._logger.debug(f"Closing client socket {cs}")
+            cs.close()
+        except OSError as error:
+            self._logger.error(error)
+            self._logger.error(f"Error on closing socket {cs}")
+
     def handle_client(self, endpoint_connection_handler: ConnectionHandler, cs: ClientSocket, client_poller: select.epoll, active_client_connections: ClientSocketPool) -> None:
         try:
             # TODO detect closed by a client cs connection and close it by our side?
             req, err = self.request_reader.read_request(cs, RPCRequest())  # TODO close connection if fatal error i.e. non http request
 
-            if err is not None:  # TODO also check req == None?
-                # TODO send err to the client
-                active_client_connections.del_cs_in_use(cs.socket.fileno())
-                client_poller.unregister(cs.socket.fileno())
-                cs.close()
+            if err is not None:
+                try:
+                    cs.send_all(err.raw)
+                except IOError as error:  # TODO: Does this handle closed connections?
+                    self._logger.error(error)
+
+                if not err.request.keep_alive:
+                    active_client_connections.del_cs_in_use(cs.socket.fileno())
+                    client_poller.unregister(cs.socket.fileno())
+                    self.__close_client_socket(cs)
                 return
+
             # if self.is_cache_available:  # TODO cache
             #     self.read_cache()
             endpoint_req_bytes = endpoint_connection_handler.get_sender().send_request(req)  # TODO reconnect?
@@ -100,11 +102,11 @@ class Web3RPCProxy:
             if req.keep_alive:
                 active_client_connections.set_cs_pending(cs.socket.fileno())
                 client_poller.modify(cs.socket, select.EPOLLIN | select.EPOLLONESHOT)  # TODO hangup? errors?
-                # cs.close()  # TODO if this is commented out, rpc-tests are 30% faster, why?
+                # self.__close_client_socket(cs)  # TODO if this is commented out, rpc-tests are 30% faster, why?
             else:
                 active_client_connections.del_cs_in_use(cs.socket.fileno())
                 client_poller.unregister(cs.socket.fileno())
-                cs.close()
+                self.__close_client_socket(cs)
 
             endpoint_connection_handler.release()
 
@@ -113,10 +115,11 @@ class Web3RPCProxy:
             #     if self.stats.is_ready_to_update_display():
             #         self.stats.display_rudimentary_stats()
         except Exception as e:
+            self._logger.error(e)
             print(f"Error while handling the client request {e}")  # TODO is this a good error handling?
             active_client_connections.del_cs_in_use(cs.socket.fileno())
             client_poller.unregister(cs.socket.fileno())
-            cs.close()
+            self.__close_client_socket(cs)
 
     @classmethod
     def __print_post_init_info(cls, proxy_listen_port: int) -> None:
@@ -126,7 +129,7 @@ class Web3RPCProxy:
         while True:
             cs = queue_cs_for_close.get()
             client_poller.unregister(cs.socket.fileno())
-            cs.close()
+            self.__close_client_socket(cs)
 
     def main_loop(self) -> None:
         client_poller = select.epoll()
@@ -165,8 +168,9 @@ class Web3RPCProxy:
 
     def cleanup(self) -> None:
         print()
-        print("Proxy interrupted - shutting down endpoint(s)")
-        self.request_manager.shut_down()
+
+        print("Proxy interrupted - closing node connections")
+        self.connection_pool.close()
 
         print("Proxy interrupted - shutting down proxy server")
         self.inbound_srv.shutdown()

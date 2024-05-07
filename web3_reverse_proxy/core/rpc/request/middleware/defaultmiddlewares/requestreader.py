@@ -55,14 +55,17 @@ class RequestReader(RequestReaderMiddleware):
                 request_parser.feed_data(data)
         except HttpParserError as error:
             self._logger.error(error)
+            req.keep_alive = False
             return self.failure(ErrorResponses.http_bad_request(), req)
-        except IOError as error:
-            self._logger.error(error)
-            return self.failure(ErrorResponses.http_internal_server_error(), req)
+        except IOError:
+            self._logger.error("IOError")
+            req.keep_alive = False
+            return self.failure(bytes(), req)  # Empty response for closed connection
 
         if request_parser.get_method() != b"POST":
             return self.failure(ErrorResponses.http_method_not_allowed(), req)
 
+        # breakpoint()
         if req.content is None or req.content_len == 0 or len(req.content.strip()) == 0:
             return self.failure(ErrorResponses.http_bad_request(), req)
 
