@@ -56,7 +56,7 @@ class ErrorResponses:
         return formatdate(timeval=None, localtime=False, usegmt=True)
 
     @classmethod
-    def web3_json(cls, code: int, message: str, _id: int | str):
+    def web3_json(cls, code: int, message: str, _id: int | str) -> str:
         return cls.WEB3_JSON_TEMPLATE.format(_id, code, message)
 
     @classmethod
@@ -71,12 +71,12 @@ class ErrorResponses:
         return cls.to_bytes(err_msg)
 
     @classmethod
-    def forbidden_payment_required(cls, _id: int | str = None):
+    def forbidden_payment_required(cls, _id: int | str = None) -> bytes:
         web3_err = -(cls.PROXY_ERROR_BASE_CODE + cls.PE_PAYMENT_REQUIRED)
         return cls.bad_request_web3(web3_err, "You exceeded the limit of calls. Check your plan", _id)
 
     @classmethod
-    def parse_error(cls, _id: int | str = None):
+    def parse_error(cls, _id: int | str = None) -> bytes:
         return cls.bad_request_web3(-32700, "Invalid JSON format", _id)
 
     @classmethod

@@ -11,6 +11,7 @@ class RPCRequest:
     id: int | str | None = None
     priority: int = 0
     last_queried_bytes: bytearray | None = None
+    keep_alive: bool = True
 
     def as_bytearray(self, request_line: bytearray, host_header: bytearray) -> bytearray:
         self.last_queried_bytes = request_line + self.headers + host_header + self.content

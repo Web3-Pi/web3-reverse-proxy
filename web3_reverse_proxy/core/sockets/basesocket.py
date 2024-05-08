@@ -7,14 +7,15 @@ import ssl
 import select
 
 from web3_reverse_proxy.config.conf import Config
-from web3_reverse_proxy.utils.logger import logger
+from web3_reverse_proxy.utils.logger import get_logger
 
 
 class BaseSocket:
+    _logger = get_logger("BaseSocket")
 
     HOST_IP_MAPPING = {}
 
-    def __init__(self, _socket) -> None:
+    def __init__(self, _socket: socket.socket) -> None:
         self.socket = _socket
 
     def send_all(self, data):
@@ -69,11 +70,16 @@ class BaseSocket:
 
         host_ip = cls.HOST_IP_MAPPING[host]
 
-        logger.debug("Creating socket")
+        cls._logger.debug("Creating socket")
         s_dst = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        logger.debug("Connecting socket")
-        s_dst.connect((host_ip, port))
-        logger.debug("Finished connecting socket")
+        cls._logger.debug("Connecting socket")
+        try:
+            s_dst.connect((host_ip, port))
+        except TimeoutError as error:
+            cls._logger.error(error)
+            raise error
+
+        cls._logger.debug("Finished connecting socket")
 
         if is_ssl:
             context = ssl.create_default_context()

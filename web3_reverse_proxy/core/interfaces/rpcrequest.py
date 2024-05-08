@@ -12,9 +12,8 @@ class RequestReaderMiddleware(ABC):
     ReturnType = [RPCRequest | None, RPCResponse | None]
 
     @staticmethod
-    def failure(err_res: RPCResponse | bytes | None = None, req: RPCRequest | None = None) -> ReturnType:
+    def failure(err_res: RPCResponse | bytes, req: RPCRequest) -> ReturnType:
         if isinstance(err_res, bytes):
-            assert req is not None
             err_res = RPCResponse(bytearray(err_res), req)
 
         return None, err_res

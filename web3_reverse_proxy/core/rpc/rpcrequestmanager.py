@@ -68,7 +68,6 @@ class RPCProxyRequestManager:
                         self.response_cache.store(response.request.method, response)
                 self.responses.append((cs, response))
 
-
     def handle_responses(self) -> None:
         self.no_current_responses = 0
 
