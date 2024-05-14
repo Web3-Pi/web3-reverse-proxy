@@ -14,6 +14,7 @@ from web3_reverse_proxy.core.rpc.node.client_socket_pool import ClientSocketPool
 from web3_reverse_proxy.core.rpc.node.connection_pool import ConnectionPool
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connection_handler import ConnectionHandler
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
+from web3_reverse_proxy.core.utilhttp.errors import ErrorResponses
 
 from web3_reverse_proxy.utils.logger import get_logger
 
@@ -66,39 +67,13 @@ class Web3RPCProxy:
             self._logger.error(error)
             self._logger.error(f"Error on closing socket {cs}")
 
-    def handle_client(self, endpoint_connection_handler: ConnectionHandler, cs: ClientSocket, client_poller: select.epoll, active_client_connections: ClientSocketPool) -> None:
-        try:
-            # TODO detect closed by a client cs connection and close it by our side?
-            req, err = self.request_reader.read_request(cs, RPCRequest())  # TODO close connection if fatal error i.e. non http request
-
-            if err is not None:
-                try:
-                    cs.send_all(err.raw)
-                except IOError as error:  # TODO: Does this handle closed connections?
-                    self._logger.error(error)
-
-                if not err.request.keep_alive:
-                    active_client_connections.del_cs_in_use(cs.socket.fileno())
-                    client_poller.unregister(cs.socket.fileno())
-                    self.__close_client_socket(cs)
-                return
-
-            # if self.is_cache_available:  # TODO cache
-            #     self.read_cache()
-            endpoint_req_bytes = endpoint_connection_handler.get_sender().send_request(req)  # TODO reconnect?
-            # self.stats.update(endpoint_req_bytes, res_bytes)  # TODO stats
-
-            def response_handler(res):
-                cs.send_all(res)  # TODO errors
-                # self.stats.update(endpoint_req_bytes, res_bytes)  # TODO stats
-
-            endpoint_connection_handler.get_receiver().recv_response(response_handler)  # TODO errors
-            # if self.is_cache_available and \  # TODO cache
-            #         self.response_cache.is_writeable(response.request) and \
-            #         self.response_cache.get(response.request.method) is None:
-            #     self.response_cache.store(response.request.method, response)
-
-            # keep alive management
+    def __manage_client_connection(
+            self,
+            req: RPCRequest,
+            cs: ClientSocket,
+            client_poller: select.epoll,
+            active_client_connections: ClientSocketPool,
+        ) -> None:
             if req.keep_alive:
                 active_client_connections.set_cs_pending(cs.socket.fileno())
                 client_poller.modify(cs.socket, select.EPOLLIN | select.EPOLLONESHOT)  # TODO hangup? errors?
@@ -108,6 +83,65 @@ class Web3RPCProxy:
                 client_poller.unregister(cs.socket.fileno())
                 self.__close_client_socket(cs)
 
+    def __send_back_to_client(self, cs: ClientSocket, data: bytearray) -> None:
+        try:
+            cs.send_all(data)
+        except:
+            self._logger.error(f"Failed to send response on socket {cs}")
+
+
+    def handle_client(
+            self,
+            endpoint_connection_handler: ConnectionHandler,
+            cs: ClientSocket,
+            client_poller: select.epoll,
+            active_client_connections: ClientSocketPool
+        ) -> None:
+        try:
+            # TODO detect closed by a client cs connection and close it by our side?
+            req, err = self.request_reader.read_request(cs, RPCRequest())  # TODO close connection if fatal error i.e. non http request
+
+            if err is not None:
+                self.__send_back_to_client(cs, err.raw)
+
+                if not err.request.keep_alive:
+                    active_client_connections.del_cs_in_use(cs.socket.fileno())
+                    client_poller.unregister(cs.socket.fileno())
+                    self.__close_client_socket(cs)
+
+                endpoint_connection_handler.release()
+                return
+
+            # if self.is_cache_available:  # TODO cache
+            #     self.read_cache()
+            try:
+                endpoint_req_bytes = endpoint_connection_handler.get_sender().send_request(req)
+            except:
+                self._logger.error(f"Failed to send request {req} over connection {endpoint_connection_handler}")
+                self._logger.debug(f"Reconnecting {endpoint_connection_handler}")
+                endpoint_connection_handler.reconnect()
+                try:
+                    endpoint_req_bytes = endpoint_connection_handler.get_sender().send_request(req)
+                except:
+                    self._logger.error(f"Cannot reach endpoint {endpoint_connection_handler.get_ip_address()}")
+                    self.__send_back_to_client(cs, ErrorResponses.http_internal_server_error())
+                    self.__manage_client_connection(req, cs, client_poller, active_client_connections)
+                    endpoint_connection_handler.close()
+                    return
+
+            # self.stats.update(endpoint_req_bytes, res_bytes)  # TODO stats
+
+            def response_handler(res):
+                self.__send_back_to_client(cs, res)
+                # self.stats.update(endpoint_req_bytes, res_bytes)  # TODO stats
+
+            endpoint_connection_handler.get_receiver().recv_response(response_handler)  # TODO errors
+            # if self.is_cache_available and \  # TODO cache
+            #         self.response_cache.is_writeable(response.request) and \
+            #         self.response_cache.get(response.request.method) is None:
+            #     self.response_cache.store(response.request.method, response)
+
+            self.__manage_client_connection(req, cs, client_poller, active_client_connections)
             endpoint_connection_handler.release()
 
             #     # Basic bookkeeping  # TODO stats
@@ -117,6 +151,7 @@ class Web3RPCProxy:
         except Exception as e:
             self._logger.error(e)
             print(f"Error while handling the client request {e}")  # TODO is this a good error handling?
+            endpoint_connection_handler.release()
             active_client_connections.del_cs_in_use(cs.socket.fileno())
             client_poller.unregister(cs.socket.fileno())
             self.__close_client_socket(cs)
