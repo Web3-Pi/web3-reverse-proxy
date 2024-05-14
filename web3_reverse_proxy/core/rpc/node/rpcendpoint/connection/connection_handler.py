@@ -1,14 +1,19 @@
-import abc
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.sender import RequestSender
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.receiver import ResponseReceiver
+from abc import ABCMeta, abstractmethod
 
 
-class ConnectionHandler(abc.ABC):
+class ConnectionHandler(metaclass=ABCMeta):
+    @abstractmethod
+    def send(self) -> bytearray:
+        pass
+
+    @abstractmethod
+    def receive(self) -> bytearray:
+        pass
+
+    @abstractmethod
     def release(self) -> None:
         pass
 
-    def get_sender(self) -> RequestSender:
-        pass
-
-    def get_receiver(self) -> ResponseReceiver:
+    @abstractmethod
+    def close(self) -> None:
         pass

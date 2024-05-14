@@ -4,10 +4,9 @@ from dataclasses import dataclass
 
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import EndpointConnectionDescriptor
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnectionstats import EndpointConnectionStats
-from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
-
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.receiver import ResponseReceiver, ResponseReceiverGeth
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.sender import RequestSender
+from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
 
 from web3_reverse_proxy.utils.logger import get_logger
 
@@ -23,6 +22,7 @@ class EndpointConnection:
     ip: str
     host: str
     port: int
+    auth_key: str
     is_ssl: bool
 
     stats: EndpointConnectionStats
@@ -45,7 +45,23 @@ class EndpointConnection:
 
         stats = EndpointConnectionStats()
 
-        return EndpointConnection(sock, req_sender, res_receiver, ip, conn_descr.host, conn_descr.port, is_ssl, stats)
+        return EndpointConnection(
+            sock,
+            req_sender,
+            res_receiver,
+            ip,
+            conn_descr.host,
+            conn_descr.port,
+            conn_descr.auth_key,
+            is_ssl,
+            stats
+        )
 
     def close(self) -> None:
         self.socket.close()
+
+    def reconnect(self) -> None:
+        self.close()
+        self.socket = BaseSocket.create_socket(self.host, self.port, self.is_ssl)
+        self.req_sender = RequestSender(self.socket, self.host, self.auth_key)
+        self.res_receiver = ResponseReceiverGeth(self.socket)
