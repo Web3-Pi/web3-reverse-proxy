@@ -1,11 +1,12 @@
 from datetime import datetime
+# from threading import Lock
 
 from web3_reverse_proxy.interfaces.servicestate import StateUpdater
 from web3_reverse_proxy.service.ledger.activitysummary import ServiceActivitySummary, UserActivitySummary
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
-from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
 
 
+# TODO: Apply locks to prevent data loss and inconsistency
 class SimpleActivityLedger(StateUpdater):
 
     ALL_TIME_SUMMARY = 'all_time_summary'
@@ -14,6 +15,8 @@ class SimpleActivityLedger(StateUpdater):
     def __init__(self):
         self.daily_usage = {}
         self.all_time_summary = ServiceActivitySummary()
+
+        # self.__lock = Lock()
 
     @staticmethod
     def utc_now_as_key():
@@ -25,6 +28,7 @@ class SimpleActivityLedger(StateUpdater):
     def get_active_state_sample(self) -> ServiceActivitySummary:
         key = self.utc_now_as_key()
 
+        # with self.__lock:
         if key not in self.daily_usage:
             self.daily_usage[key] = ServiceActivitySummary()
 
@@ -32,19 +36,25 @@ class SimpleActivityLedger(StateUpdater):
 
     def remove_user(self, user_api_key: str) -> None:
         self.all_time_summary.remove_user(user_api_key)
+        # with self.__lock:
         for daily_summary in self.daily_usage.values():
             daily_summary.remove_user(user_api_key)
 
-    def record_processed_rpc_call(self, request: RPCRequest, response: RPCResponse) -> None:
+    def record_rpc_request(self, request: RPCRequest) -> None:
         sample = self.get_active_state_sample()
-        sample.register_next_call(request, response)
+        sample.update(request=request)
+        self.all_time_summary.update(request=request)
 
-        self.all_time_summary.register_next_call(request, response)
+    def record_rpc_response(self, request: RPCRequest, response: bytearray) -> None:
+        sample = self.get_active_state_sample()
+        sample.update(request=request, response=response)
+        self.all_time_summary.update(request=request, response=response)
 
     def get_all_time_summary(self) -> ServiceActivitySummary:
         return self.all_time_summary
 
     def to_dict(self) -> dict:
+        # with self.__lock:
         return {
             self.ALL_TIME_SUMMARY: self.get_all_time_summary().to_dict(),
             self.DAILY_USE_SUMMARY: {k: v.to_dict() for k, v in self.daily_usage.items()}
