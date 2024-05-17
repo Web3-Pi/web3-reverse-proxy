@@ -77,6 +77,12 @@ class EndpointConnectionHandler(ConnectionHandler):
     def receive(self, callback: Callable) -> bytearray:
         return self.connection.res_receiver.recv_response(callback)
 
+    def update_request_stats(self, request: RPCRequest):
+        self.connection.update_endpoint_stats(request.last_queried_bytes, bytearray())
+
+    def update_response_stats(self, response_bytes: bytearray) -> None:
+        self.connection.update_endpoint_stats(bytearray(), response_bytes)
+
     def release(self) -> None:
         if self.connection is not None:
             self.connection_pool.put(self.connection)

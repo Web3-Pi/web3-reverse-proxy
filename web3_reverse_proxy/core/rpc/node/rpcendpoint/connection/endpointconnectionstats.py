@@ -1,3 +1,4 @@
+from threading import Lock
 import time
 
 
@@ -9,6 +10,8 @@ class EndpointConnectionStats:
         self._no_bytes_sent = 0
         self._no_bytes_received = 0
         self._no_requests_handled = 0
+
+        self.__lock = Lock()
 
     def __get_started_at(self):
         return self._started_at
@@ -28,18 +31,20 @@ class EndpointConnectionStats:
     no_requests_handled = property(__get_no_requests_handled)
 
     def _update(self, no_bytes_received: int, no_bytes_sent: int, no_requests_handled: int) -> None:
-        self._no_requests_handled += no_requests_handled
-        self._no_bytes_sent += no_bytes_sent
-        self._no_bytes_received += no_bytes_received
+        with self.__lock:
+            self._no_requests_handled += no_requests_handled
+            self._no_bytes_sent += no_bytes_sent
+            self._no_bytes_received += no_bytes_received
 
-    def update(self, req_data: bytearray, resp_data: bytearray) -> None:
-        self._update(len(req_data), len(resp_data), 1)
+    def update_request_bytes(self, req_data: bytearray) -> None:
+        no_req_bytes = len(req_data)
+        if no_req_bytes:
+            self._update(no_req_bytes, 0, 1)
 
-    def update_response_bytes(self, resp_data: bytearray) -> None:
-        self._update(0, len(resp_data), 0)
-
-    def append(self, conn_stats: "EndpointConnectionStats") -> None:
-        self._update(conn_stats.no_bytes_received, conn_stats.no_bytes_sent, conn_stats.no_requests_handled)
+    def update_response_bytes(self, res_data: bytearray) -> None:
+        no_res_bytes = len(res_data)
+        if no_res_bytes:
+            self._update(0, no_res_bytes, 0)
 
     def to_dict(self):
         return {
