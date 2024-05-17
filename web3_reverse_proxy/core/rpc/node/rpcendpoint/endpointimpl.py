@@ -1,26 +1,12 @@
 from __future__ import annotations
 
-from typing import Callable
-
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import EndpointConnectionDescriptor
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnectionstats import EndpointConnectionStats
-from web3_reverse_proxy.interfaces.servicestate import StateUpdater
-
-from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
-from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
-
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
-
-from web3_reverse_proxy.utils.logger import get_logger
 
 
 class RPCEndpoint:
-    _logger = get_logger("RPCEndpoint")
-
-
-    def __init__(self, name, conn_descr: EndpointConnectionDescriptor, state_updater: StateUpdater) -> None:
+    def __init__(self, name, conn_descr: EndpointConnectionDescriptor) -> None:
         self.conn_descr = conn_descr
-        self.state_updater = state_updater
         self.name = name
         self.conn_stats = EndpointConnectionStats()
 
@@ -33,9 +19,10 @@ class RPCEndpoint:
     def get_connection_stats(self) -> EndpointConnectionStats:
         return self.conn_stats
 
-    def create_connection(self) -> EndpointConnection:
-        return EndpointConnection.create(self.conn_descr)
+    def update_stats(self, request_bytes: bytearray, response_bytes: bytearray) -> None:
+        self.conn_stats.update_request_bytes(request_bytes)
+        self.conn_stats.update_response_bytes(response_bytes)
 
     @classmethod
-    def create(cls, name: str, conn_descr: EndpointConnectionDescriptor, state_updater: StateUpdater) -> RPCEndpoint:
-        return RPCEndpoint(name, conn_descr, state_updater)
+    def create(cls, name: str, conn_descr: EndpointConnectionDescriptor) -> RPCEndpoint:
+        return RPCEndpoint(name, conn_descr)

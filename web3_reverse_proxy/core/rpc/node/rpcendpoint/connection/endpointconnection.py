@@ -1,21 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import EndpointConnectionDescriptor
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnectionstats import EndpointConnectionStats
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.receiver import ResponseReceiver, ResponseReceiverGeth
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.sender import RequestSender
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
 
 from web3_reverse_proxy.utils.logger import get_logger
 
 
-@dataclass
 class EndpointConnection:
-
+    endpoint: RPCEndpoint
     socket: BaseSocket
-
     req_sender: RequestSender
     res_receiver: ResponseReceiver
 
@@ -25,43 +21,38 @@ class EndpointConnection:
     auth_key: str
     is_ssl: bool
 
-    stats: EndpointConnectionStats
+    def __init__(self, endpoint: RPCEndpoint) -> None:
+        self._logger = get_logger(f"EndpointConnection.{id(self)}")
+        self.endpoint = endpoint
 
-    _logger = get_logger("EndpointConnection")
+        self._logger.debug(f"Creating socket for endpoint: {endpoint}")
+        self.socket = self.__create_socket()
+        self._logger.debug(f"Socket created for description: {self.conn_descr}")
 
+        self.req_sender = RequestSender(self.socket, self.conn_descr.host, self.conn_descr.auth_key)
 
-    @classmethod
-    def create(cls, conn_descr: EndpointConnectionDescriptor) -> EndpointConnection:
-        cls._logger.debug(f"Creating socket based on description: {conn_descr}")
-        sock = BaseSocket.create_socket(conn_descr.host, conn_descr.port, conn_descr.is_ssl)
-        cls._logger.debug(f"Socket created for description: {conn_descr}")
-        ip = sock.get_peer_name()[0]
+        self.res_receiver = ResponseReceiverGeth(self.socket)
 
-        req_sender = RequestSender(sock, conn_descr.host, conn_descr.auth_key)
+    @property
+    def conn_descr(self) -> EndpointConnectionDescriptor:
+        return self.endpoint.conn_descr
 
-        is_ssl = conn_descr.is_ssl
+    @property
+    def ip(self) -> str:
+        return self.socket.get_peer_name()[0]
 
-        res_receiver = ResponseReceiverGeth(sock)
+    def __create_socket(self) -> BaseSocket:
+        return BaseSocket.create_socket(self.conn_descr.host, self.conn_descr.port, self.conn_descr.is_ssl)
 
-        stats = EndpointConnectionStats()
-
-        return EndpointConnection(
-            sock,
-            req_sender,
-            res_receiver,
-            ip,
-            conn_descr.host,
-            conn_descr.port,
-            conn_descr.auth_key,
-            is_ssl,
-            stats
-        )
 
     def close(self) -> None:
         self.socket.close()
 
     def reconnect(self) -> None:
         self.close()
-        self.socket = BaseSocket.create_socket(self.host, self.port, self.is_ssl)
-        self.req_sender = RequestSender(self.socket, self.host, self.auth_key)
+        self.socket = self.__create_socket()
+        self.req_sender = RequestSender(self.socket, self.conn_descr.host, self.conn_descr.auth_key)
         self.res_receiver = ResponseReceiverGeth(self.socket)
+
+    def update_endpoint_stats(self, request_bytes: bytearray, response_bytes: bytearray) -> None:
+        self.endpoint.update_stats(request_bytes, response_bytes)

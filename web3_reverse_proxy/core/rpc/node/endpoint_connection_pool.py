@@ -26,7 +26,6 @@ class EndpointConnectionPool(ConnectionPool):
     def __init__(
             self,
             descriptors: List[Tuple[str, EndpointConnectionDescriptor]],
-            state_updater: StateUpdater,
             load_balancer: LoadBalancer = RandomLoadBalancer,  # For convenience during architecture change
         ):
         self.endpoints = []
@@ -38,7 +37,7 @@ class EndpointConnectionPool(ConnectionPool):
             name, conn_descr = descriptors[index]
             assert conn_descr is not None
             self._logger.debug(f"Creating endpoint {name} with connection {conn_descr}")
-            self.endpoints.append(RPCEndpoint.create(name, conn_descr, state_updater))
+            self.endpoints.append(RPCEndpoint.create(name, conn_descr))
 
     def _cleanup(self) -> None:
         excessive_connections = self.connections.qsize() - self.MAX_CONNECTIONS
@@ -65,7 +64,7 @@ class EndpointConnectionPool(ConnectionPool):
             finally:
                 self.lock.release()
 
-            connection = self.endpoints[endpoint_index].create_connection()
+            connection = EndpointConnection(self.endpoints[endpoint_index])
             is_fresh_connection = True
         else:
             try:
@@ -82,6 +81,9 @@ class EndpointConnectionPool(ConnectionPool):
         with self.lock:
             self.connections.put(connection)
             self._cleanup()
+
+    def get_endpoints(self):
+        return self.endpoints
 
     # Intended for cleaning after shutdown
     def close(self) -> None:
