@@ -22,6 +22,7 @@ class EndpointConnection:
     ip: str
     host: str
     port: int
+    auth_key: str
     is_ssl: bool
 
     stats: EndpointConnectionStats
@@ -44,7 +45,17 @@ class EndpointConnection:
 
         stats = EndpointConnectionStats()
 
-        return EndpointConnection(sock, req_sender, res_receiver, ip, conn_descr.host, conn_descr.port, is_ssl, stats)
+        return EndpointConnection(
+            sock,
+            req_sender,
+            res_receiver,
+            ip,
+            conn_descr.host,
+            conn_descr.port,
+            conn_descr.auth_key,
+            is_ssl,
+            stats
+        )
 
     def close(self) -> None:
         self.socket.close()
@@ -52,3 +63,5 @@ class EndpointConnection:
     def reconnect(self) -> None:
         self.close()
         self.socket = BaseSocket.create_socket(self.host, self.port, self.is_ssl)
+        self.req_sender = RequestSender(self.socket, self.host, self.auth_key)
+        self.res_receiver = ResponseReceiverGeth(self.socket)

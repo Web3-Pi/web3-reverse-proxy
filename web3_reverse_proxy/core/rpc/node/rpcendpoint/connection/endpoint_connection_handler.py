@@ -3,41 +3,77 @@ from typing import Callable
 from web3_reverse_proxy.core.rpc.node.connection_pool import ConnectionPool
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connection_handler import ConnectionHandler
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.sender import RequestSender
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.receiver import ResponseReceiver
+
+from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
+
+from web3_reverse_proxy.utils.logger import get_logger
+
+
+class ConnectionReleasedError(Exception):
+    message = "Connection has already been released"
+
+
+class BrokenConnectionError(Exception):
+    message = "Connection is broken"
+
+
+class BrokenFreshConnectionError(BrokenConnectionError):
+    message = "Connection is broken from start"
+
+
+class ReconnectError(BrokenConnectionError):
+    message = "Error while attempting reconnect"
 
 
 class EndpointConnectionHandler(ConnectionHandler):
-    class ConnectionReleasedError(Exception):
-        message = "Connection has already been released"
-
     def __init__(
             self,
             connection: EndpointConnection,
-            connection_pool: ConnectionPool
+            connection_pool: ConnectionPool,
+            is_fresh_connection: bool = False,
         ) -> None:
         self.connection = connection
         self.connection_pool = connection_pool
+        self.is_fresh_connection = is_fresh_connection
+
+        self._logger = get_logger(f"EndpointConnectionHandler.{id(self)}")
+        self._logger.debug(f"Created handler for connection {connection}")
 
     @staticmethod
     def _acquired_connection(func: Callable) -> Callable:
         def decorator(instance: 'EndpointConnectionHandler', *args, **kwargs):
             if instance.connection is None:
-                raise instance.ConnectionReleasedError
+                raise ConnectionReleasedError
             return func(instance, *args, **kwargs)
         return decorator
 
     @_acquired_connection
-    def get_sender(self) -> RequestSender:
-        return self.connection.req_sender
+    def send(self, req: RPCRequest) -> bytearray:
+        try:
+            return self.connection.req_sender.send_request(req)
+        except:
+            self._logger.error(f"Failed to send request {req} over connection {self.connection}")
+            self._logger.debug(f"Reconnecting {self.connection}")
+
+        if not self.is_fresh_connection:
+            try:
+                self.connection.reconnect()
+            except:
+                self._logger.error(f"Connection {self.connection} failed to reconnect!")
+                raise ReconnectError
+        else:
+            self._logger.error(f"Connection {self.connection} started broken!")
+            raise BrokenFreshConnectionError 
+
+        try:
+            return self.connection.req_sender.send_request(req)
+        except:
+            self._logger.error(f"Connection {self.connection} is broken")
+            raise BrokenConnectionError
 
     @_acquired_connection
-    def get_receiver(self) -> ResponseReceiver:
-        return self.connection.res_receiver
-
-    @_acquired_connection
-    def reconnect(self) -> None:
-        self.connection.reconnect()
+    def receive(self, callback: Callable) -> bytearray:
+        return self.connection.res_receiver.recv_response(callback)
 
     def release(self) -> None:
         if self.connection is not None:
