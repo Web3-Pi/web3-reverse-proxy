@@ -48,7 +48,7 @@ class EndpointConnectionPool(ConnectionPool):
                 connection = self.connections.get_nowait()
                 self._logger.debug(f"Removed connection {connection}")
                 try:
-                    connection.close()
+                    connection.close()  # TODO: Move out of lock for better performance
                 except OSError:
                     self._logger.error(f"Failure on closing connection {connection}")
 
@@ -66,14 +66,16 @@ class EndpointConnectionPool(ConnectionPool):
                 self.lock.release()
 
             connection = self.endpoints[endpoint_index].create_connection()
+            is_fresh_connection = True
         else:
             try:
                 connection = self.connections.get_nowait()
+                is_fresh_connection = False
             finally:
                 self.lock.release()
 
         self._logger.debug(f"Return connection {connection}")
-        return EndpointConnectionHandler(connection, self)
+        return EndpointConnectionHandler(connection, self, is_fresh_connection)
 
     def put(self, connection: EndpointConnection) -> None:
         self._logger.debug(f"Putting connection {connection} to pool")
