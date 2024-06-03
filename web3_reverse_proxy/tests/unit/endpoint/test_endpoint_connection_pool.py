@@ -62,7 +62,7 @@ class EndpointConnectionPoolTests(TestCase):
 
         connection_pool.get()
 
-        connection_handler_mock.assert_called_with(connection, connection_pool)
+        connection_handler_mock.assert_called_with(connection, connection_pool, False)
         self.assertEqual(connection_pool.connections.qsize(), pool_size_before - 1)
 
     @patch("web3_reverse_proxy.core.rpc.node.endpoint_connection_pool.EndpointConnectionHandler")
@@ -72,7 +72,7 @@ class EndpointConnectionPoolTests(TestCase):
 
         connection_pool.get()
 
-        connection_handler_mock.assert_called_with(self.connection_mock, connection_pool)
+        connection_handler_mock.assert_called_with(self.connection_mock, connection_pool, True)
         self.assertEqual(connection_pool.connections.qsize(), pool_size_before)
 
     def test_pool_should_close_excessive_connections(self):
