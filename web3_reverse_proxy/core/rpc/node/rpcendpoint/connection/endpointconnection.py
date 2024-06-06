@@ -22,12 +22,12 @@ class EndpointConnection:
     is_ssl: bool
 
     def __init__(self, endpoint: RPCEndpoint) -> None:
-        self._logger = get_logger(f"EndpointConnection.{id(self)}")
+        self.__logger = get_logger(f"EndpointConnection.{id(self)}")
         self.endpoint = endpoint
 
-        self._logger.debug(f"Creating socket for endpoint: {endpoint}")
+        self.__logger.debug(f"Creating socket for endpoint: {endpoint}")
         self.socket = self.__create_socket()
-        self._logger.debug(f"Socket created for description: {self.conn_descr}")
+        self.__logger.debug(f"Socket created for description: {self.conn_descr}")
 
         self.req_sender = RequestSender(self.socket, self.conn_descr.host, self.conn_descr.auth_key)
 

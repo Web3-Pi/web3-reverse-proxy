@@ -11,7 +11,7 @@ from web3_reverse_proxy.utils.logger import get_logger
 
 
 class BaseSocket:
-    _logger = get_logger("BaseSocket")
+    __logger = get_logger("BaseSocket")
 
     HOST_IP_MAPPING = {}
 
@@ -70,16 +70,16 @@ class BaseSocket:
 
         host_ip = cls.HOST_IP_MAPPING[host]
 
-        cls._logger.debug("Creating socket")
+        cls.__logger.debug("Creating socket")
         s_dst = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        cls._logger.debug("Connecting socket")
+        cls.__logger.debug("Connecting socket")
         try:
             s_dst.connect((host_ip, port))
         except TimeoutError as error:
-            cls._logger.error(error)
+            cls.__logger.error(error)
             raise error
 
-        cls._logger.debug("Finished connecting socket")
+        cls.__logger.debug("Finished connecting socket")
 
         if is_ssl:
             context = ssl.create_default_context()

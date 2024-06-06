@@ -18,7 +18,7 @@ class AcceptJSONRPCContentReader(RequestReaderMiddleware):
         JSONRPCContentValidator,
         JSONRPCMethodValidator,
     ]
-    _logger = get_logger("AcceptJSONRPCContentReader")
+    __logger = get_logger("AcceptJSONRPCContentReader")
 
     def __init__(self, next_reader: RequestReaderMiddleware = None) -> None:
         self.next_reader = next_reader
@@ -45,17 +45,17 @@ class AcceptJSONRPCContentReader(RequestReaderMiddleware):
             try:
                 json_content = json.loads(jsonrpc_content.decode("utf-8"))
             except:
-                self._logger.error(f"Request {req} is incorrect JSON format")
+                self.__logger.error(f"Request {req} is incorrect JSON format")
                 return self.failure(ErrorResponses.parse_error(req.id), req)
 
             try:
                 for validator in self.VALIDATORS:
                     validator.validate(json_content)
             except JSONRPCError as error:
-                self._logger.error(f"Request {req} failed with {error}")
+                self.__logger.error(f"Request {req} failed with {error}")
                 return self.failure(ErrorResponses.bad_request_web3(error.code, error.message, req.id), req)
             except:
-                self._logger.error(f"Internal error while parsing request {req}")
+                self.__logger.error(f"Internal error while parsing request {req}")
                 return self.failure(ErrorResponses.http_internal_server_error(), req)
 
             req.method = json_content["method"]

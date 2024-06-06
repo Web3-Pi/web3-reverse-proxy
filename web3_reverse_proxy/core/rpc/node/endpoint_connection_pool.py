@@ -15,12 +15,11 @@ from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
 from web3_reverse_proxy.core.rpc.node.connection_pool import ConnectionPool
 
-from web3_reverse_proxy.interfaces.servicestate import StateUpdater
 from web3_reverse_proxy.utils.logger import get_logger
 
 
 class EndpointConnectionPool(ConnectionPool):
-    _logger = get_logger("EndpointConnectionPool")
+    __logger = get_logger("EndpointConnectionPool")
     MAX_CONNECTIONS = Config.NUM_PROXY_WORKERS
 
     def __init__(
@@ -31,38 +30,38 @@ class EndpointConnectionPool(ConnectionPool):
         self.endpoints = []
         self.load_balancer = load_balancer
         self.connections = SimpleQueue()
-        self.lock = Lock()
+        self.__lock = Lock()
 
         for index in range(len(descriptors)):
             name, conn_descr = descriptors[index]
             assert conn_descr is not None
-            self._logger.debug(f"Creating endpoint {name} with connection {conn_descr}")
+            self.__logger.debug(f"Creating endpoint {name} with connection {conn_descr}")
             self.endpoints.append(RPCEndpoint.create(name, conn_descr))
 
     def _cleanup(self) -> None:
         excessive_connections = self.connections.qsize() - self.MAX_CONNECTIONS
         if excessive_connections > 0:
-            self._logger.debug(f"Detected {excessive_connections} excessive connections")
+            self.__logger.debug(f"Detected {excessive_connections} excessive connections")
             for _ in range(excessive_connections):
                 connection = self.connections.get_nowait()
-                self._logger.debug(f"Removed connection {connection}")
+                self.__logger.debug(f"Removed connection {connection}")
                 try:
                     connection.close()  # TODO: Move out of lock for better performance
                 except OSError:
-                    self._logger.error(f"Failure on closing connection {connection}")
+                    self.__logger.error(f"Failure on closing connection {connection}")
 
     def get(self) -> EndpointConnectionHandler:
-        self._logger.debug("Selecting endpoint connection from pool")
+        self.__logger.debug("Selecting endpoint connection from pool")
 
-        self.lock.acquire()
+        self.__lock.acquire()
         if self.connections.empty():
             try:
-                self._logger.debug("No existing connections available, establishing new connection")
+                self.__logger.debug("No existing connections available, establishing new connection")
                 # TODO: Reconsider load balancers after new architecture is settled
                 # TODO: Could be released sooner, if endpoints remain constant
                 endpoint_index = self.load_balancer.get_queue_for_request(self.endpoints, RPCRequest())
             finally:
-                self.lock.release()
+                self.__lock.release()
 
             connection = EndpointConnection(self.endpoints[endpoint_index])
             is_fresh_connection = True
@@ -71,14 +70,14 @@ class EndpointConnectionPool(ConnectionPool):
                 connection = self.connections.get_nowait()
                 is_fresh_connection = False
             finally:
-                self.lock.release()
+                self.__lock.release()
 
-        self._logger.debug(f"Return connection {connection}")
+        self.__logger.debug(f"Return connection {connection}")
         return EndpointConnectionHandler(connection, self, is_fresh_connection)
 
     def put(self, connection: EndpointConnection) -> None:
-        self._logger.debug(f"Putting connection {connection} to pool")
-        with self.lock:
+        self.__logger.debug(f"Putting connection {connection} to pool")
+        with self.__lock:
             self.connections.put(connection)
             self._cleanup()
 
@@ -87,10 +86,10 @@ class EndpointConnectionPool(ConnectionPool):
 
     # Intended for cleaning after shutdown
     def close(self) -> None:
-        with self.lock:
+        with self.__lock:
             while not self.connections.empty():
                 connection = self.connections.get_nowait()
                 try:
                     connection.close()
-                except OSError as error:
-                    self._logger.error(f"Failure on closing connection {connection}")
+                except OSError:
+                    self.__logger.error(f"Failure on closing connection {connection}")
