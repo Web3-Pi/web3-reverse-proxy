@@ -46,20 +46,14 @@ class ServiceComponentsProvider:
         )
 
     @classmethod
-    def create_default_connection_pool(
-        cls,
-        endpoint_config: List[dict],
-        ssm:SampleStateManager,
-    ):
+    def create_default_connection_pool(cls, endpoint_config: List[dict]):
         descriptors = [
             (entrypoint["name"], EndpointConnectionDescriptor.from_url(entrypoint["url"]))
             for entrypoint in endpoint_config
         ]
-        updater = ssm.get_service_state_updater_instance()
 
         return EndpointConnectionPool(
-            descriptors,
-            updater,
+            descriptors
         )
 
     @classmethod
@@ -70,7 +64,6 @@ class ServiceComponentsProvider:
     def create_web3_rpc_proxy(
         cls,
         ssm: SampleStateManager,
-        endpoints_handler: EndpointsHandler,
         connection_pool: EndpointConnectionPool,
         proxy_port,
         num_proxy_workers: int
@@ -79,23 +72,28 @@ class ServiceComponentsProvider:
         middlewares = cls.configure_default_reader_middlewares(ssm)
 
         # Create proxy (do not launch it yet)
-        proxy = Web3RPCProxy(proxy_port, num_proxy_workers, middlewares, endpoints_handler, connection_pool)
+        proxy = Web3RPCProxy(
+            proxy_port,
+            num_proxy_workers,
+            middlewares,
+            connection_pool,
+            ssm.get_service_state_updater_instance()
+        )
 
         # Pass proxy stats to StateManager, so that it may be queried
-        ssm.register_proxy_stats(proxy.stats)
+        # ssm.register_proxy_stats(proxy.stats)
 
         # Pass endpoint data, so that it can be queried
-        ssm.register_endpoints(endpoints_handler.get_endpoints())
+        ssm.register_endpoints(connection_pool.get_endpoints())
 
         return proxy
 
     @classmethod
     def create_default_web3_rpc_proxy(cls, ssm: SampleStateManager, proxy_listen_port, num_proxy_workers: int) -> Web3RPCProxy:
         # Create default components
-        endpoint_handler = cls.create_default_multi_threaded_endpoint_handler(Config.ETH_ENDPOINTS, ssm)
-        connection_pool = cls.create_default_connection_pool(Config.ETH_ENDPOINTS, ssm)
+        connection_pool = cls.create_default_connection_pool(Config.ETH_ENDPOINTS)
 
-        return cls.create_web3_rpc_proxy(ssm, endpoint_handler, connection_pool, proxy_listen_port, num_proxy_workers)
+        return cls.create_web3_rpc_proxy(ssm, connection_pool, proxy_listen_port, num_proxy_workers)
 
     @classmethod
     def create_admin_http_server_thread(cls, state_manager: SampleStateManager, listen_port):

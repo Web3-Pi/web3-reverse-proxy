@@ -17,7 +17,7 @@ from web3_reverse_proxy.utils.logger import get_logger
 
 
 class ThreadedEndpointHandler(EndpointsHandler):
-    _logger = get_logger("ThreadedEndpointHandler")
+    __logger = get_logger("ThreadedEndpointHandler")
 
     def __init__(
             self,
@@ -51,12 +51,12 @@ class ThreadedEndpointHandler(EndpointsHandler):
         self.add_processing_thread(self.request_consumer, queue_in, self.queues_ids.OUT_0, endpoint)
 
     def add_request(self, cs: ClientSocket, req: RPCRequest) -> None:
-        self._logger.debug(f"Adding request {req} for {cs}")
+        self.__logger.debug(f"Adding request {req} for {cs}")
         in_queue_index = self.load_balancer.get_queue_for_request(self, req)
 
         self.req_queues[in_queue_index].put((cs, req))
         self.no_pending_requests += 1
-        self._logger.debug(f"Added request with {self.no_pending_requests} pending requests")
+        self.__logger.debug(f"Added request with {self.no_pending_requests} pending requests")
 
     def process_pending_requests(self) -> List[Tuple[ClientSocket, RPCResponse]]:
         ret = []
@@ -76,24 +76,24 @@ class ThreadedEndpointHandler(EndpointsHandler):
 
     @classmethod
     def request_consumer(cls, req_q: Queue, res_q: Queue, endpoint: RPCEndpoint) -> None:
-        cls._logger.debug("Started consuming request")
+        cls.__logger.debug("Started consuming request")
         while True:
-            cls._logger.debug(f"Endpoint {endpoint} awaiting requests...")
+            cls.__logger.debug(f"Endpoint {endpoint} awaiting requests...")
             cs, req = req_q.get()
 
-            cls._logger.debug(f"Endpoint {endpoint} accepted request {req} from client socket {cs}")
+            cls.__logger.debug(f"Endpoint {endpoint} accepted request {req} from client socket {cs}")
             response_handler = lambda res: res_q.put((cs, res))
 
-            cls._logger.debug("Initiating request/response roundtrip")
+            cls.__logger.debug("Initiating request/response roundtrip")
             endpoint.handle_request_response_roundtrip(req, response_handler)
-            cls._logger.debug("Request/response roundtrip ended")
+            cls.__logger.debug("Request/response roundtrip ended")
 
     def has_pending_requests(self) -> bool:
         return self.no_pending_requests > 0
 
     def close(self) -> None:
         for endpoint in self.endpoints:
-            self._logger.debug(f"Closing endpoint {endpoint}")
+            self.__logger.debug(f"Closing endpoint {endpoint}")
             endpoint.close()
 
     def get_endpoints(self) -> Iterable[RPCEndpoint]:

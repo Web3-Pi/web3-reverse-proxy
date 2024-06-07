@@ -36,7 +36,7 @@ class ResponseReceiver(ABC):
 
 
 class ResponseReceiverGeth(ResponseReceiver):
-    _logger = get_logger("ResponseReceiverGeth")
+    __logger = get_logger("ResponseReceiverGeth")
 
     def __init__(self, sock: BaseSocket) -> None:
         self.socket = sock
@@ -47,17 +47,17 @@ class ResponseReceiverGeth(ResponseReceiver):
         response_listener = HttpResponseParserListener()
         response_parser = HttpResponseParser(response_listener)
 
-        self._logger.debug("Loop starting")
+        self.__logger.debug("Loop starting")
         while response_listener.need_more_data:
             assert self.socket.is_ready_read()
             data = self.socket.recv(buf_size)
             if not data:
                 raise IOError
             response_parser.feed_data(data)
-            self._logger.debug(f"Raw response -> {data}")
+            self.__logger.debug(f"Raw response -> {data}")
             callback(data)
 
-        self._logger.debug("Response completed")
+        self.__logger.debug("Response completed")
 
     def update_socket(self, sock: BaseSocket) -> None:
         self.socket = sock

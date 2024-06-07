@@ -40,6 +40,7 @@ class StateManagerProvider:
 
             print(f"Writing State Manager to basic pickle DB: {db_fn}")
             with open(db_fn, 'wb') as f:
+                # TODO: If locks are applied, they cannot be pickled. Store stats data rather than state object.
                 pickle.dump(ssm, f)
 
         print(f"Service uptime for this session: {ssm.get_uptime()}")

@@ -1,21 +1,23 @@
 import select
 import threading
 import queue
+import traceback
+from typing import Callable
 
 from web3_reverse_proxy.config.conf import Config
 
 from web3_reverse_proxy.core.inbound.server import InboundServer
 from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
-from web3_reverse_proxy.core.stats.proxystats import RPCProxyStats
-from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 from web3_reverse_proxy.core.rpc.request.middleware.requestmiddlewaredescr import RequestMiddlewareDescr
 from web3_reverse_proxy.core.rpc.node.client_socket_pool import ClientSocketPool
 from web3_reverse_proxy.core.rpc.node.endpoint_connection_pool import EndpointConnectionPool
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handler import \
-    EndpointConnectionHandler, BrokenConnectionError, BrokenFreshConnectionError
+    EndpointConnectionHandler, BrokenConnectionError
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.utilhttp.errors import ErrorResponses
+
+from web3_reverse_proxy.interfaces.servicestate import StateUpdater
 
 from web3_reverse_proxy.utils.logger import get_logger
 
@@ -23,37 +25,36 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class Web3RPCProxy:
-    _logger = get_logger('Web3RPCProxy')
+    __logger = get_logger('Web3RPCProxy')
 
     def __init__(
             self,
             proxy_listen_port: int,
             num_proxy_workers: int,
             middlewares: RequestMiddlewareDescr,
-            endpoints_handler: EndpointsHandler,
             connection_pool: EndpointConnectionPool,
+            state_updater: StateUpdater,
         ) -> None:
 
         self.request_reader = middlewares.instantiate()
 
-        self.__print_pre_init_info(self.request_reader, endpoints_handler)
+        self.__print_pre_init_info(self.request_reader, connection_pool)
 
         self.inbound_srv = InboundServer(proxy_listen_port, Config.BLOCKING_ACCEPT_TIMEOUT)
         self.connection_pool = connection_pool
+        self.state_updater = state_updater
 
         self.__print_post_init_info(proxy_listen_port)
-
-        self.stats = RPCProxyStats()
 
         self.num_workers = num_proxy_workers
 
     @classmethod
-    def __print_pre_init_info(cls, rr: RequestReaderMiddleware, eh: EndpointsHandler) -> None:
+    def __print_pre_init_info(cls, rr: RequestReaderMiddleware, cp: EndpointConnectionPool) -> None:
 
         print(f'Starting {Config.PROXY_NAME}, version {Config.PROXY_VER}')
         print(f'Provided request middleware chain: {rr}')
 
-        endpoints = list(eh.get_endpoints())
+        endpoints = list(cp.get_endpoints())
         print(f'Connected to {len(endpoints)} endpoint{"s" if len(endpoints) > 1 else ""}:', end="")
         for i in range(len(endpoints)):
             print(f'{"" if i == 0 else ","} "{endpoints[i].get_name()}" @ {endpoints[i].get_endpoint_addr()}', end="")
@@ -62,11 +63,11 @@ class Web3RPCProxy:
 
     def __close_client_socket(self, cs: ClientSocket) -> None:
         try:
-            self._logger.debug(f"Closing client socket {cs}")
+            self.__logger.debug(f"Closing client socket {cs}")
             cs.close()
         except OSError as error:
-            self._logger.error(error)
-            self._logger.error(f"Error on closing socket {cs}")
+            self.__logger.error(error)
+            self.__logger.error(f"Error on closing socket {cs}")
 
     def __close_client_connection(
             self,
@@ -92,6 +93,18 @@ class Web3RPCProxy:
             else:
                 self.__close_client_connection(cs, client_poller, active_client_connections)
 
+    def __create_response_handler(
+        self,
+        endpoint_connection_handler: EndpointConnectionHandler,
+        cs: ClientSocket,
+        req: RPCRequest
+    ) -> Callable:
+        def response_handler(res):
+            cs.send_all(res)
+            endpoint_connection_handler.update_response_stats(res)
+            self.state_updater.record_rpc_response(req, res)
+
+        return response_handler
 
     def handle_client(
             self,
@@ -113,7 +126,7 @@ class Web3RPCProxy:
             # if self.is_cache_available:  # TODO cache
             #     self.read_cache()
             try:
-                endpoint_req_bytes = endpoint_connection_handler.send(req)
+                endpoint_connection_handler.send(req)
             except BrokenConnectionError:  # TODO: Pick up new connection from pool if fresh connection failed
                 self._logger.error(f"Failed to send request with {endpoint_connection_handler}")
                 cs.send_all(ErrorResponses.http_internal_server_error())  # TODO: detect wether client connection is closed
@@ -121,28 +134,20 @@ class Web3RPCProxy:
                 endpoint_connection_handler.close()
                 return
 
-
-            # self.stats.update(endpoint_req_bytes, res_bytes)  # TODO stats
-
-            def response_handler(res):
-                 cs.send_all(res)  # TODO: detect wether client connection is closed
-                # self.stats.update(endpoint_req_bytes, res_bytes)  # TODO stats
-
+            response_handler = self.__create_response_handler(endpoint_connection_handler, cs, req)
             endpoint_connection_handler.receive(response_handler)  # TODO errors
             # if self.is_cache_available and \  # TODO cache
             #         self.response_cache.is_writeable(response.request) and \
             #         self.response_cache.get(response.request.method) is None:
             #     self.response_cache.store(response.request.method, response)
-
+            endpoint_connection_handler.update_request_stats(req)
+            self.state_updater.record_rpc_request(req)
             self.__manage_client_connection(req, cs, client_poller, active_client_connections)
             endpoint_connection_handler.release()
 
-            #     # Basic bookkeeping  # TODO stats
-            #     self.stats.update(incoming_connections_num, processed_requests_num, closed_connections_num)
-            #     if self.stats.is_ready_to_update_display():
-            #         self.stats.display_rudimentary_stats()
         except Exception as e:
-            self._logger.error(e)
+            traceback.print_exc()
+            self.__logger.error(e)
             print(f"Error while handling the client request {e}")  # TODO is this a good error handling?
             self.__close_client_connection(cs, client_poller, active_client_connections)
             endpoint_connection_handler.release()
@@ -150,6 +155,15 @@ class Web3RPCProxy:
     @classmethod
     def __print_post_init_info(cls, proxy_listen_port: int) -> None:
         print("Proxy initialized and listening on {}".format(f"{Config.PROXY_LISTEN_ADDRESS}:{proxy_listen_port}"))
+
+    def update_connection_stats(
+            self,
+            endpoint_connection_handler: EndpointConnectionHandler,
+            request: RPCRequest,
+            response: bytearray,
+        ):
+        endpoint_connection_handler.update_endpoint_stats(request.last_queried_bytes, response)
+        self.state_updater.record_processed_rpc_call(request, response)
 
     def closing_cs(self, client_poller: select.epoll, queue_cs_for_close: queue.Queue):
         while True:
@@ -177,7 +191,7 @@ class Web3RPCProxy:
                     pending_cs_size = pending_cs_size - 1
 
                 events = client_poller.poll(Config.BLOCKING_ACCEPT_TIMEOUT)
-                for fd, flag in events:
+                for fd, _ in events:
                     if fd == srv_socket.socket.fileno():
                         cs = srv_socket.accept(0)  # TODO connection hang up? errors?
                         active_client_connections.add_cs_pending(cs)
