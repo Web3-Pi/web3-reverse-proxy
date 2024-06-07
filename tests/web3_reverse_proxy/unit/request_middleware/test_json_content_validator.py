@@ -2,7 +2,7 @@ import json
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from web3_reverse_proxy.tests.data.json_rpc import RPCCalls
+from tests.web3_reverse_proxy.data.json_rpc import RPCCalls
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.jsoncontentvalidator import AcceptJSONRPCContentReader

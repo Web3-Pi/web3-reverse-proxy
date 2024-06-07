@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=65.5"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "web3pi-reverse-proxy"
+version = "0.0.0a1"
+dependencies = [
+    "httptools>=0.6.1",
+    "python-dotenv>=1.0.1",
+    "requests>=2.31.0",
+    "urllib3>=2.1.0",
+    "upnpclient>=1.0.3",
+    "WhatIsMyIP>=2022.7.10",
+]
+requires-python = ">= 3.11"
+authors = [
+    { name = "jimmyisthis" },
+]
+description = "A reverse proxy service for Geth"
+readme = "README.md"
+keywords = ["web3pi", "web3", "rpi", "raspberry", "geth", "ethereum", "proxy"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: POSIX :: Linux",
+]
+
+[project.urls]
+Repository = "https://github.com/Web3-Pi/web3-reverse-proxy"
+
+[project.scripts]
+"rproxy-run" = "web3_reverse_proxy.rproxy:main"

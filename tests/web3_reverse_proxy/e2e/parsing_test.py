@@ -6,7 +6,7 @@ import requests
 import time
 import pytest
 
-from web3_reverse_proxy.tests.data.json_rpc import RPCCalls
+from tests.web3_reverse_proxy.data.json_rpc import RPCCalls
 from web3_reverse_proxy.utils.logger import get_logger
 
 
