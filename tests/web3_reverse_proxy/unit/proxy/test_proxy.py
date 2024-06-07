@@ -1,27 +1,30 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from web3_reverse_proxy.core.proxy import Web3RPCProxy
-
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
-from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
-from web3_reverse_proxy.core.rpc.request.middleware.requestmiddlewaredescr import RequestMiddlewareDescr
+from web3_reverse_proxy.core.proxy import Web3RPCProxy
 from web3_reverse_proxy.core.rpc.node.client_socket_pool import ClientSocketPool
 from web3_reverse_proxy.core.rpc.node.connection_pool import ConnectionPool
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connection_handler import ConnectionHandler
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connection_handler import (
+    ConnectionHandler,
+)
+from web3_reverse_proxy.core.rpc.request.middleware.requestmiddlewaredescr import (
+    RequestMiddlewareDescr,
+)
+from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 
 
 class Web3RPCProxyTestCase(TestCase):
     def setUp(self):
         self.middlewares = Mock()
-        self.endpoints_handler = Mock(),
+        self.endpoints_handler = (Mock(),)
         self.connection_pool = Mock()
 
     def create_proxy(self, proxy_listen_port=8545, num_proxy_workers=150):
         with (
             patch(
                 "web3_reverse_proxy.core.proxy.Config",
-                BLOCKING_ACCEPT_TIMEOUT = 5,
+                BLOCKING_ACCEPT_TIMEOUT=5,
                 PROXY_NAME="Web3 RPC Reverse Proxy - Test",
                 PROXY_VER="0.0.1",
                 PROXY_LISTEN_ADDRESS="0.0.0.0",
@@ -30,7 +33,13 @@ class Web3RPCProxyTestCase(TestCase):
             patch("web3_reverse_proxy.core.proxy.InboundServer"),
             patch("web3_reverse_proxy.core.proxy.RPCProxyStats"),
         ):
-            return Web3RPCProxy(proxy_listen_port, num_proxy_workers, middlewares, endpoints_handler, connection_pool)
+            return Web3RPCProxy(
+                proxy_listen_port,
+                num_proxy_workers,
+                middlewares,
+                endpoints_handler,
+                connection_pool,
+            )
 
 
 class HandleClientTests(Web3RPCProxyTestCase):
@@ -57,6 +66,7 @@ class HandleClientTests(Web3RPCProxyTestCase):
 
     def test_unexpected_error(self):
         pass
+
     # def __init__(
     #         self,
     #         proxy_listen_port: int,

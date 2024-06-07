@@ -1,5 +1,5 @@
-from threading import Lock
 import time
+from threading import Lock
 
 
 class EndpointConnectionStats:
@@ -30,7 +30,9 @@ class EndpointConnectionStats:
     no_bytes_received = property(__get_no_bytes_received)
     no_requests_handled = property(__get_no_requests_handled)
 
-    def _update(self, no_bytes_received: int, no_bytes_sent: int, no_requests_handled: int) -> None:
+    def _update(
+        self, no_bytes_received: int, no_bytes_sent: int, no_requests_handled: int
+    ) -> None:
         with self.__lock:
             self._no_requests_handled += no_requests_handled
             self._no_bytes_sent += no_bytes_sent
@@ -48,8 +50,8 @@ class EndpointConnectionStats:
 
     def to_dict(self):
         return {
-            'started_at_timestamp': self.started_at,
-            'req_no': self.no_requests_handled,
-            'bytes_sent': self.no_bytes_sent,
-            'bytes_received': self.no_bytes_received
+            "started_at_timestamp": self.started_at,
+            "req_no": self.no_requests_handled,
+            "bytes_sent": self.no_bytes_sent,
+            "bytes_received": self.no_bytes_received,
         }

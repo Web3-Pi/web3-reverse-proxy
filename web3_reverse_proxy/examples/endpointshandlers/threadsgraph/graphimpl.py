@@ -31,7 +31,9 @@ class ThreadsGraph:
 
         return self.queues[queue_id]
 
-    def add_processing_thread(self, fun: Callable, input_queue: int, output_queue: int, *args) -> None:
+    def add_processing_thread(
+        self, fun: Callable, input_queue: int, output_queue: int, *args
+    ) -> None:
         assert input_queue != output_queue
 
         input_queue = self.get_queue(input_queue)

@@ -17,11 +17,7 @@ class RPCAdminCalls:
 
     @classmethod
     def create_method_call_dict(cls, method_str: str, *params) -> dict:
-        res = {
-            'jsonrpc': '2.0',
-            'method': f'{method_str}',
-            'params': list(params)
-        }
+        res = {"jsonrpc": "2.0", "method": f"{method_str}", "params": list(params)}
 
         return res
 
@@ -54,5 +50,7 @@ class RPCAdminCalls:
         return cls.create_method_call_dict(cls.REMOVE_USER, user_api_key)
 
     @classmethod
-    def get_update_user_plan(cls, user_api_key: str,  user_plan: dict) -> dict:
-        return cls.create_method_call_dict(cls.UPDATE_USER_PLAN, user_api_key, user_plan)
+    def get_update_user_plan(cls, user_api_key: str, user_plan: dict) -> dict:
+        return cls.create_method_call_dict(
+            cls.UPDATE_USER_PLAN, user_api_key, user_plan
+        )

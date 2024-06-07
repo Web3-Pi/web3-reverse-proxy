@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import socket
-import select
-import ssl
 import logging
+import select
+import socket
+import ssl
 
 from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
@@ -25,17 +25,19 @@ class ServerSocket:
             try:
                 s_src, _ = self.socket.accept()
                 res = ClientSocket.from_socket(s_src)
-            except(ssl.SSLError) as ssl_err:
+            except ssl.SSLError as ssl_err:
                 logging.error(ssl_err)
                 res = None
 
         return res
 
     @classmethod
-    def create(cls,
-               listen_port: int,
-               listen_backlog_param: int = Config.LISTEN_BACKLOG_PARAM,
-               timeout=None) -> ServerSocket:
+    def create(
+        cls,
+        listen_port: int,
+        listen_backlog_param: int = Config.LISTEN_BACKLOG_PARAM,
+        timeout=None,
+    ) -> ServerSocket:
 
         s_srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s_srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

@@ -1,11 +1,12 @@
-import os
-from typing import get_type_hints, Union, List
-from dotenv import dotenv_values
 import json
+import os
+from typing import List, Union, get_type_hints
+
+from dotenv import dotenv_values
 
 
 def _parse_bool(val: Union[str, bool]) -> bool:
-    return val if val is bool else val.lower() in ['true', 'yes', '1']
+    return val if val is bool else val.lower() in ["true", "yes", "1"]
 
 
 class AppConfig:
@@ -64,8 +65,10 @@ class AppConfig:
     STATE_STORAGE_FILE: str = f"{os.getcwd()}/.w3appdata/{DB_FILE}"
 
     # admin panel
-    ADMIN_ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    ADMIN_HTML_FILE: str = f'{ADMIN_ROOT_DIR}/web3-reverse-proxy-admin/admin/admin.html'
+    ADMIN_ROOT_DIR: str = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+    ADMIN_HTML_FILE: str = f"{ADMIN_ROOT_DIR}/web3-reverse-proxy-admin/admin/admin.html"
 
     # console info
     SERVICE_NAME: str = "Web3 RPC Reverse Proxy Service  - RPI4 Edition"

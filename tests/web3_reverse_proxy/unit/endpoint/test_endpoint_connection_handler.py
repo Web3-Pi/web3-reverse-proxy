@@ -1,12 +1,20 @@
 from unittest import TestCase
-from unittest.mock import Mock, DEFAULT
+from unittest.mock import DEFAULT, Mock
 
 from web3_reverse_proxy.core.rpc.node.connection_pool import ConnectionPool
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handler import (
+    BrokenConnectionError,
+    BrokenFreshConnectionError,
+    ConnectionReleasedError,
+    EndpointConnectionHandler,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import (
+    EndpointConnection,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.receiver import (
+    ResponseReceiver,
+)
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.sender import RequestSender
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.receiver import ResponseReceiver
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handler import \
-    EndpointConnectionHandler, ConnectionReleasedError, BrokenConnectionError, BrokenFreshConnectionError
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 
 
@@ -21,13 +29,17 @@ class EndpointConnectionHandlerTests(TestCase):
         self.connection_mock = Mock(
             EndpointConnection,
             req_sender=self.request_sender_mock,
-            res_receiver=self.response_receiver_mock
+            res_receiver=self.response_receiver_mock,
         )
         self.connection_pool_mock = Mock(ConnectionPool)
-        self.endpoint_connection_handler = EndpointConnectionHandler(self.connection_mock, self.connection_pool_mock)
+        self.endpoint_connection_handler = EndpointConnectionHandler(
+            self.connection_mock, self.connection_pool_mock
+        )
 
     def test_receive_should_return_receiver(self):
-        self.assertIs(self.endpoint_connection_handler.receive(Mock()), self.response_mock)
+        self.assertIs(
+            self.endpoint_connection_handler.receive(Mock()), self.response_mock
+        )
 
     def test_send_should_return_sender(self):
         self.assertIs(

@@ -3,14 +3,20 @@ from __future__ import annotations
 
 class SimplestBillingPlan:
 
-    NUM_FREE_CALLS = 'num_free_calls'
-    NUM_FREE_BYTES = 'num_free_bytes'
-    GLM_CALL_PRICE = 'glm_call_price'
-    GLM_BYTE_PRICE = 'glm_byte_price'
-    USER_PRIORITY = 'user_priority'
+    NUM_FREE_CALLS = "num_free_calls"
+    NUM_FREE_BYTES = "num_free_bytes"
+    GLM_CALL_PRICE = "glm_call_price"
+    GLM_BYTE_PRICE = "glm_byte_price"
+    USER_PRIORITY = "user_priority"
 
-    def __init__(self, no_free_calls: int, no_free_bytes: int, glm_call_price: float, glm_byte_price: float,
-                 user_priority: int) -> None:
+    def __init__(
+        self,
+        no_free_calls: int,
+        no_free_bytes: int,
+        glm_call_price: float,
+        glm_byte_price: float,
+        user_priority: int,
+    ) -> None:
         self.no_free_calls = no_free_calls
         self.no_free_bytes = no_free_bytes
         self.glm_call_price = glm_call_price
@@ -39,7 +45,7 @@ class SimplestBillingPlan:
             self.NUM_FREE_BYTES: self.no_free_bytes,
             self.GLM_CALL_PRICE: self.glm_call_price,
             self.GLM_BYTE_PRICE: self.glm_byte_price,
-            self.USER_PRIORITY: self.user_priority
+            self.USER_PRIORITY: self.user_priority,
         }
 
     @classmethod
@@ -49,8 +55,12 @@ class SimplestBillingPlan:
         assert cls.NUM_FREE_CALLS in d
         assert cls.USER_PRIORITY in d
 
-        return SimplestBillingPlan(d[cls.NUM_FREE_CALLS], d[cls.NUM_FREE_BYTES], 0.0, 0.0, d[cls.USER_PRIORITY])
+        return SimplestBillingPlan(
+            d[cls.NUM_FREE_CALLS], d[cls.NUM_FREE_BYTES], 0.0, 0.0, d[cls.USER_PRIORITY]
+        )
 
     @classmethod
-    def create_plan(cls, no_free_calls: int, no_free_bytes: int, priority: int) -> SimplestBillingPlan:
+    def create_plan(
+        cls, no_free_calls: int, no_free_bytes: int, priority: int
+    ) -> SimplestBillingPlan:
         return SimplestBillingPlan(no_free_calls, no_free_bytes, 0.0, 0.0, priority)

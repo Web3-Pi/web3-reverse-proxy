@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from queue import Queue
-from typing import Dict, Iterable, Callable
+from typing import Callable, Dict, Iterable
 
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
-
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
-
-from web3_reverse_proxy.examples.endpointshandlers.threadsgraph.graphimpl import ThreadsGraph, Queues
+from web3_reverse_proxy.examples.endpointshandlers.threadsgraph.graphimpl import (
+    Queues,
+    ThreadsGraph,
+)
 
 
 class ThreadedEndpointHandler(EndpointsHandler):
@@ -28,7 +29,9 @@ class ThreadedEndpointHandler(EndpointsHandler):
 
         self.no_pending_requests = 0
 
-    def add_processing_thread(self, fun: Callable, queue_in: int, queue_out: int, *args):
+    def add_processing_thread(
+        self, fun: Callable, queue_in: int, queue_out: int, *args
+    ):
         assert queue_in not in self.req_queues
         self.req_queues[queue_in] = self.tg.get_queue(queue_in)
 
@@ -38,7 +41,9 @@ class ThreadedEndpointHandler(EndpointsHandler):
         if endpoint not in self.endpoints:
             self.endpoints.append(endpoint)
 
-        self.add_processing_thread(self.request_consumer, queue_in, Queues.OUT_0, endpoint)
+        self.add_processing_thread(
+            self.request_consumer, queue_in, Queues.OUT_0, endpoint
+        )
 
     def get_queue_for_request(self, req: RPCRequest) -> int:
         return min(self.MAX_PRIORITY_VAL, req.priority)

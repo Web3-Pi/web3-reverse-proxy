@@ -1,4 +1,6 @@
-from web3_reverse_proxy.core.rpc.response.middleware.responsehandler import DefaultRPCResponseHandler
+from web3_reverse_proxy.core.rpc.response.middleware.responsehandler import (
+    DefaultRPCResponseHandler,
+)
 
 
 class RPCResponseMiddlewareFactory:

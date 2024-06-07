@@ -1,14 +1,18 @@
 import json
 
-from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
-from web3_reverse_proxy.core.utilhttp.errors import ErrorResponses
-from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
-from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.validators import \
-    JSONRPCFormatValidator, JSONRPCContentValidator, JSONRPCMethodValidator
-from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
-from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.errors import JSONRPCError
 from web3_reverse_proxy.config.conf import Config
-
+from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
+from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.errors import (
+    JSONRPCError,
+)
+from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.validators import (
+    JSONRPCContentValidator,
+    JSONRPCFormatValidator,
+    JSONRPCMethodValidator,
+)
+from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
+from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
+from web3_reverse_proxy.core.utilhttp.errors import ErrorResponses
 from web3_reverse_proxy.utils.logger import get_logger
 
 
@@ -23,18 +27,27 @@ class AcceptJSONRPCContentReader(RequestReaderMiddleware):
     def __init__(self, next_reader: RequestReaderMiddleware = None) -> None:
         self.next_reader = next_reader
 
-    def read_request(self, cs: ClientSocket, req: RPCRequest) -> RequestReaderMiddleware.ReturnType:
+    def read_request(
+        self, cs: ClientSocket, req: RPCRequest
+    ) -> RequestReaderMiddleware.ReturnType:
         if not Config.JSON_RPC_REQUEST_PARSER_ENABLED:
             method = None
             id = None
             for tok in req.content.split(b","):
                 if tok.startswith(b'"id":') or tok.startswith(b' "id":'):
-                    id = str(tok.split(b":")[1][1:-1], 'utf-8').replace('"', '').strip()
+                    id = str(tok.split(b":")[1][1:-1], "utf-8").replace('"', "").strip()
                 if tok.startswith(b'"method":') or tok.startswith(b' "method":'):
-                    method = str(tok.split(b":")[1][1:-1], 'utf-8').replace('"', '').strip()
+                    method = (
+                        str(tok.split(b":")[1][1:-1], "utf-8").replace('"', "").strip()
+                    )
 
             if method is None:
-                return self.failure(ErrorResponses.bad_request_web3(-32600, "Missing method field", req.id), req)
+                return self.failure(
+                    ErrorResponses.bad_request_web3(
+                        -32600, "Missing method field", req.id
+                    ),
+                    req,
+                )
 
             req.method = method
             req.id = id
@@ -53,7 +66,10 @@ class AcceptJSONRPCContentReader(RequestReaderMiddleware):
                     validator.validate(json_content)
             except JSONRPCError as error:
                 self.__logger.error(f"Request {req} failed with {error}")
-                return self.failure(ErrorResponses.bad_request_web3(error.code, error.message, req.id), req)
+                return self.failure(
+                    ErrorResponses.bad_request_web3(error.code, error.message, req.id),
+                    req,
+                )
             except:
                 self.__logger.error(f"Internal error while parsing request {req}")
                 return self.failure(ErrorResponses.http_internal_server_error(), req)

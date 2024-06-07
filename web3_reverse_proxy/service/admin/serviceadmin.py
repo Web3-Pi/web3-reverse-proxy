@@ -1,8 +1,10 @@
 from collections import OrderedDict
 from io import StringIO
-from typing import Dict, Any
+from typing import Any, Dict
 
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnectionstats import EndpointConnectionStats
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnectionstats import (
+    EndpointConnectionStats,
+)
 from web3_reverse_proxy.core.stats.proxystats import RPCProxyStats
 from web3_reverse_proxy.service.billing.billingplan import SimplestBillingPlan
 from web3_reverse_proxy.service.billing.billingservice import BasicBillingService
@@ -14,11 +16,16 @@ class RPCServiceAdmin:
 
     CONSOLE_CONTENTS = "console_contents"
 
-    USERS_API_KEYS = 'users_api_keys'
+    USERS_API_KEYS = "users_api_keys"
 
     ReturnType = Dict[str, Any] | None
 
-    def __init__(self, billing: BasicBillingService, activity: SimpleActivityLedger, console_buffer: StringIO):
+    def __init__(
+        self,
+        billing: BasicBillingService,
+        activity: SimpleActivityLedger,
+        console_buffer: StringIO,
+    ):
         self.billing_service = billing
         self.activity_ledger = activity
         self.console_buffer = console_buffer
@@ -37,11 +44,13 @@ class RPCServiceAdmin:
             RPCAdminCalls.QUERY_PROXY_STATS: self.query_proxy_stats,
             RPCAdminCalls.QUERY_LIST_ENDPOINTS: self.query_list_endpoints,
             RPCAdminCalls.QUERY_ENDPOINT_STATS: self.query_endpoint_stats,
-            RPCAdminCalls.QUERY_SERVICE_CONSOLE: self.query_service_console
+            RPCAdminCalls.QUERY_SERVICE_CONSOLE: self.query_service_console,
         }
 
     @classmethod
-    def create_plan(cls, free_calls: int | str, free_bytes: int | str, priority: int | str):
+    def create_plan(
+        cls, free_calls: int | str, free_bytes: int | str, priority: int | str
+    ):
         # FIXME: naive type handling
         free_calls_num = int(free_calls)
         free_bytes_num = int(free_bytes)
@@ -59,7 +68,9 @@ class RPCServiceAdmin:
     def register_proxy_stats(self, stats: RPCProxyStats) -> None:
         self.proxy_stats = stats
 
-    def register_endpoint_stats(self, name: str, stats: EndpointConnectionStats) -> None:
+    def register_endpoint_stats(
+        self, name: str, stats: EndpointConnectionStats
+    ) -> None:
         assert name not in self.endpoint_stats
 
         self.endpoint_stats[name] = stats
@@ -91,9 +102,7 @@ class RPCServiceAdmin:
     def query_list_registered_users(self) -> ReturnType:
         users_api_keys = self.billing_service.get_registered_users_api_keys()
 
-        return {
-            self.USERS_API_KEYS: users_api_keys
-        }
+        return {self.USERS_API_KEYS: users_api_keys}
 
     def query_list_users_activities_basic(self) -> ReturnType:
         res = self.activity_ledger.get_all_time_summary()
@@ -103,14 +112,20 @@ class RPCServiceAdmin:
     def query_list_users_activities_detailed(self) -> ReturnType:
         return self.as_dict(self.activity_ledger)
 
-    def register_user(self, user_api_key: str, user_plan: SimplestBillingPlan) -> ReturnType:
+    def register_user(
+        self, user_api_key: str, user_plan: SimplestBillingPlan
+    ) -> ReturnType:
         if not self.billing_service.is_registered(user_api_key):
             self.billing_service.register_user(user_api_key, user_plan)
 
             return self.query_list_registered_users()
 
-    def register_user_flat(self, user_api_key: str, free_calls: int, free_bytes: int, priority: int) -> ReturnType:
-        return self.register_user(user_api_key, self.create_plan(free_calls, free_bytes, priority))
+    def register_user_flat(
+        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int
+    ) -> ReturnType:
+        return self.register_user(
+            user_api_key, self.create_plan(free_calls, free_bytes, priority)
+        )
 
     def remove_user(self, user_api_key: str) -> ReturnType:
         if self.billing_service.is_registered(user_api_key):
@@ -119,14 +134,20 @@ class RPCServiceAdmin:
 
             return self.query_list_registered_users()
 
-    def update_user_plan(self, user_api_key: str, user_plan: SimplestBillingPlan) -> ReturnType:
+    def update_user_plan(
+        self, user_api_key: str, user_plan: SimplestBillingPlan
+    ) -> ReturnType:
         if self.billing_service.is_registered(user_api_key):
             self.billing_service.update_user_plan(user_api_key, user_plan)
 
             return self.query_user_plan(user_api_key)
 
-    def update_user_plan_flat(self, user_api_key: str, free_calls: int, free_bytes: int, priority: int) -> ReturnType:
-        return self.update_user_plan(user_api_key, self.create_plan(free_calls, free_bytes, priority))
+    def update_user_plan_flat(
+        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int
+    ) -> ReturnType:
+        return self.update_user_plan(
+            user_api_key, self.create_plan(free_calls, free_bytes, priority)
+        )
 
     # #########################################################
     # #                PROXY DOMAIN QUERIES                   #

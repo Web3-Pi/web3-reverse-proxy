@@ -2,7 +2,6 @@ import socket
 from typing import List
 
 import upnpclient
-
 from upnpclient import UPNPError
 from upnpclient.soap import SOAPError
 
@@ -15,7 +14,11 @@ class BasicUPnPPortMapper:
 
     SERVICE_WAN_IP_CONN_1 = "WANIPConn1"
 
-    REQUIRED_ACTIONS = [ACTION_ADD_PORT_MAPPING, ACTION_DELETE_PORT_MAPPING, ACTION_GET_EXTERNAL_IP_ADDRESS]
+    REQUIRED_ACTIONS = [
+        ACTION_ADD_PORT_MAPPING,
+        ACTION_DELETE_PORT_MAPPING,
+        ACTION_GET_EXTERNAL_IP_ADDRESS,
+    ]
 
     def __init__(self):
         self.initialized = False
@@ -30,10 +33,10 @@ class BasicUPnPPortMapper:
         try:
             # doesn't even have to be reachable
             # s.connect(('10.254.254.254', 1))
-            s.connect(('8.8.8.8', 1))
+            s.connect(("8.8.8.8", 1))
             ip = s.getsockname()[0]
         except Exception:
-            ip = '127.0.0.1'
+            ip = "127.0.0.1"
         finally:
             s.close()
         return ip
@@ -47,7 +50,9 @@ class BasicUPnPPortMapper:
             actions = set(a.name for a in dev.actions)
             services = set(s.name for s in dev.services)
 
-            if self.SERVICE_WAN_IP_CONN_1 in services and all(ra in actions for ra in self.REQUIRED_ACTIONS):
+            if self.SERVICE_WAN_IP_CONN_1 in services and all(
+                ra in actions for ra in self.REQUIRED_ACTIONS
+            ):
                 self.device = dev
                 break
 
@@ -66,19 +71,23 @@ class BasicUPnPPortMapper:
 
         return self.device.actions
 
-    def add_simple_mapping_rule(self, port: int, rule_descr: str, lease_duration: int) -> bool:
+    def add_simple_mapping_rule(
+        self, port: int, rule_descr: str, lease_duration: int
+    ) -> bool:
         assert self.is_upnp_available()
 
         d = self.device
         try:
-            r = d.WANIPConn1.AddPortMapping(NewRemoteHost='',
-                                            NewExternalPort=port,
-                                            NewProtocol='TCP',
-                                            NewInternalPort=port,
-                                            NewInternalClient=self.local_ip,
-                                            NewEnabled='1',
-                                            NewPortMappingDescription=rule_descr,
-                                            NewLeaseDuration=lease_duration)
+            r = d.WANIPConn1.AddPortMapping(
+                NewRemoteHost="",
+                NewExternalPort=port,
+                NewProtocol="TCP",
+                NewInternalPort=port,
+                NewInternalClient=self.local_ip,
+                NewEnabled="1",
+                NewPortMappingDescription=rule_descr,
+                NewLeaseDuration=lease_duration,
+            )
             assert len(r) == 0
         except (UPNPError, SOAPError) as ex:
             return False
@@ -92,9 +101,9 @@ class BasicUPnPPortMapper:
 
         d = self.device
         try:
-            r = d.WANIPConn1.DeletePortMapping(NewRemoteHost='',
-                                               NewExternalPort=port,
-                                               NewProtocol='TCP')
+            r = d.WANIPConn1.DeletePortMapping(
+                NewRemoteHost="", NewExternalPort=port, NewProtocol="TCP"
+            )
             assert len(r) == 0
         except (UPNPError, SOAPError):
             return False
@@ -107,14 +116,16 @@ class BasicUPnPPortMapper:
     def get_external_ip_address(self):
         assert self.is_upnp_available()
 
-        return self.device.WANIPConn1.GetExternalIPAddress()['NewExternalIPAddress']
+        return self.device.WANIPConn1.GetExternalIPAddress()["NewExternalIPAddress"]
 
     def get_status(self):
         assert self.is_upnp_available()
 
         return self.device.WANIPConn1.GetStatusInfo()
 
-    def add_multiple_mappings(self, ports: List[int], rules_descr: List[str], lease_duration: int) -> bool:
+    def add_multiple_mappings(
+        self, ports: List[int], rules_descr: List[str], lease_duration: int
+    ) -> bool:
         assert len(ports) == len(rules_descr)
 
         res = True

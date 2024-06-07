@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import errno
+import select
 import socket
 import ssl
-
-import select
 
 from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.utils.logger import get_logger

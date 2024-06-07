@@ -1,6 +1,6 @@
+import re
 from abc import ABC, abstractmethod
 from typing import Any, List
-import re
 
 
 class Condition(ABC):
@@ -35,6 +35,7 @@ class Exact(Condition):
     @property
     def description(self) -> str:
         return f"is {self.value}"
+
 
 class Matches(Condition):
     def __init__(self, regex: str) -> None:

@@ -1,7 +1,7 @@
+import time
 from abc import ABC
 from dataclasses import dataclass
 from typing import Any, Type
-import time
 
 
 @dataclass
@@ -50,12 +50,12 @@ class CacheService(ABC):
 
 class ExpirableCacheService(CacheService):
     def __init__(
-            self,
-            expiry_milis: int,
-            cache_record_class: Type[ExpirableCacheRecord] = ExpirableCacheRecord
-        ) -> None:
+        self,
+        expiry_milis: int,
+        cache_record_class: Type[ExpirableCacheRecord] = ExpirableCacheRecord,
+    ) -> None:
         super().__init__(cache_record_class)
-        self._expiry_ns = expiry_milis * 10 ** 6
+        self._expiry_ns = expiry_milis * 10**6
 
     def _is_record_valid(self, record: ExpirableCacheRecord):
         return record.expiry > time.time_ns()

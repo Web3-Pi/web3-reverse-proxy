@@ -9,7 +9,7 @@ class ClientSocket(BaseSocket):
     def __init__(self, _socket) -> None:
         super().__init__(_socket)
 
-        self.rfile = _socket.makefile('rb', -1)
+        self.rfile = _socket.makefile("rb", -1)
 
     def recv_discard_data(self) -> None:
         ready_read = self.is_ready_read()

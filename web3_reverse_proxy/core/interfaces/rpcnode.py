@@ -1,12 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Iterable
 
-from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
-
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
-
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
+from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 
 
 class EndpointsHandler(ABC):
@@ -34,5 +32,9 @@ class EndpointsHandler(ABC):
 
 class LoadBalancer(ABC):
     @abstractmethod
-    def get_queue_for_request(self, endpoint_handler: EndpointsHandler, req: RPCRequest, ) -> int:
+    def get_queue_for_request(
+        self,
+        endpoint_handler: EndpointsHandler,
+        req: RPCRequest,
+    ) -> int:
         pass
