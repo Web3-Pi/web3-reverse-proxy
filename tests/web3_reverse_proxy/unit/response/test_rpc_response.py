@@ -129,7 +129,7 @@ class RPCResponseTests(TestCase):
 
     def test_create(self):
         for response_data in self.responses.values():
-            with self.subTest(response_data["raw"]):
+            with self.subTest(response=response_data["raw"]):
                 request = self.request_mock()
                 response = RPCResponse(response_data["raw"], request)
                 self.assertEqual(response.raw, response_data["raw"])
@@ -142,21 +142,21 @@ class RPCResponseTests(TestCase):
 
     def test_chunked_property(self):
         for response_type, response_data in self.responses.items():
-            with self.subTest(response_data["raw"]):
+            with self.subTest(response=response_data["raw"]):
                 is_response_chunked = response_type.startswith("chunked")
                 response = RPCResponse(response_data["raw"], self.request_mock())
                 self.assertEqual(response.chunked, is_response_chunked)
 
     def test_compressed_property(self):
         for response_type, response_data in self.responses.items():
-            with self.subTest(response_data["raw"]):
+            with self.subTest(response=response_data["raw"]):
                 is_response_chunked = response_type.startswith("compressed")
                 response = RPCResponse(response_data["raw"], self.request_mock())
                 self.assertEqual(response.compressed, is_response_chunked)
 
     def test_get_headers(self):
         for response_data in self.responses.values():
-            with self.subTest(response_data["raw"]):
+            with self.subTest(response=response_data["raw"]):
                 result = RPCResponse.get_headers(response_data["raw"])
                 self.assertEqual(result, response_data["headers"])
 
@@ -194,6 +194,6 @@ class RPCResponseTests(TestCase):
             (b'HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: application/json\r\nDate: Wed, 03 Apr 2024 22:45:33 GMT\r\nContent-Length: 62\r\n\r\n\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\xaaV\xca*\xce\xcf+*HV\xb2R2\xd23P\xd2Q\xcaLQ\xb22\xd0Q*J-.\xcd)Q\xb2R2T\xaa\xe5\x02\x04\x00\x00\xff\xff\xba', False),
         ]
         for raw_response, is_complete in dataset:
-            with self.subTest(raw_response):
+            with self.subTest(response=raw_response):
                 result = RPCResponse.is_complete_raw_response(raw_response)
                 self.assertEqual(result, is_complete)

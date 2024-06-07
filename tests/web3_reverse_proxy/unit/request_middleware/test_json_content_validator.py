@@ -81,7 +81,7 @@ class AcceptJSONRPCContentReaderTests(TestCase):
         json_reader = AcceptJSONRPCContentReader()
 
         for payload, is_valid in test_data:
-            with self.subTest(payload):
+            with self.subTest(payload=payload):
                 request = self._make_request(payload)
                 result = self._pass_request(json_reader, request)
                 if is_valid:
@@ -95,7 +95,7 @@ class AcceptJSONRPCContentReaderTests(TestCase):
         test_data = [payload for payload in RPCCalls.generate_missing_member_calls() if payload.get("method") is not None] + RPCCalls.generate_non_alphanumeric_input_calls()
 
         for payload in test_data:
-            with self.subTest(payload):
+            with self.subTest(payload=payload):
                 with patch("web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.jsoncontentvalidator.Config", JSON_RPC_REQUEST_PARSER_ENABLED=False):
                     request = self._make_request(payload)
                     result, _ = json_reader.read_request(Mock(ClientSocket), request)
@@ -106,7 +106,7 @@ class AcceptJSONRPCContentReaderTests(TestCase):
         test_data = [payload for payload in RPCCalls.generate_missing_member_calls() if payload.get("method") is None]
 
         for payload in test_data:
-            with self.subTest(payload):
+            with self.subTest(payload=payload):
                 with patch("web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.jsoncontentvalidator.Config", JSON_RPC_REQUEST_PARSER_ENABLED=False):
                     _, response = json_reader.read_request(Mock(ClientSocket), self._make_request(payload))
                     self.assertIn(b"Missing method field", response.raw)
