@@ -1,7 +1,11 @@
 from __future__ import annotations
 
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import EndpointConnectionDescriptor
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnectionstats import EndpointConnectionStats
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
+    EndpointConnectionDescriptor,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnectionstats import (
+    EndpointConnectionStats,
+)
 
 
 class RPCEndpoint:

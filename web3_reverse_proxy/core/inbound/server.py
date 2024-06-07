@@ -1,19 +1,21 @@
-from typing import List, Iterable, Set
-
 import select
+from typing import Iterable, List, Set
 
 from web3_reverse_proxy.config.conf import Config
-from web3_reverse_proxy.core.utilhttp.errors import ErrorResponses
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 from web3_reverse_proxy.core.sockets.serversocket import ServerSocket
+from web3_reverse_proxy.core.utilhttp.errors import ErrorResponses
 
 
 class InboundServer:
 
-    def __init__(self, listen_port: int,
-                 blocking_accept_timeout: int,
-                 max_concurrent_conn: int = Config.MAX_CONCURRENT_CONNECTIONS,
-                 qos_frequency: float = Config.QOS_BASE_FREQUENCY) -> None:
+    def __init__(
+        self,
+        listen_port: int,
+        blocking_accept_timeout: int,
+        max_concurrent_conn: int = Config.MAX_CONCURRENT_CONNECTIONS,
+        qos_frequency: float = Config.QOS_BASE_FREQUENCY,
+    ) -> None:
 
         self.accepted_connections = set()
         self.active_connections = set()
@@ -32,7 +34,9 @@ class InboundServer:
             cs.recv_discard_data()
 
     @classmethod
-    def _close_with_error_responses(cls, connections: Iterable[ClientSocket], error_response: bytes) -> None:
+    def _close_with_error_responses(
+        cls, connections: Iterable[ClientSocket], error_response: bytes
+    ) -> None:
         for cs in connections:
             try:
                 if cs.is_ready_write():
@@ -44,7 +48,9 @@ class InboundServer:
 
             cs.close()
 
-    def handle_additional_connections(self, incoming: set, accept_timeout: float) -> [Set, List]:
+    def handle_additional_connections(
+        self, incoming: set, accept_timeout: float
+    ) -> [Set, List]:
         cur_conn_num = len(self.active_connections) + len(incoming)
         rejected = []
 
@@ -60,7 +66,9 @@ class InboundServer:
                     break
 
                 next_client_s = self.server_s.accept(0.0)
-        elif self.no_saturated_iterations > Config.MAX_SATURATED_ITERATIONS_LISTEN_PARAM:
+        elif (
+            self.no_saturated_iterations > Config.MAX_SATURATED_ITERATIONS_LISTEN_PARAM
+        ):
             # In this case - reject all pending connections
             next_client_s = self.server_s.accept(0.0)
             while next_client_s is not None:
@@ -73,7 +81,9 @@ class InboundServer:
         incoming = set()
 
         # If there are active connections available, there should be no delay in processing them (hence a 0.0 timeout)
-        additional_connections_accept_timeout = self.qos_timeout if len(self.active_connections) == 0 else 0.0
+        additional_connections_accept_timeout = (
+            self.qos_timeout if len(self.active_connections) == 0 else 0.0
+        )
 
         # If there are no accepted connections, wait for the new one (timeout allows for keyboard interrupt handling)
         if len(self.accepted_connections) == 0:
@@ -85,7 +95,9 @@ class InboundServer:
 
             incoming.add(next_client_s)
 
-        incoming, rejected = self.handle_additional_connections(incoming, additional_connections_accept_timeout)
+        incoming, rejected = self.handle_additional_connections(
+            incoming, additional_connections_accept_timeout
+        )
 
         if len(incoming) > 0:
             self.active_connections |= incoming
@@ -93,7 +105,9 @@ class InboundServer:
 
         if len(rejected) > 0:
             self._receive_dev_null(rejected)
-            self._close_with_error_responses(rejected, ErrorResponses.service_unavailable())
+            self._close_with_error_responses(
+                rejected, ErrorResponses.service_unavailable()
+            )
 
         return len(incoming)
 
@@ -136,5 +150,7 @@ class InboundServer:
 
     def shutdown(self) -> None:
         # FIXME: unreliable, "best effort" error handling - 500 Internal Server Error
-        self._close_with_error_responses(self.active_connections, ErrorResponses.http_internal_server_error())
+        self._close_with_error_responses(
+            self.active_connections, ErrorResponses.http_internal_server_error()
+        )
         self.server_s.close()

@@ -1,20 +1,26 @@
 from __future__ import annotations
 
 from queue import SimpleQueue
-from typing import List, Tuple
 from threading import Lock
+from typing import List, Tuple
 
 from web3_reverse_proxy.config.conf import Config
-
 from web3_reverse_proxy.core.interfaces.rpcnode import LoadBalancer
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import EndpointConnectionDescriptor
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
-from web3_reverse_proxy.core.rpc.node.rpcendpointhandlers.loadbalancers.simpleloadbalancers import RandomLoadBalancer
-from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handler import EndpointConnectionHandler
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
 from web3_reverse_proxy.core.rpc.node.connection_pool import ConnectionPool
-
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
+    EndpointConnectionDescriptor,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handler import (
+    EndpointConnectionHandler,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import (
+    EndpointConnection,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
+from web3_reverse_proxy.core.rpc.node.rpcendpointhandlers.loadbalancers.simpleloadbalancers import (
+    RandomLoadBalancer,
+)
+from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.utils.logger import get_logger
 
 
@@ -23,10 +29,10 @@ class EndpointConnectionPool(ConnectionPool):
     MAX_CONNECTIONS = Config.NUM_PROXY_WORKERS
 
     def __init__(
-            self,
-            descriptors: List[Tuple[str, EndpointConnectionDescriptor]],
-            load_balancer: LoadBalancer = RandomLoadBalancer,  # For convenience during architecture change
-        ):
+        self,
+        descriptors: List[Tuple[str, EndpointConnectionDescriptor]],
+        load_balancer: LoadBalancer = RandomLoadBalancer,  # For convenience during architecture change
+    ):
         self.endpoints = []
         self.load_balancer = load_balancer
         self.connections = SimpleQueue()
@@ -35,13 +41,17 @@ class EndpointConnectionPool(ConnectionPool):
         for index in range(len(descriptors)):
             name, conn_descr = descriptors[index]
             assert conn_descr is not None
-            self.__logger.debug(f"Creating endpoint {name} with connection {conn_descr}")
+            self.__logger.debug(
+                f"Creating endpoint {name} with connection {conn_descr}"
+            )
             self.endpoints.append(RPCEndpoint.create(name, conn_descr))
 
     def _cleanup(self) -> None:
         excessive_connections = self.connections.qsize() - self.MAX_CONNECTIONS
         if excessive_connections > 0:
-            self.__logger.debug(f"Detected {excessive_connections} excessive connections")
+            self.__logger.debug(
+                f"Detected {excessive_connections} excessive connections"
+            )
             for _ in range(excessive_connections):
                 connection = self.connections.get_nowait()
                 self.__logger.debug(f"Removed connection {connection}")
@@ -56,10 +66,14 @@ class EndpointConnectionPool(ConnectionPool):
         self.__lock.acquire()
         if self.connections.empty():
             try:
-                self.__logger.debug("No existing connections available, establishing new connection")
+                self.__logger.debug(
+                    "No existing connections available, establishing new connection"
+                )
                 # TODO: Reconsider load balancers after new architecture is settled
                 # TODO: Could be released sooner, if endpoints remain constant
-                endpoint_index = self.load_balancer.get_queue_for_request(self.endpoints, RPCRequest())
+                endpoint_index = self.load_balancer.get_queue_for_request(
+                    self.endpoints, RPCRequest()
+                )
             finally:
                 self.__lock.release()
 

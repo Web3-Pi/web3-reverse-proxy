@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
+from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 
 
 class RPCResponseHandler(ABC):

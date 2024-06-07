@@ -1,6 +1,5 @@
 from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.core.upnp.ipgetter import my_public_ip
-
 from web3_reverse_proxy.core.upnp.upnpportmapper import BasicUPnPPortMapper
 
 
@@ -31,7 +30,9 @@ class BasicUPnPService:
             if not res:
                 print("UPnP service: port forwarding -> FAILURE")
             else:
-                print(f"UPnP service: forwarded proxy port {self.proxy_port} and http admin port {self.admin_port}")
+                print(
+                    f"UPnP service: forwarded proxy port {self.proxy_port} and http admin port {self.admin_port}"
+                )
                 ip = self.upnp.get_external_ip_address()
 
         if ip is None:

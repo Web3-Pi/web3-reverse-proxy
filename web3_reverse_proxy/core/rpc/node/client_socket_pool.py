@@ -22,6 +22,7 @@ class ClientSocketPool:
     Thread-safe.
     But a caller must ensure conditions for each call.
     """
+
     def __init__(self):
         self.all_client_connections = {}
         self.head = None
@@ -30,7 +31,7 @@ class ClientSocketPool:
         self.lock = Lock()
 
     def add_cs_pending(self, cs: ClientSocket):
-        """ Adds a new client socket to the pool, in pending status """
+        """Adds a new client socket to the pool, in pending status"""
         # assert all_client_connections.get(cs.socket.fileno()) is None
         with self.lock:
             entry = ClientSocketPoolEntry(cs)
@@ -43,7 +44,7 @@ class ClientSocketPool:
             self.size = self.size + 1
 
     def get_cs_and_set_in_use(self, fd: int) -> ClientSocket:
-        """ Searches for a client socket, it must be in pending status, is changed to in_use status and returned """
+        """Searches for a client socket, it must be in pending status, is changed to in_use status and returned"""
         # assert all_client_connections.get(fd) is not None
         # assert all_client_connections[fd].in_use == False
         with self.lock:
@@ -65,7 +66,7 @@ class ClientSocketPool:
             return entry.cs
 
     def set_cs_pending(self, fd: int):
-        """ Changes the status of a client socket to pending - it must be in_use beforehand """
+        """Changes the status of a client socket to pending - it must be in_use beforehand"""
         # assert all_client_connections.get(fd) is not None
         # assert all_client_connections[fd].in_use == True
         with self.lock:
@@ -80,7 +81,7 @@ class ClientSocketPool:
             self.size = self.size + 1
 
     def del_cs_in_use(self, fd: int):
-        """ Removes a client socket from the pool - it must be in_use beforehand """
+        """Removes a client socket from the pool - it must be in_use beforehand"""
         # assert all_client_connections.get(fd) is not None
         # assert all_client_connections[fd].in_use == True
         with self.lock:
@@ -95,15 +96,16 @@ class ClientSocketPool:
             return tail_entry.cs
 
     def get_size(self) -> int:
-        """ Returns the size of the list of pending cs """
+        """Returns the size of the list of pending cs"""
         return self.size
 
     def iterate_cs_pending(self):
-        """ Iterates the linked list of pending cs, from the tail to the head - from the last used to recently """
+        """Iterates the linked list of pending cs, from the tail to the head - from the last used to recently"""
         with self.lock:
             next_entry = self.tail
             while next_entry:
                 entry = next_entry
-                next_entry = entry.prev  # entry.prev may be changed at yield, so there is the helper var next_entry
+                next_entry = (
+                    entry.prev
+                )  # entry.prev may be changed at yield, so there is the helper var next_entry
                 yield entry
-

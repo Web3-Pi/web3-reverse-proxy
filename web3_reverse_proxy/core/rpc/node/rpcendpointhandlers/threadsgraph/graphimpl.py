@@ -17,8 +17,12 @@ class Queues:
         self.in_queues = {}
         self.out_queues = {}
 
-        in_labels = [self._IN_PREFIX + str(in_index) for in_index in range(num_in_queues)]
-        out_labels = [self._OUT_PREFIX + str(out_index) for out_index in range(num_out_queues)]
+        in_labels = [
+            self._IN_PREFIX + str(in_index) for in_index in range(num_in_queues)
+        ]
+        out_labels = [
+            self._OUT_PREFIX + str(out_index) for out_index in range(num_out_queues)
+        ]
 
         QueuesTuple = namedtuple("QueuesTuple", in_labels + out_labels)
         return QueuesTuple(*[index for index in range(num_in_queues + num_out_queues)])
@@ -36,7 +40,9 @@ class ThreadsGraph:
 
         return self.queues[queue_id]
 
-    def add_processing_thread(self, fun: Callable, input_queue: int, output_queue: int, *args) -> None:
+    def add_processing_thread(
+        self, fun: Callable, input_queue: int, output_queue: int, *args
+    ) -> None:
         assert input_queue != output_queue
 
         input_queue = self.get_queue(input_queue)

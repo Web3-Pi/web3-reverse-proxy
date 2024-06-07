@@ -2,16 +2,21 @@ from typing import Iterable, List, Optional
 
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
 from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
-from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
-from web3_reverse_proxy.core.rpc.cache.responsecacheservice import ResponseCacheService
 from web3_reverse_proxy.core.interfaces.rpcresponse import RPCResponseHandler
+from web3_reverse_proxy.core.rpc.cache.responsecacheservice import ResponseCacheService
+from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 
 
 class RPCProxyRequestManager:
 
-    def __init__(self, request_reader: RequestReaderMiddleware, endpoints_handler: EndpointsHandler,
-                 response_handler: RPCResponseHandler, cache_service: Optional[ResponseCacheService] = None) -> None:
+    def __init__(
+        self,
+        request_reader: RequestReaderMiddleware,
+        endpoints_handler: EndpointsHandler,
+        response_handler: RPCResponseHandler,
+        cache_service: Optional[ResponseCacheService] = None,
+    ) -> None:
 
         self.request_reader = request_reader
         self.endpoints_handler = endpoints_handler
@@ -37,7 +42,11 @@ class RPCProxyRequestManager:
         self.errors = {}
 
     def read_requests(self, client_sockets: Iterable[ClientSocket]) -> None:
-        assert len(self.requests) == 0 and len(self.responses) == 0 and len(self.errors) == 0
+        assert (
+            len(self.requests) == 0
+            and len(self.responses) == 0
+            and len(self.errors) == 0
+        )
 
         for cs in client_sockets:
             req, err = self.request_reader.read_request(cs, RPCRequest())
@@ -51,10 +60,10 @@ class RPCProxyRequestManager:
         for cs, request in list(self.requests.items()):
             if self.response_cache.is_writeable(request):
                 cached_response = self.response_cache.get(request.method)
-                if cached_response is not None:  
+                if cached_response is not None:
                     self.responses.append((cs, cached_response))
                     del self.requests[cs]
-                
+
     def process_requests(self) -> None:
         for cs, request in self.requests.items():
             self.endpoints_handler.add_request(cs, request)
@@ -62,10 +71,12 @@ class RPCProxyRequestManager:
         if self.endpoints_handler.has_pending_requests():
             responses = self.endpoints_handler.process_pending_requests()
             for cs, response in responses:
-                if self.is_cache_available and \
-                    self.response_cache.is_writeable(response.request) and \
-                    self.response_cache.get(response.request.method) is None:
-                        self.response_cache.store(response.request.method, response)
+                if (
+                    self.is_cache_available
+                    and self.response_cache.is_writeable(response.request)
+                    and self.response_cache.get(response.request.method) is None
+                ):
+                    self.response_cache.store(response.request.method, response)
                 self.responses.append((cs, response))
 
     def handle_responses(self) -> None:

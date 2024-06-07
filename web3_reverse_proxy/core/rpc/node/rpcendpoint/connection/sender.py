@@ -1,10 +1,10 @@
-from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
+from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
 
 
 class RequestSender:
 
-    POST_REQUEST_LINE = 'POST /{} HTTP/1.1\r\n'
+    POST_REQUEST_LINE = "POST /{} HTTP/1.1\r\n"
     HOST_LAST_HEADER = "Host: {}\r\n\r\n"
 
     def __init__(self, sock: BaseSocket, host: str, api_key: str = "") -> None:

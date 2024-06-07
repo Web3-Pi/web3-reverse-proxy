@@ -2,23 +2,27 @@ import datetime
 from io import StringIO
 from typing import Iterable
 
-from web3_reverse_proxy.state.wrappers import SimpleAuthenticatorFromBilling, BasicBillingServiceWithLedger
-
-from web3_reverse_proxy.core.stats.proxystats import RPCProxyStats
-
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
-
-from web3_reverse_proxy.interfaces.permissions import ClientPermissions, CallPermissions
+from web3_reverse_proxy.core.stats.proxystats import RPCProxyStats
+from web3_reverse_proxy.interfaces.permissions import CallPermissions, ClientPermissions
 from web3_reverse_proxy.interfaces.servicestate import StateUpdater
-
 from web3_reverse_proxy.service.admin.serviceadmin import RPCServiceAdmin
 from web3_reverse_proxy.service.billing.billingservice import BasicBillingService
 from web3_reverse_proxy.service.ledger.activityledger import SimpleActivityLedger
+from web3_reverse_proxy.state.wrappers import (
+    BasicBillingServiceWithLedger,
+    SimpleAuthenticatorFromBilling,
+)
 
 
 class SampleStateManager:
 
-    def __init__(self, billing: BasicBillingService, activity: SimpleActivityLedger, console_buffer: StringIO) -> None:
+    def __init__(
+        self,
+        billing: BasicBillingService,
+        activity: SimpleActivityLedger,
+        console_buffer: StringIO,
+    ) -> None:
         self.billing_service = billing
         self.activity_ledger = activity
 
@@ -37,7 +41,9 @@ class SampleStateManager:
 
     def get_call_permissions_instance(self) -> CallPermissions:
         user_summary_getter_fun = self.activity_ledger.get_all_time_user_summary
-        return BasicBillingServiceWithLedger(self.billing_service, user_summary_getter_fun)
+        return BasicBillingServiceWithLedger(
+            self.billing_service, user_summary_getter_fun
+        )
 
     def get_service_state_updater_instance(self) -> StateUpdater:
         return self.activity_ledger
@@ -50,7 +56,9 @@ class SampleStateManager:
 
     def register_endpoints(self, endpoints: Iterable[RPCEndpoint]) -> None:
         for e in endpoints:
-            self.admin_impl.register_endpoint_stats(e.get_name(), e.get_connection_stats())
+            self.admin_impl.register_endpoint_stats(
+                e.get_name(), e.get_connection_stats()
+            )
 
     def clear_transient_fields(self):
         self.admin_impl.clear_transient_fields()

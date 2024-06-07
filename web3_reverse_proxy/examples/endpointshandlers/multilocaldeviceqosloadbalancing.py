@@ -2,38 +2,51 @@ from email.utils import formatdate
 from queue import Queue
 from typing import Dict, Iterable, List, Tuple
 
-from web3_reverse_proxy.interfaces.servicestate import StateUpdater
-
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
-
-from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
-
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
+    EndpointConnectionDescriptor,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
-
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import EndpointConnectionDescriptor
-
-from web3_reverse_proxy.examples.endpointshandlers.threadsgraph.graphimpl import ThreadsGraph, Queues
+from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
+from web3_reverse_proxy.examples.endpointshandlers.threadsgraph.graphimpl import (
+    Queues,
+    ThreadsGraph,
+)
+from web3_reverse_proxy.interfaces.servicestate import StateUpdater
 
 
 class MultiDeviceLocalLoadBalancingQoSHandler(EndpointsHandler):
 
-    RES_CID_0 = bytearray(b'HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: application/json\r\nDate: ')
-    RES_CID_1 = bytearray(b'\r\nContent-Length: 64\r\n\r\n\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\xaaV\xca*\xce\xcf+*HV\xb2R2\xd23P\xd2Q\xcaLQ\xb22\xd0Q*J-.\xcd)Q\xb2R2\xa80T\xaa\xe5\x02\x04\x00\x00\xff\xff\xe1\xb1\x0cF(\x00\x00\x00')
+    RES_CID_0 = bytearray(
+        b"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: application/json\r\nDate: "
+    )
+    RES_CID_1 = bytearray(
+        b"\r\nContent-Length: 64\r\n\r\n\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\xaaV\xca*\xce\xcf+*HV\xb2R2\xd23P\xd2Q\xcaLQ\xb22\xd0Q*J-.\xcd)Q\xb2R2\xa80T\xaa\xe5\x02\x04\x00\x00\xff\xff\xe1\xb1\x0cF(\x00\x00\x00"
+    )
 
-    def __init__(self, descriptors: List[Tuple[str, EndpointConnectionDescriptor]], updater: StateUpdater) -> None:
+    def __init__(
+        self,
+        descriptors: List[Tuple[str, EndpointConnectionDescriptor]],
+        updater: StateUpdater,
+    ) -> None:
         super().__init__()
 
         assert len(descriptors) <= Queues.OUT_0
 
-        self.endpoints = [RPCEndpoint.create(name, conn_descr, updater) for name, conn_descr in descriptors]
+        self.endpoints = [
+            RPCEndpoint.create(name, conn_descr, updater)
+            for name, conn_descr in descriptors
+        ]
 
         self.tg = ThreadsGraph()
         self.queues = []
         self.counter = {}
         for queue_in_no, endpoint in enumerate(self.endpoints):
-            self.tg.add_processing_thread(self.request_consumer, queue_in_no, Queues.OUT_0, endpoint)
+            self.tg.add_processing_thread(
+                self.request_consumer, queue_in_no, Queues.OUT_0, endpoint
+            )
             self.queues.append(self.tg.get_queue(queue_in_no))
             self.counter[queue_in_no] = 0
 

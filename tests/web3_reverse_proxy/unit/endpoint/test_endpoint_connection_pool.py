@@ -1,13 +1,18 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from web3_reverse_proxy.core.rpc.node.endpoint_connection_pool import EndpointConnectionPool
-
 from web3_reverse_proxy.core.interfaces.rpcnode import LoadBalancer
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import EndpointConnectionDescriptor
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
-from web3_reverse_proxy.interfaces.servicestate import StateUpdater
+from web3_reverse_proxy.core.rpc.node.endpoint_connection_pool import (
+    EndpointConnectionPool,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
+    EndpointConnectionDescriptor,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import (
+    EndpointConnection,
+)
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
+from web3_reverse_proxy.interfaces.servicestate import StateUpdater
 
 
 class EndpointConnectionPoolTests(TestCase):
@@ -21,11 +26,10 @@ class EndpointConnectionPoolTests(TestCase):
         endpoint_instance_mock = Mock(RPCEndpoint)
         rpc_endpoint_mock.create.return_value = endpoint_instance_mock
 
-
     def create_pool(self, descriptors=None, max_connections=1):
-        with (
-            patch("web3_reverse_proxy.core.rpc.node.endpoint_connection_pool.RPCEndpoint") as rpc_endpoint_mock
-        ):
+        with patch(
+            "web3_reverse_proxy.core.rpc.node.endpoint_connection_pool.RPCEndpoint"
+        ) as rpc_endpoint_mock:
             self.configure_endpoint_mock(rpc_endpoint_mock)
             connection_pool = EndpointConnectionPool(
                 descriptors or [("endpoint-0", self.connection_desc_mock)],
@@ -50,8 +54,12 @@ class EndpointConnectionPoolTests(TestCase):
 
         self.assertEqual(connection_pool.connections.qsize(), pool_size_before + 1)
 
-    @patch("web3_reverse_proxy.core.rpc.node.endpoint_connection_pool.EndpointConnectionHandler")
-    def test_get_should_take_connection_from_pool_if_exists(self, connection_handler_mock):
+    @patch(
+        "web3_reverse_proxy.core.rpc.node.endpoint_connection_pool.EndpointConnectionHandler"
+    )
+    def test_get_should_take_connection_from_pool_if_exists(
+        self, connection_handler_mock
+    ):
         connection_pool = self.create_pool()
         connection = Mock(EndpointConnection)
         connection_pool.connections.put(connection)
@@ -62,15 +70,23 @@ class EndpointConnectionPoolTests(TestCase):
         connection_handler_mock.assert_called_with(connection, connection_pool, False)
         self.assertEqual(connection_pool.connections.qsize(), pool_size_before - 1)
 
-    @patch("web3_reverse_proxy.core.rpc.node.endpoint_connection_pool.EndpointConnection")
-    @patch("web3_reverse_proxy.core.rpc.node.endpoint_connection_pool.EndpointConnectionHandler")
-    def test_get_should_create_new_connection_if_pool_is_empty(self, connection_handler_mock, connection_mock):
+    @patch(
+        "web3_reverse_proxy.core.rpc.node.endpoint_connection_pool.EndpointConnection"
+    )
+    @patch(
+        "web3_reverse_proxy.core.rpc.node.endpoint_connection_pool.EndpointConnectionHandler"
+    )
+    def test_get_should_create_new_connection_if_pool_is_empty(
+        self, connection_handler_mock, connection_mock
+    ):
         connection_pool = self.create_pool()
         pool_size_before = connection_pool.connections.qsize()
 
         connection_pool.get()
 
-        connection_handler_mock.assert_called_with(connection_mock(), connection_pool, True)
+        connection_handler_mock.assert_called_with(
+            connection_mock(), connection_pool, True
+        )
         self.assertEqual(connection_pool.connections.qsize(), pool_size_before)
 
     def test_pool_should_close_excessive_connections(self):

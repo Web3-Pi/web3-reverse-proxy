@@ -1,17 +1,23 @@
 from __future__ import annotations
 
 from queue import Queue
-from typing import Iterable, Callable, List, Tuple
+from typing import Callable, Iterable, List, Tuple
 
 from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler, LoadBalancer
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import EndpointConnectionDescriptor
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
+    EndpointConnectionDescriptor,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import (
+    EndpointConnection,
+)
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
-from web3_reverse_proxy.core.rpc.node.rpcendpointhandlers.threadsgraph.graphimpl import ThreadsGraph, Queues
+from web3_reverse_proxy.core.rpc.node.rpcendpointhandlers.threadsgraph.graphimpl import (
+    Queues,
+    ThreadsGraph,
+)
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
-
 from web3_reverse_proxy.interfaces.servicestate import StateUpdater
 from web3_reverse_proxy.utils.logger import get_logger
 
@@ -20,11 +26,11 @@ class ThreadedEndpointHandler(EndpointsHandler):
     __logger = get_logger("ThreadedEndpointHandler")
 
     def __init__(
-            self,
-            descriptors: List[Tuple[str, EndpointConnectionDescriptor]],
-            state_updater: StateUpdater,
-            load_balancer: LoadBalancer,
-        ):
+        self,
+        descriptors: List[Tuple[str, EndpointConnectionDescriptor]],
+        state_updater: StateUpdater,
+        load_balancer: LoadBalancer,
+    ):
         self.tg = ThreadsGraph()
         self.queues_ids = Queues.create(len(descriptors), 1)
         self.req_queues = {}
@@ -36,9 +42,14 @@ class ThreadedEndpointHandler(EndpointsHandler):
         for index in range(len(descriptors)):
             name, conn_descr = descriptors[index]
             assert conn_descr is not None
-            self.add_request_consumer(self.queues_ids[index], RPCEndpoint.create(name, conn_descr, state_updater))
+            self.add_request_consumer(
+                self.queues_ids[index],
+                RPCEndpoint.create(name, conn_descr, state_updater),
+            )
 
-    def add_processing_thread(self, fun: Callable, queue_in: int, queue_out: int, *args):
+    def add_processing_thread(
+        self, fun: Callable, queue_in: int, queue_out: int, *args
+    ):
         assert queue_in not in self.req_queues
         self.req_queues[queue_in] = self.tg.get_queue(queue_in)
 
@@ -48,7 +59,9 @@ class ThreadedEndpointHandler(EndpointsHandler):
         if endpoint not in self.endpoints:
             self.endpoints.append(endpoint)
 
-        self.add_processing_thread(self.request_consumer, queue_in, self.queues_ids.OUT_0, endpoint)
+        self.add_processing_thread(
+            self.request_consumer, queue_in, self.queues_ids.OUT_0, endpoint
+        )
 
     def add_request(self, cs: ClientSocket, req: RPCRequest) -> None:
         self.__logger.debug(f"Adding request {req} for {cs}")
@@ -56,7 +69,9 @@ class ThreadedEndpointHandler(EndpointsHandler):
 
         self.req_queues[in_queue_index].put((cs, req))
         self.no_pending_requests += 1
-        self.__logger.debug(f"Added request with {self.no_pending_requests} pending requests")
+        self.__logger.debug(
+            f"Added request with {self.no_pending_requests} pending requests"
+        )
 
     def process_pending_requests(self) -> List[Tuple[ClientSocket, RPCResponse]]:
         ret = []
@@ -75,13 +90,17 @@ class ThreadedEndpointHandler(EndpointsHandler):
         return ret
 
     @classmethod
-    def request_consumer(cls, req_q: Queue, res_q: Queue, endpoint: RPCEndpoint) -> None:
+    def request_consumer(
+        cls, req_q: Queue, res_q: Queue, endpoint: RPCEndpoint
+    ) -> None:
         cls.__logger.debug("Started consuming request")
         while True:
             cls.__logger.debug(f"Endpoint {endpoint} awaiting requests...")
             cs, req = req_q.get()
 
-            cls.__logger.debug(f"Endpoint {endpoint} accepted request {req} from client socket {cs}")
+            cls.__logger.debug(
+                f"Endpoint {endpoint} accepted request {req} from client socket {cs}"
+            )
             response_handler = lambda res: res_q.put((cs, res))
 
             cls.__logger.debug("Initiating request/response roundtrip")

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
-from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.rpc.response.rpcresponse import RPCResponse
+from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
 
 
 class RequestReaderMiddleware(ABC):

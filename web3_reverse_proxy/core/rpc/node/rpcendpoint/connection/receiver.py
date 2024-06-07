@@ -3,8 +3,8 @@ from typing import Callable
 
 from httptools import HttpResponseParser
 
-from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
 from web3_reverse_proxy.config.conf import Config
+from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
 from web3_reverse_proxy.utils.logger import get_logger
 
 
@@ -14,7 +14,9 @@ class HttpResponseParserListener:
         self.need_more_data = True
         self.chunk_completed = False
 
-    def on_message_complete(self):  # non-chunked message or the last response of chunked message
+    def on_message_complete(
+        self,
+    ):  # non-chunked message or the last response of chunked message
         self.need_more_data = False
 
     def on_chunk_header(self):

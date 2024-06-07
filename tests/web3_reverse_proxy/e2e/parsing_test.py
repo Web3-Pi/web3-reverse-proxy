@@ -2,24 +2,27 @@
 TODO: Parsing tests are covered by unit tests, but valid calls could still be made into an E2E test.
 Consider refactoring this for compatibility with a test runner.
 """
-import requests
+
 import time
+
 import pytest
+import requests
 
 from tests.web3_reverse_proxy.data.json_rpc import RPCCalls
 from web3_reverse_proxy.utils.logger import get_logger
-
 
 logger = get_logger("ParserE2ETest")
 pytest.skip("skipping incompatible E2E", allow_module_level=True)
 
 
-URL = 'http://localhost:6512/aaa'
+URL = "http://localhost:6512/aaa"
 
 
 def make_request(payload):
     logger.info(f"Sending command: {payload}")
-    return requests.post(URL, json=payload, headers={'Content-Type': 'application/json'})
+    return requests.post(
+        URL, json=payload, headers={"Content-Type": "application/json"}
+    )
 
 
 def send_valid_requests():
@@ -38,9 +41,9 @@ def send_valid_requests():
             logger.info(f"With content: {response._content}\n")
     runtime = time.time() - timestamp
     print(f"Finished in {runtime}")
-    print(f'Failed {len(failed_requests)} out of {total_requests} requests\n')
+    print(f"Failed {len(failed_requests)} out of {total_requests} requests\n")
     if len(failed_requests) > 0:
-        print(f'Failed following requests:\n')
+        print(f"Failed following requests:\n")
         for method, params in failed_requests:
             print(f"{method} -> {params}")
     print("\n")
@@ -57,14 +60,14 @@ def send_missing_member_calls():
         if not response.ok:
             logger.info(f"Responded with error: {response._content}\n")
         else:
-            passed_requests.append((payload.get('method'), payload.get('params')))
+            passed_requests.append((payload.get("method"), payload.get("params")))
             logger.error(f"Request passed with response: {response}")
             logger.error(f"With content: {response._content}\n")
     runtime = time.time() - timestamp
     print(f"Finished in {runtime}")
-    print(f'Passed {len(passed_requests)} out of {total_requests} requests\n')
+    print(f"Passed {len(passed_requests)} out of {total_requests} requests\n")
     if len(passed_requests) > 0:
-        print(f'Passed following requests:\n')
+        print(f"Passed following requests:\n")
         for method, params in passed_requests:
             print(f"{method} -> {params}")
     print("\n")
@@ -81,14 +84,14 @@ def send_non_alphanumeric_input_calls():
         if not response.ok:
             logger.info(f"Responded with error: {response._content}\n")
         else:
-            passed_requests.append((payload['method'], payload.get(('params'))))
+            passed_requests.append((payload["method"], payload.get(("params"))))
             logger.error(f"Request passed with response: {response}")
             logger.error(f"With content: {response._content}\n")
     runtime = time.time() - timestamp
     print(f"Finished in {runtime}")
-    print(f'Passed {len(passed_requests)} out of {total_requests} requests\n')
+    print(f"Passed {len(passed_requests)} out of {total_requests} requests\n")
     if len(passed_requests) > 0:
-        print(f'Passed following requests:\n')
+        print(f"Passed following requests:\n")
         for method, params in passed_requests:
             print(f"{method} -> {params}")
     print("\n")
@@ -112,5 +115,5 @@ def main():
     # stress_test()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

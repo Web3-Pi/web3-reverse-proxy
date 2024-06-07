@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Tuple, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 
@@ -7,8 +7,8 @@ from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 # FIXME: this class requires implementation from scratch
 class RPCResponse:
     # FIXME: parse response headers to correctly receive the whole response
-    START_OF_TRANSMISSION = b'HTTP'
-    END_OF_CHUNKED_TRANSMISSION = b'0\r\n\r\n'
+    START_OF_TRANSMISSION = b"HTTP"
+    END_OF_CHUNKED_TRANSMISSION = b"0\r\n\r\n"
 
     HEAD_SEPARATOR = b"\r\n\r\n"
     CRLF_SEPARATOR = b"\r\n"
@@ -38,7 +38,9 @@ class RPCResponse:
 
     @property
     def is_complete(self) -> bool:
-        return type(self.content) is dict or self._verify_completion(self.content, self.headers)
+        return type(self.content) is dict or self._verify_completion(
+            self.content, self.headers
+        )
 
     @staticmethod
     def _is_compressed(headers: Dict[str, str]) -> bool:
@@ -49,7 +51,9 @@ class RPCResponse:
         return headers is None or "chunked" in headers.get("transfer-encoding", "")
 
     @classmethod
-    def _separate_head_from_body(cls, raw_data: bytearray) -> Tuple[Optional[bytearray], bytearray]:
+    def _separate_head_from_body(
+        cls, raw_data: bytearray
+    ) -> Tuple[Optional[bytearray], bytearray]:
         if not raw_data.startswith(cls.START_OF_TRANSMISSION):
             return None, raw_data
         head, _, body = raw_data.partition(cls.HEAD_SEPARATOR)
@@ -77,13 +81,17 @@ class RPCResponse:
     @classmethod
     def is_complete_raw_response(cls, raw_data: bytearray) -> bool:
         head, body = cls._separate_head_from_body(raw_data)
-        headers = cls._parse_headers(head.partition(cls.CRLF_SEPARATOR)[2]) \
-            if head is not None \
+        headers = (
+            cls._parse_headers(head.partition(cls.CRLF_SEPARATOR)[2])
+            if head is not None
             else None
+        )
         return cls._verify_completion(body, headers)
 
     @classmethod
-    def _verify_completion(cls, body: bytearray, headers: Optional[Dict[str, str]]) -> bool:
+    def _verify_completion(
+        cls, body: bytearray, headers: Optional[Dict[str, str]]
+    ) -> bool:
         if cls._is_chunked(headers):
             return body.endswith(cls.END_OF_CHUNKED_TRANSMISSION)
         assert headers is not None
@@ -95,10 +103,12 @@ class RPCResponse:
             self.content = body
         else:
             self.content = body.decode(self.RAW_ENCODING)
-            if len(self.content) > 0 \
-                and not self.chunked \
-                and not self.headers.get('content-type', "").lower() == "text/plain" \
-                and self._verify_completion(body, self.headers):
+            if (
+                len(self.content) > 0
+                and not self.chunked
+                and not self.headers.get("content-type", "").lower() == "text/plain"
+                and self._verify_completion(body, self.headers)
+            ):
                 self.content = json.loads(self.content)
 
     def _parse_response(self, raw_data: bytearray) -> None:

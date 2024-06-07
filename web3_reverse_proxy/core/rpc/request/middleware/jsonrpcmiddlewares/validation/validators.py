@@ -1,10 +1,17 @@
 from abc import ABC
 from typing import Any
 
-from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.conditions import \
-    Type, Exact, In, Matches
-from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.errors import \
-    InvalidRequestError, InvalidParamsError, MethodNotFoundError
+from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.conditions import (
+    Exact,
+    In,
+    Matches,
+    Type,
+)
+from web3_reverse_proxy.core.rpc.request.middleware.jsonrpcmiddlewares.validation.errors import (
+    InvalidParamsError,
+    InvalidRequestError,
+    MethodNotFoundError,
+)
 
 
 class JSONValidator(ABC):
@@ -24,7 +31,9 @@ class JSONRPCFormatValidator(JSONValidator):
     @classmethod
     def validate(cls, content: dict) -> None:
         if type(content) != dict:
-            raise InvalidRequestError(f"JSON-RPC request must be an object, batches are not supported")
+            raise InvalidRequestError(
+                f"JSON-RPC request must be an object, batches are not supported"
+            )
         for key, condition in cls.RPC_PARAM_CONDITIONS.items():
             if not key in content:
                 if key != "params":
@@ -34,7 +43,7 @@ class JSONRPCFormatValidator(JSONValidator):
 
 
 class JSONRPCContentValidator(JSONValidator):
-    REGEX_CONDITION = Matches(r'^\w+$')
+    REGEX_CONDITION = Matches(r"^\w+$")
 
     def get_error_message(label, value):
         value = value.replace('"', '\\"')

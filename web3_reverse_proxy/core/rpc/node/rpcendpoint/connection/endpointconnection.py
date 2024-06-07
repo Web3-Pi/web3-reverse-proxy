@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import EndpointConnectionDescriptor
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.receiver import ResponseReceiver, ResponseReceiverGeth
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
+    EndpointConnectionDescriptor,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.receiver import (
+    ResponseReceiver,
+    ResponseReceiverGeth,
+)
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.sender import RequestSender
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3_reverse_proxy.core.sockets.basesocket import BaseSocket
-
 from web3_reverse_proxy.utils.logger import get_logger
 
 
@@ -29,7 +33,9 @@ class EndpointConnection:
         self.socket = self.__create_socket()
         self.__logger.debug(f"Socket created for description: {self.conn_descr}")
 
-        self.req_sender = RequestSender(self.socket, self.conn_descr.host, self.conn_descr.auth_key)
+        self.req_sender = RequestSender(
+            self.socket, self.conn_descr.host, self.conn_descr.auth_key
+        )
 
         self.res_receiver = ResponseReceiverGeth(self.socket)
 
@@ -42,8 +48,9 @@ class EndpointConnection:
         return self.socket.get_peer_name()[0]
 
     def __create_socket(self) -> BaseSocket:
-        return BaseSocket.create_socket(self.conn_descr.host, self.conn_descr.port, self.conn_descr.is_ssl)
-
+        return BaseSocket.create_socket(
+            self.conn_descr.host, self.conn_descr.port, self.conn_descr.is_ssl
+        )
 
     def close(self) -> None:
         self.socket.close()
@@ -51,8 +58,12 @@ class EndpointConnection:
     def reconnect(self) -> None:
         self.close()
         self.socket = self.__create_socket()
-        self.req_sender = RequestSender(self.socket, self.conn_descr.host, self.conn_descr.auth_key)
+        self.req_sender = RequestSender(
+            self.socket, self.conn_descr.host, self.conn_descr.auth_key
+        )
         self.res_receiver = ResponseReceiverGeth(self.socket)
 
-    def update_endpoint_stats(self, request_bytes: bytearray, response_bytes: bytearray) -> None:
+    def update_endpoint_stats(
+        self, request_bytes: bytearray, response_bytes: bytearray
+    ) -> None:
         self.endpoint.update_stats(request_bytes, response_bytes)

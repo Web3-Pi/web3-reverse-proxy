@@ -1,11 +1,13 @@
 from typing import Callable
 
 from web3_reverse_proxy.core.rpc.node.connection_pool import ConnectionPool
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connection_handler import ConnectionHandler
-from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
-
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connection_handler import (
+    ConnectionHandler,
+)
+from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import (
+    EndpointConnection,
+)
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
-
 from web3_reverse_proxy.utils.logger import get_logger
 
 
@@ -27,11 +29,11 @@ class ReconnectError(BrokenConnectionError):
 
 class EndpointConnectionHandler(ConnectionHandler):
     def __init__(
-            self,
-            connection: EndpointConnection,
-            connection_pool: ConnectionPool,
-            is_fresh_connection: bool = False,  # TODO: It might be a good idea to derive this from connection instead
-        ) -> None:
+        self,
+        connection: EndpointConnection,
+        connection_pool: ConnectionPool,
+        is_fresh_connection: bool = False,  # TODO: It might be a good idea to derive this from connection instead
+    ) -> None:
         self.connection = connection
         self.connection_pool = connection_pool
         self.is_reconnect_forbidden = is_fresh_connection
@@ -41,10 +43,11 @@ class EndpointConnectionHandler(ConnectionHandler):
 
     @staticmethod
     def _acquired_connection(func: Callable) -> Callable:
-        def decorator(instance: 'EndpointConnectionHandler', *args, **kwargs):
+        def decorator(instance: "EndpointConnectionHandler", *args, **kwargs):
             if instance.connection is None:
                 raise ConnectionReleasedError
             return func(instance, *args, **kwargs)
+
         return decorator
 
     @_acquired_connection
@@ -54,7 +57,9 @@ class EndpointConnectionHandler(ConnectionHandler):
             self.is_reconnect_forbidden = True
             return request
         except:
-            self._logger.error(f"Failed to send request {req} over connection {self.connection}")
+            self._logger.error(
+                f"Failed to send request {req} over connection {self.connection}"
+            )
             self._logger.debug(f"Reconnecting {self.connection}")
 
         if not self.is_reconnect_forbidden:
@@ -65,7 +70,7 @@ class EndpointConnectionHandler(ConnectionHandler):
                 raise ReconnectError
         else:
             self._logger.error(f"Connection {self.connection} started broken!")
-            raise BrokenFreshConnectionError 
+            raise BrokenFreshConnectionError
 
         try:
             return self.connection.req_sender.send_request(req)

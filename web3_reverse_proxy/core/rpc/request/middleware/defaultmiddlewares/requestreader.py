@@ -1,10 +1,10 @@
-from httptools import HttpRequestParser, HttpParserError
+from httptools import HttpParserError, HttpRequestParser
 
 from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
-from web3_reverse_proxy.core.utilhttp.errors import ErrorResponses
 from web3_reverse_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3_reverse_proxy.core.sockets.clientsocket import ClientSocket
+from web3_reverse_proxy.core.utilhttp.errors import ErrorResponses
 from web3_reverse_proxy.utils.logger import get_logger
 
 
@@ -12,19 +12,23 @@ class HttpRequestParserListener:
 
     def __init__(self, req: RPCRequest) -> None:
         self.req = req
-        req.headers = b''
+        req.headers = b""
         self.need_more_data = True
 
     def on_url(self, url: bytes):
-        self.req.user_api_key = str(url[1:], 'utf-8')  # TODO is it utf-8? TODO do we need str?
+        self.req.user_api_key = str(
+            url[1:], "utf-8"
+        )  # TODO is it utf-8? TODO do we need str?
 
     def on_header(self, name: bytes, value: bytes):
-        if name.lower() == b'host':
+        if name.lower() == b"host":
             pass
-        elif name.lower() == b'connection':
-            self.req.keep_alive = value != b'close'  # TODO is value already trimmed? TODO value is case sensitive?
+        elif name.lower() == b"connection":
+            self.req.keep_alive = (
+                value != b"close"
+            )  # TODO is value already trimmed? TODO value is case sensitive?
         else:
-            self.req.headers = self.req.headers + name + b': ' + value + b'\r\n'
+            self.req.headers = self.req.headers + name + b": " + value + b"\r\n"
 
     def on_body(self, body: bytes):
         self.req.content = body
@@ -40,7 +44,9 @@ class RequestReader(RequestReaderMiddleware):
     def __init__(self, next_reader: RequestReaderMiddleware = None):
         self.next_reader = next_reader
 
-    def read_request(self, cs: ClientSocket, req: RPCRequest) -> RequestReaderMiddleware.ReturnType:
+    def read_request(
+        self, cs: ClientSocket, req: RPCRequest
+    ) -> RequestReaderMiddleware.ReturnType:
         buf_size = Config.DEFAULT_RECV_BUF_SIZE
 
         request_listener = HttpRequestParserListener(req)
