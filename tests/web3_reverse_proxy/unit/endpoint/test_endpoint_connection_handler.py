@@ -1,7 +1,9 @@
 from unittest import TestCase
 from unittest.mock import DEFAULT, Mock
 
-from web3_reverse_proxy.core.rpc.node.connection_pool import ConnectionPool
+from web3_reverse_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import (
+    EndpointConnectionPool,
+)
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handler import (
     BrokenConnectionError,
     BrokenFreshConnectionError,
@@ -31,7 +33,7 @@ class EndpointConnectionHandlerTests(TestCase):
             req_sender=self.request_sender_mock,
             res_receiver=self.response_receiver_mock,
         )
-        self.connection_pool_mock = Mock(ConnectionPool)
+        self.connection_pool_mock = Mock(EndpointConnectionPool)
         self.endpoint_connection_handler = EndpointConnectionHandler(
             self.connection_mock, self.connection_pool_mock
         )
