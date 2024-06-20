@@ -134,7 +134,7 @@ class Web3RPCProxy:
             )  # TODO close connection if fatal error i.e. non http request
 
             if err is not None:
-                cs.send_all(err.raw)  # TODO: detect wether client connection is closed
+                cs.send_all(err.raw)  # TODO: detect whether client connection is closed
                 self.__manage_client_connection(
                     req, cs, client_poller, active_client_connections
                 )
