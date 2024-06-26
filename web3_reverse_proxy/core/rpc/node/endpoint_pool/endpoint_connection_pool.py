@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from enum import Enum
 from queue import SimpleQueue
 from threading import Lock, RLock
 
@@ -119,9 +120,14 @@ class EndpointConnectionPool(ConnectionPool):
         self.endpoint = endpoint
         self.connections = SimpleQueue()
         self.stats = PoolStats()
-        self.__active = True
+        self.status = self.PoolStatus.ACTIVE.value
         self.__lock = Lock()
         self.__logger = get_logger(f"EndpointConnectionPool.{id(self)}")
+
+    class PoolStatus(Enum):
+        ACTIVE = ("ACTIVE",)
+        DISABLED = "DISABLED"
+        CLOSED = "CLOSED"
 
     class ConnectionHolder:
         def __init__(self, connection: EndpointConnection) -> None:
@@ -159,6 +165,10 @@ class EndpointConnectionPool(ConnectionPool):
                 connection.close()
             except OSError:
                 self.__logger.error(f"Failure on closing connection {connection}")
+
+    def __update_status(self, status: str):
+        self.status = status
+        self.__logger.debug(f"Changed status to {status}")
 
     def get(self) -> EndpointConnectionHandler:
         self.__lock.acquire()
@@ -200,23 +210,25 @@ class EndpointConnectionPool(ConnectionPool):
                 self.connections.put(self.ConnectionHolder(connection))
                 self.__cleanup()
         else:
-            self.__logger.warn("Returned connection to a disabled pool")
+            self.__logger.warn(f"Connection returned on status {self.status}")
             self.__logger.debug(f"Shutting down connection {connection}")
             connection.close()
 
     def is_active(self):
-        return self.__active
+        return self.status == self.PoolStatus.ACTIVE.value
 
     def disable(self):
         with self.__lock:
-            self.__active = False
+            self.__update_status(self.PoolStatus.DISABLED.value)
             self.__close()
             self.stats = PoolStats()
         self.__logger.info("Pool has been disabled")
 
     def activate(self):
+        if self.status == self.PoolStatus.CLOSED.value:
+            self.__logger.error("Tried to activate after closure")
         with self.__lock:
-            self.__active = True
+            self.__update_status(self.PoolStatus.ACTIVE.value)
         self.__logger.info("Pool has been activated")
 
     def handle_broken_connection(self, connection: EndpointConnection, is_new=False):
@@ -229,5 +241,5 @@ class EndpointConnectionPool(ConnectionPool):
 
     def close(self) -> None:
         with self.__lock:
-            self.__active = False
+            self.__update_status(self.PoolStatus.CLOSED.value)
             self.__close()
