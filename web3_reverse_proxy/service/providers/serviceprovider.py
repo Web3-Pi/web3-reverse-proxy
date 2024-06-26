@@ -1,23 +1,17 @@
 from typing import List
 
 from web3_reverse_proxy.config.conf import Config
-from web3_reverse_proxy.core.interfaces.rpcnode import EndpointsHandler
 from web3_reverse_proxy.core.interfaces.rpcresponse import RPCResponseHandler
 from web3_reverse_proxy.core.proxy import Web3RPCProxy
-from web3_reverse_proxy.core.rpc.node.endpoint_connection_pool import (
-    EndpointConnectionPool,
+from web3_reverse_proxy.core.rpc.node.endpoint_pool import load_balancers
+from web3_reverse_proxy.core.rpc.node.endpoint_pool.pool_manager import (
+    EndpointConnectionPoolManager,
 )
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
     EndpointConnectionDescriptor,
 )
-from web3_reverse_proxy.core.rpc.node.rpcendpointhandlers.loadbalancers import (
-    simpleloadbalancers,
-)
 from web3_reverse_proxy.core.rpc.request.middleware.requestmiddlewaredescr import (
     RequestMiddlewareDescr,
-)
-from web3_reverse_proxy.service.factories.endpointshandlermiddlewarefactory import (
-    RPCEndpointsHandlerMiddlewareFactory,
 )
 from web3_reverse_proxy.service.factories.requestmiddlewarefactory import (
     RPCRequestMiddlewareFactory,
@@ -44,30 +38,6 @@ class ServiceComponentsProvider:
         return RPCRequestMiddlewareFactory.create_default_descr(cli, call)
 
     @classmethod
-    def create_default_endpoint_handler(
-        cls, ssm: SampleStateManager, name: str, url: str
-    ) -> EndpointsHandler:
-        updater = ssm.get_service_state_updater_instance()
-
-        return RPCEndpointsHandlerMiddlewareFactory.create_pass_through(
-            url, name, updater
-        )
-
-    @classmethod
-    def create_default_multi_threaded_endpoint_handler(
-        cls,
-        endpoint_config: List[dict],
-        ssm: SampleStateManager,
-    ):
-        updater = ssm.get_service_state_updater_instance()
-
-        return RPCEndpointsHandlerMiddlewareFactory.create_multi_thread(
-            endpoint_config,
-            updater,
-            simpleloadbalancers.PriorityLoadBalancer,
-        )
-
-    @classmethod
     def create_default_connection_pool(cls, endpoint_config: List[dict]):
         descriptors = [
             (
@@ -76,8 +46,9 @@ class ServiceComponentsProvider:
             )
             for entrypoint in endpoint_config
         ]
-
-        return EndpointConnectionPool(descriptors)
+        # TODO: Settle on most suitable place for plugging in load balancer for interchangeability
+        load_balancer = load_balancers.LeastBusyLoadBalancer()
+        return EndpointConnectionPoolManager(descriptors, load_balancer)
 
     @classmethod
     def create_default_response_handler(cls) -> RPCResponseHandler:
@@ -87,7 +58,7 @@ class ServiceComponentsProvider:
     def create_web3_rpc_proxy(
         cls,
         ssm: SampleStateManager,
-        connection_pool: EndpointConnectionPool,
+        connection_pool: EndpointConnectionPoolManager,
         proxy_port,
         num_proxy_workers: int,
     ) -> Web3RPCProxy:
@@ -107,7 +78,7 @@ class ServiceComponentsProvider:
         # ssm.register_proxy_stats(proxy.stats)
 
         # Pass endpoint data, so that it can be queried
-        ssm.register_endpoints(connection_pool.get_endpoints())
+        ssm.register_endpoints(connection_pool.endpoints)
 
         return proxy
 
