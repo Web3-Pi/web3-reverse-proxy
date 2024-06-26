@@ -92,6 +92,10 @@ class ErrorResponses:
         return cls.bad_request_web3(-32700, "Invalid JSON format", _id)
 
     @classmethod
+    def connection_error(cls, _id: int | str = None) -> bytes:
+        return cls.bad_request_web3(-32603, "Could not reach server", _id)
+
+    @classmethod
     def http_internal_server_error(cls) -> bytes:
         return cls.http_error(500)
 
