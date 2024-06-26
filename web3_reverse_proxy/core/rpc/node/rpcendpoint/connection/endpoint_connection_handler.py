@@ -1,6 +1,8 @@
 from typing import Callable
 
-from web3_reverse_proxy.core.rpc.node.connection_pool import ConnectionPool
+from web3_reverse_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import (
+    ConnectionPool,
+)
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connection_handler import (
     ConnectionHandler,
 )
@@ -32,14 +34,15 @@ class EndpointConnectionHandler(ConnectionHandler):
         self,
         connection: EndpointConnection,
         connection_pool: ConnectionPool,
-        is_fresh_connection: bool = False,  # TODO: It might be a good idea to derive this from connection instead
+        is_new_connection: bool = False,  # TODO: It might be a good idea to derive this from connection instead
     ) -> None:
         self.connection = connection
         self.connection_pool = connection_pool
-        self.is_reconnect_forbidden = is_fresh_connection
+        self.is_new_connection = is_new_connection
+        self.is_reconnect_forbidden = is_new_connection
 
-        self._logger = get_logger(f"EndpointConnectionHandler.{id(self)}")
-        self._logger.debug(f"Created handler for connection {connection}")
+        self.__logger = get_logger(f"EndpointConnectionHandler.{id(self)}")
+        self.__logger.debug(f"Created handler for connection {connection}")
 
     @staticmethod
     def _acquired_connection(func: Callable) -> Callable:
@@ -57,25 +60,30 @@ class EndpointConnectionHandler(ConnectionHandler):
             self.is_reconnect_forbidden = True
             return request
         except:
-            self._logger.error(
+            self.__logger.error(
                 f"Failed to send request {req} over connection {self.connection}"
             )
-            self._logger.debug(f"Reconnecting {self.connection}")
 
         if not self.is_reconnect_forbidden:
             try:
+                self.__logger.debug(f"Reconnecting {self.connection}")
                 self.connection.reconnect()
             except:
-                self._logger.error(f"Connection {self.connection} failed to reconnect!")
+                self.__logger.error(
+                    f"Connection {self.connection} failed to reconnect!"
+                )
+                self.__handle_broken_connection()
                 raise ReconnectError
         else:
-            self._logger.error(f"Connection {self.connection} started broken!")
+            self.__logger.error(f"Connection {self.connection} started broken!")
+            self.__handle_broken_connection()
             raise BrokenFreshConnectionError
 
         try:
             return self.connection.req_sender.send_request(req)
         except:
-            self._logger.error(f"Connection {self.connection} is broken")
+            self.__logger.error(f"Connection {self.connection} is broken")
+            self.__handle_broken_connection()
             raise BrokenConnectionError
 
     @_acquired_connection
@@ -92,6 +100,12 @@ class EndpointConnectionHandler(ConnectionHandler):
         if self.connection is not None:
             self.connection_pool.put(self.connection)
             self.connection = None
+
+    def __handle_broken_connection(self) -> None:
+        self.connection_pool.handle_broken_connection(
+            self.connection, self.is_new_connection
+        )
+        self.connection = None
 
     def close(self) -> None:
         if self.connection is not None:

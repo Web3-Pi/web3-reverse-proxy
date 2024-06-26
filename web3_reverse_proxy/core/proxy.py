@@ -9,8 +9,8 @@ from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.core.inbound.server import InboundServer
 from web3_reverse_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
 from web3_reverse_proxy.core.rpc.node.client_socket_pool import ClientSocketPool
-from web3_reverse_proxy.core.rpc.node.endpoint_connection_pool import (
-    EndpointConnectionPool,
+from web3_reverse_proxy.core.rpc.node.endpoint_pool.pool_manager import (
+    EndpointConnectionPoolManager,
 )
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handler import (
     BrokenConnectionError,
@@ -34,7 +34,7 @@ class Web3RPCProxy:
         proxy_listen_port: int,
         num_proxy_workers: int,
         middlewares: RequestMiddlewareDescr,
-        connection_pool: EndpointConnectionPool,
+        connection_pool: EndpointConnectionPoolManager,
         state_updater: StateUpdater,
     ) -> None:
 
@@ -54,13 +54,13 @@ class Web3RPCProxy:
 
     @classmethod
     def __print_pre_init_info(
-        cls, rr: RequestReaderMiddleware, cp: EndpointConnectionPool
+        cls, rr: RequestReaderMiddleware, cp: EndpointConnectionPoolManager
     ) -> None:
 
         print(f"Starting {Config.PROXY_NAME}, version {Config.PROXY_VER}")
         print(f"Provided request middleware chain: {rr}")
 
-        endpoints = list(cp.get_endpoints())
+        endpoints = cp.endpoints
         print(
             f'Connected to {len(endpoints)} endpoint{"s" if len(endpoints) > 1 else ""}:',
             end="",
@@ -103,7 +103,6 @@ class Web3RPCProxy:
             client_poller.modify(
                 cs.socket, select.EPOLLIN | select.EPOLLONESHOT
             )  # TODO hangup? errors?
-            # self.__close_client_socket(cs)  # TODO if this is commented out, rpc-tests are 30% faster, why?
         else:
             self.__close_client_connection(cs, client_poller, active_client_connections)
 
@@ -116,17 +115,18 @@ class Web3RPCProxy:
         def response_handler(res):
             cs.send_all(res)
             endpoint_connection_handler.update_response_stats(res)
-            self.state_updater.record_rpc_response(req, res)
+            self.state_updater.record_rpc_response(res)
 
         return response_handler
 
     def handle_client(
         self,
-        endpoint_connection_handler: EndpointConnectionHandler,
+        connection_getter: Callable,
         cs: ClientSocket,
         client_poller: select.epoll,
         active_client_connections: ClientSocketPool,
     ) -> None:
+        endpoint_connection_handler = None
         try:
             # TODO detect closed by a client cs connection and close it by our side?
             req, err = self.request_reader.read_request(
@@ -136,23 +136,35 @@ class Web3RPCProxy:
             if err is not None:
                 cs.send_all(err.raw)  # TODO: detect whether client connection is closed
                 self.__manage_client_connection(
-                    req, cs, client_poller, active_client_connections
+                    err.request, cs, client_poller, active_client_connections
                 )
-                endpoint_connection_handler.release()
                 return
 
             # if self.is_cache_available:  # TODO cache
             #     self.read_cache()
             try:
+                endpoint_connection_handler = connection_getter()
+            except Exception as error:
+                self.__logger.error(error)
+                self.__logger.error("Failed to establish endpoint connection")
+                cs.send_all(
+                    ErrorResponses.connection_error(req.id)
+                )  # TODO: detect wether client connection is closed
+                self.__manage_client_connection(
+                    req, cs, client_poller, active_client_connections
+                )
+                return
+
+            try:
                 endpoint_connection_handler.send(req)
             except (
                 BrokenConnectionError
             ):  # TODO: Pick up new connection from pool if fresh connection failed
-                self._logger.error(
+                self.__logger.error(
                     f"Failed to send request with {endpoint_connection_handler}"
                 )
                 cs.send_all(
-                    ErrorResponses.http_internal_server_error()
+                    ErrorResponses.connection_error(req.id)
                 )  # TODO: detect wether client connection is closed
                 self.__manage_client_connection(
                     req, cs, client_poller, active_client_connections
@@ -182,7 +194,8 @@ class Web3RPCProxy:
                 f"Error while handling the client request {e}"
             )  # TODO is this a good error handling?
             self.__close_client_connection(cs, client_poller, active_client_connections)
-            endpoint_connection_handler.release()
+            if endpoint_connection_handler:
+                endpoint_connection_handler.release()
 
     @classmethod
     def __print_post_init_info(cls, proxy_listen_port: int) -> None:
@@ -191,17 +204,6 @@ class Web3RPCProxy:
                 f"{Config.PROXY_LISTEN_ADDRESS}:{proxy_listen_port}"
             )
         )
-
-    def update_connection_stats(
-        self,
-        endpoint_connection_handler: EndpointConnectionHandler,
-        request: RPCRequest,
-        response: bytearray,
-    ):
-        endpoint_connection_handler.update_endpoint_stats(
-            request.last_queried_bytes, response
-        )
-        self.state_updater.record_processed_rpc_call(request, response)
 
     def closing_cs(self, client_poller: select.epoll, queue_cs_for_close: queue.Queue):
         while True:
@@ -249,7 +251,7 @@ class Web3RPCProxy:
                         # TODO connection hang up?
                         executor.submit(
                             self.handle_client,
-                            self.connection_pool.get(),
+                            self.connection_pool.get_connection,
                             cs,
                             client_poller,
                             active_client_connections,

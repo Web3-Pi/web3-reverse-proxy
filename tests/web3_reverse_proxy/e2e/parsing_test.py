@@ -108,12 +108,8 @@ def stress_test(method="eth_sendTransaction", count=1000):
     print(f"Finished in {runtime}")
 
 
-def main():
+def test_parser_e2e():
     send_valid_requests()
     send_missing_member_calls()
     send_non_alphanumeric_input_calls()
     # stress_test()
-
-
-if __name__ == "__main__":
-    main()

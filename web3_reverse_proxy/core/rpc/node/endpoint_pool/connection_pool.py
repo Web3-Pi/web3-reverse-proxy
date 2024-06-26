@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 
 from web3_reverse_proxy.core.rpc.node.rpcendpoint.connection.connection_handler import (
