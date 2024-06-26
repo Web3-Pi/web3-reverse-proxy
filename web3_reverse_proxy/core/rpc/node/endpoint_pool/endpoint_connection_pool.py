@@ -162,6 +162,9 @@ class EndpointConnectionPool(ConnectionPool):
 
     def get(self) -> EndpointConnectionHandler:
         self.__lock.acquire()
+        if not self.is_active():
+            self.__lock.release()
+            raise Exception("the pool is disabled")  # TODO better exception
         if self.connections.empty():
             self.__lock.release()
             self.__logger.debug(
@@ -226,4 +229,5 @@ class EndpointConnectionPool(ConnectionPool):
 
     def close(self) -> None:
         with self.__lock:
+            self.__active = False
             self.__close()

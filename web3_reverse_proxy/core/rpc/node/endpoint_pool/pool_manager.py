@@ -147,7 +147,7 @@ class EndpointConnectionPoolManager:
             if connection_pool is None:
                 raise PoolDoesNotExist(name)
             endpoint = connection_pool.endpoint
-            connection_pool.close()
+            connection_pool.close()  # TODO this closes all connections and could be done in a separate thread
             del self.pools[name]
             return endpoint
 

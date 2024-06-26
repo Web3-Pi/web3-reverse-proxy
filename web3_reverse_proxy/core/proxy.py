@@ -103,7 +103,6 @@ class Web3RPCProxy:
             client_poller.modify(
                 cs.socket, select.EPOLLIN | select.EPOLLONESHOT
             )  # TODO hangup? errors?
-            # self.__close_client_socket(cs)  # TODO if this is commented out, rpc-tests are 30% faster, why?
         else:
             self.__close_client_connection(cs, client_poller, active_client_connections)
 
@@ -116,7 +115,7 @@ class Web3RPCProxy:
         def response_handler(res):
             cs.send_all(res)
             endpoint_connection_handler.update_response_stats(res)
-            self.state_updater.record_rpc_response(req, res)
+            self.state_updater.record_rpc_response(res)
 
         return response_handler
 
@@ -127,6 +126,7 @@ class Web3RPCProxy:
         client_poller: select.epoll,
         active_client_connections: ClientSocketPool,
     ) -> None:
+        endpoint_connection_handler = None
         try:
             # TODO detect closed by a client cs connection and close it by our side?
             req, err = self.request_reader.read_request(
@@ -194,7 +194,8 @@ class Web3RPCProxy:
                 f"Error while handling the client request {e}"
             )  # TODO is this a good error handling?
             self.__close_client_connection(cs, client_poller, active_client_connections)
-            endpoint_connection_handler.release()
+            if endpoint_connection_handler:
+                endpoint_connection_handler.release()
 
     @classmethod
     def __print_post_init_info(cls, proxy_listen_port: int) -> None:
@@ -203,17 +204,6 @@ class Web3RPCProxy:
                 f"{Config.PROXY_LISTEN_ADDRESS}:{proxy_listen_port}"
             )
         )
-
-    def update_connection_stats(
-        self,
-        endpoint_connection_handler: EndpointConnectionHandler,
-        request: RPCRequest,
-        response: bytearray,
-    ):
-        endpoint_connection_handler.update_endpoint_stats(
-            request.last_queried_bytes, response
-        )
-        self.state_updater.record_processed_rpc_call(request, response)
 
     def closing_cs(self, client_poller: select.epoll, queue_cs_for_close: queue.Queue):
         while True:
