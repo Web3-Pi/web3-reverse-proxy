@@ -18,13 +18,10 @@ class EndpointConnectionDescriptor:
 
         host = parsed.host
         port = parsed.port
-        auth_key = parsed.path
+        auth_key = parsed.path or ""
         is_ssl = parsed.scheme == "https" if parsed.scheme is not None else None
 
         if host is None:
-            return None
-
-        if auth_key is None:
             return None
 
         if len(auth_key) > 0:
