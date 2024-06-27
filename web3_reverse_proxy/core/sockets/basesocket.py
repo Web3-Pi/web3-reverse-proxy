@@ -39,12 +39,12 @@ class BaseSocket:
 
         return connected
 
-    def is_ready_read(self, timeout=None):
+    def is_ready_read(self, timeout=None):  # TODO something more effective than select
         s_read, _, _ = select.select([self.socket], [], [], timeout)
 
         return len(s_read) > 0
 
-    def is_ready_write(self, timeout=None):
+    def is_ready_write(self, timeout=None):  # TODO something more effective than select
         _, s_write, _ = select.select([], [self.socket], [], timeout)
 
         return len(s_write) > 0

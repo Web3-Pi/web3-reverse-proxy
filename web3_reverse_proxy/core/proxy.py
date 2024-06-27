@@ -93,12 +93,12 @@ class Web3RPCProxy:
 
     def __manage_client_connection(
         self,
-        req: RPCRequest,
+        keep_alive: bool,
         cs: ClientSocket,
         client_poller: select.epoll,
         active_client_connections: ClientSocketPool,
     ) -> None:
-        if req.keep_alive:
+        if keep_alive:
             active_client_connections.set_cs_pending(cs.socket.fileno())
             client_poller.modify(
                 cs.socket, select.EPOLLIN | select.EPOLLONESHOT
@@ -128,15 +128,20 @@ class Web3RPCProxy:
     ) -> None:
         endpoint_connection_handler = None
         try:
-            # TODO detect closed by a client cs connection and close it by our side?
             req, err = self.request_reader.read_request(
                 cs, RPCRequest()
-            )  # TODO close connection if fatal error i.e. non http request
+            )
+
+            if req is None and err is None:
+                self.__manage_client_connection(
+                    False, cs, client_poller, active_client_connections
+                )
+                return
 
             if err is not None:
                 cs.send_all(err.raw)  # TODO: detect whether client connection is closed
                 self.__manage_client_connection(
-                    err.request, cs, client_poller, active_client_connections
+                    err.request.keep_alive, cs, client_poller, active_client_connections
                 )
                 return
 
@@ -151,7 +156,7 @@ class Web3RPCProxy:
                     ErrorResponses.connection_error(req.id)
                 )  # TODO: detect wether client connection is closed
                 self.__manage_client_connection(
-                    req, cs, client_poller, active_client_connections
+                    req.keep_alive, cs, client_poller, active_client_connections
                 )
                 return
 
@@ -167,7 +172,7 @@ class Web3RPCProxy:
                     ErrorResponses.connection_error(req.id)
                 )  # TODO: detect wether client connection is closed
                 self.__manage_client_connection(
-                    req, cs, client_poller, active_client_connections
+                    req.keep_alive, cs, client_poller, active_client_connections
                 )
                 endpoint_connection_handler.close()
                 return
@@ -183,7 +188,7 @@ class Web3RPCProxy:
             endpoint_connection_handler.update_request_stats(req)
             self.state_updater.record_rpc_request(req)
             self.__manage_client_connection(
-                req, cs, client_poller, active_client_connections
+                req.keep_alive, cs, client_poller, active_client_connections
             )
             endpoint_connection_handler.release()
 

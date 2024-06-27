@@ -24,4 +24,11 @@ class RequestReaderMiddleware(ABC):
 
     @abstractmethod
     def read_request(self, cs: ClientSocket, req: RPCRequest) -> ReturnType:
+        """
+        :param cs:
+        :param req:
+        :return: if success, then (RPCRequest, None),
+        if error that is to be returned to client, then (None, RPCResponse),
+        if fatal error and a connection should be dropped, then (None, None)
+        """
         pass
