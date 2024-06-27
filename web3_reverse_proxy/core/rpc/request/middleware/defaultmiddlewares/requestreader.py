@@ -54,7 +54,7 @@ class RequestReader(RequestReaderMiddleware):
 
         try:
             while request_listener.need_more_data:
-                if not cs.is_ready_read(timeout=0.1):  # TODO total timeout for request reading
+                if not cs.is_ready_read(timeout=0.1):  # TODO total timeout for request reading, TODO parametrization
                     self.__logger.warn("client socket read timeout")
                     req.keep_alive = False  # just in case
                     return None, None
