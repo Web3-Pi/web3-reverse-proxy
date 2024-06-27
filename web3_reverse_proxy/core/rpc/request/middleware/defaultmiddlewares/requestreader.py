@@ -54,10 +54,15 @@ class RequestReader(RequestReaderMiddleware):
 
         try:
             while request_listener.need_more_data:
-                assert cs.is_ready_read()
+                if not cs.is_ready_read(timeout=0.1):  # TODO total timeout for request reading
+                    self.__logger.warn("client socket read timeout")
+                    req.keep_alive = False  # just in case
+                    return None, None
                 data = cs.recv(buf_size)
                 if not data:
-                    raise IOError
+                    self.__logger.debug("client socket closed")
+                    req.keep_alive = False  # just in case
+                    return None, None
                 request_parser.feed_data(data)
         except HttpParserError as error:
             self.__logger.error(error)
@@ -66,7 +71,7 @@ class RequestReader(RequestReaderMiddleware):
         except IOError:
             self.__logger.error("IOError")
             req.keep_alive = False
-            return self.failure(bytes(), req)  # Empty response for closed connection
+            return None, None
 
         if request_parser.get_method() != b"POST":
             return self.failure(ErrorResponses.http_method_not_allowed(), req)
