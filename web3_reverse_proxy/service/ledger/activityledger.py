@@ -51,8 +51,8 @@ class SimpleActivityLedger(StateUpdater):
 
     def record_rpc_response(self, request: RPCRequest, response: bytearray) -> None:
         sample = self.get_active_state_sample()
-        sample.update(request=request, response=response)
-        self.all_time_summary.update(request=request, response=response)
+        sample.update(request=request, response=response, response_only=True)
+        self.all_time_summary.update(request=request, response=response, response_only=True)
 
     def get_all_time_summary(self) -> ServiceActivitySummary:
         return self.all_time_summary

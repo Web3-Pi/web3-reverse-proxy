@@ -115,7 +115,7 @@ class Web3RPCProxy:
         def response_handler(res):
             cs.send_all(res)
             endpoint_connection_handler.update_response_stats(res)
-            self.state_updater.record_rpc_response(res)
+            self.state_updater.record_rpc_response(req, res)
 
         return response_handler
 
