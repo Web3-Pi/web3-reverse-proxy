@@ -9,5 +9,5 @@ class StateUpdater(ABC):
         pass
 
     @abstractmethod
-    def record_rpc_response(self, response: bytearray) -> None:
+    def record_rpc_response(self, request: RPCRequest, response: bytearray) -> None:
         pass
