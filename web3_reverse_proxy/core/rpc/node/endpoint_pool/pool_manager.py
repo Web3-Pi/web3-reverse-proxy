@@ -29,12 +29,12 @@ class NoActivePoolsError(ConnectionPoolError):
     message = "No connection pools available"
 
 
-class PoolDoesNotExist(ConnectionPoolError):
+class PoolDoesNotExistError(ConnectionPoolError):
     def __init__(self, name: str) -> None:
         self.message = f"No pool for endpoint {name} found"
 
 
-class PoolAlreadyExists(ConnectionPoolError):
+class PoolAlreadyExistsError(ConnectionPoolError):
     def __init__(self, name: str) -> None:
         self.message = f"No pool for endpoint {name} found"
 
@@ -129,23 +129,25 @@ class EndpointConnectionPoolManager:
             self.damage_controller.check_connections(self.__get_active_pools())
             time.sleep(self.__DAMAGE_CONTROLLER_TIMEOUT_SECONDS)
 
-    def add_pool(self, name: str, conn_descr: EndpointConnectionDescriptor) -> None:
+    def add_pool(
+        self, name: str, conn_descr: EndpointConnectionDescriptor
+    ) -> RPCEndpoint:
         with self.__lock:
             if name in self.pools.keys():
-                raise PoolAlreadyExists(name)
+                raise PoolAlreadyExistsError(name)
             self.__logger.debug(
                 f"Creating endpoint {name} with connection {conn_descr}"
             )
-            connection_pool = EndpointConnectionPool(
-                RPCEndpoint.create(name, conn_descr)
-            )
+            endpoint = RPCEndpoint.create(name, conn_descr)
+            connection_pool = EndpointConnectionPool(endpoint)
             self.pools[name] = connection_pool
+            return endpoint
 
     def remove_pool(self, name) -> RPCEndpoint:
         with self.__lock:
             connection_pool = self.pools.get(name)
             if connection_pool is None:
-                raise PoolDoesNotExist(name)
+                raise PoolDoesNotExistError(name)
             endpoint = connection_pool.endpoint
             connection_pool.close()  # TODO this closes all connections and could be done in a separate thread
             del self.pools[name]
