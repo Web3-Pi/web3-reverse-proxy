@@ -15,6 +15,11 @@ class RPCAdminCalls:
 
     QUERY_SERVICE_CONSOLE = "query_service_console"
 
+    GET_ENDPOINTS = "get_endpoints"
+    ADD_ENDPOINT = "add_endpoint"
+    REMOVE_ENDPOINT = "remove_endpoint"
+    UPDATE_ENDPOINT = "update_endpoint"
+
     @classmethod
     def create_method_call_dict(cls, method_str: str, *params) -> dict:
         res = {"jsonrpc": "2.0", "method": f"{method_str}", "params": list(params)}
@@ -54,3 +59,19 @@ class RPCAdminCalls:
         return cls.create_method_call_dict(
             cls.UPDATE_USER_PLAN, user_api_key, user_plan
         )
+
+    @classmethod
+    def get_endpoints(cls) -> dict:
+        return cls.create_method_call_dict(cls.GET_ENDPOINTS)
+
+    @classmethod
+    def add_endpoint(cls, name: str, url: str) -> None:
+        return cls.create_method_call_dict(cls.ADD_ENDPOINT, name, url)
+
+    @classmethod
+    def remove_endpoint(cls, name: str) -> None:
+        return cls.create_method_call_dict(cls.REMOVE_ENDPOINT, name)
+
+    @classmethod
+    def update_endpoint(cls, name: str, url: str) -> None:
+        return cls.create_method_call_dict(cls.UPDATE_ENDPOINT, name, url)
