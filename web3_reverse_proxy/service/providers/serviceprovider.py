@@ -78,7 +78,7 @@ class ServiceComponentsProvider:
         # ssm.register_proxy_stats(proxy.stats)
 
         # Pass endpoint data, so that it can be queried
-        ssm.register_endpoints(connection_pool.endpoints)
+        ssm.create_endpoint_manager(connection_pool)
 
         return proxy
 

@@ -128,9 +128,7 @@ class Web3RPCProxy:
     ) -> None:
         endpoint_connection_handler = None
         try:
-            req, err = self.request_reader.read_request(
-                cs, RPCRequest()
-            )
+            req, err = self.request_reader.read_request(cs, RPCRequest())
 
             if req is None and err is None:
                 self.__manage_client_connection(
