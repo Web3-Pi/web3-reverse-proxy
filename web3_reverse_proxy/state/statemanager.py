@@ -8,6 +8,7 @@ from web3_reverse_proxy.interfaces.permissions import CallPermissions, ClientPer
 from web3_reverse_proxy.interfaces.servicestate import StateUpdater
 from web3_reverse_proxy.service.admin.serviceadmin import RPCServiceAdmin
 from web3_reverse_proxy.service.billing.billingservice import BasicBillingService
+from web3_reverse_proxy.service.endpoints.endpoint_manager import EndpointManagerService
 from web3_reverse_proxy.service.ledger.activityledger import SimpleActivityLedger
 from web3_reverse_proxy.state.wrappers import (
     BasicBillingServiceWithLedger,
@@ -70,3 +71,8 @@ class SampleStateManager:
             dt -= datetime.timedelta(microseconds=dt.microseconds)
 
         return dt
+
+    def create_endpoint_manager(self, endpoint_pool_manager):
+        self.register_endpoints(endpoint_pool_manager.endpoints)
+        endpoint_manager = EndpointManagerService(endpoint_pool_manager)
+        self.admin_impl.register_endpoint_manager(endpoint_manager)
