@@ -77,13 +77,13 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", "0")
             self.end_headers()
         else:
-            self.send_response(200)
-            self.send_header("Content-type", "text/html")
-            self.end_headers()
-
             # Get auth token from query params for accessing admin portal with browser
             auth_token = self.path.split("?token=")[-1]
             if self.server.auth.authenticate(auth_token):
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+
                 self.wfile.write(self.get_valid_host_page(auth_token))
 
                 # # Test how a web browser handles partial update of a web page
@@ -133,7 +133,7 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
             else:
                 res = {"error": "Missing method"}
         else:
-            res = {"error": "Authentication failed"}
+            res = {"error": "Authentication failed"}  # TODO another http status?
         self.wfile.write(json.dumps(res if res is not None else {}).encode())
 
     def get_auth_token(self) -> str:

@@ -125,7 +125,7 @@ class EndpointConnectionPool(ConnectionPool):
         self.__logger = get_logger(f"EndpointConnectionPool.{id(self)}")
 
     class PoolStatus(Enum):
-        ACTIVE = ("ACTIVE",)
+        ACTIVE = "ACTIVE"
         DISABLED = "DISABLED"
         CLOSED = "CLOSED"
 
