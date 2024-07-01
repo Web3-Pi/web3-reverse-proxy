@@ -47,7 +47,7 @@ class ServiceComponentsProvider:
             for entrypoint in endpoint_config
         ]
         # TODO: Settle on most suitable place for plugging in load balancer for interchangeability
-        load_balancer = load_balancers.LeastBusyLoadBalancer()
+        load_balancer = load_balancers.RandomLoadBalancer()
         return EndpointConnectionPoolManager(descriptors, load_balancer)
 
     @classmethod
@@ -78,7 +78,7 @@ class ServiceComponentsProvider:
         # ssm.register_proxy_stats(proxy.stats)
 
         # Pass endpoint data, so that it can be queried
-        ssm.register_endpoints(connection_pool.endpoints)
+        ssm.create_endpoint_manager(connection_pool)
 
         return proxy
 

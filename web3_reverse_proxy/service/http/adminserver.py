@@ -1,21 +1,22 @@
+import hashlib
 import json
 import random
 import re
+import secrets
 import socketserver
 import string
 import threading
-import secrets
-import hashlib
-
+import traceback
 from http.server import BaseHTTPRequestHandler
 
 from web3_reverse_proxy.config.conf import Config
 from web3_reverse_proxy.service.admin.serviceadmin import RPCServiceAdmin
+from web3_reverse_proxy.utils.logger import get_logger
 
 
 # TODO: Whole auth is operating under bastardized concept of basic authorizations scheme with random tokens
 # It's insecure for anything outside of local network and should be expanded to legitimate security measures
-class AdminServerAuthentication():
+class AdminServerAuthentication:
     def __init__(self) -> None:
         self.salt = secrets.token_hex(8)
         self.admin_token_hash = None
@@ -31,7 +32,9 @@ class AdminServerAuthentication():
         return self.hash(secret) == self.admin_token_hash
 
     def generate_secret(self) -> str:
-        return "".join(random.choice(string.ascii_letters + string.digits) for _ in range(32))
+        return "".join(
+            random.choice(string.ascii_letters + string.digits) for _ in range(32)
+        )
 
     def create_auth_token(self) -> str:
         auth_token = self.generate_secret()
@@ -41,6 +44,7 @@ class AdminServerAuthentication():
 
 # https://gist.github.com/scimad/ae0196afc0bade2ae39d604225084507
 class AdminServerRequestHandler(BaseHTTPRequestHandler):
+    __logger = get_logger("AdminServerRequestHandler")
 
     def get_valid_host_page(self, auth_token: str) -> bytes:
         assert isinstance(self.server, AdminHTTPServer)
@@ -60,7 +64,9 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
             auth_token_expr = f'return "{auth_token}";'
             auth_token_re = r"//TOKEN_MARKER_S[\s\w.]+.+\s+//TOKEN_MARKER_E"
 
-            updated_page = re.sub(auth_token_re, auth_token_expr, re.sub(host_re, host, raw_page))
+            updated_page = re.sub(
+                auth_token_re, auth_token_expr, re.sub(host_re, host, raw_page)
+            )
 
             return updated_page.encode("utf-8")
 
@@ -71,13 +77,13 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", "0")
             self.end_headers()
         else:
-            self.send_response(200)
-            self.send_header("Content-type", "text/html")
-            self.end_headers()
-
             # Get auth token from query params for accessing admin portal with browser
             auth_token = self.path.split("?token=")[-1]
-            if (self.server.auth.authenticate(auth_token)):
+            if self.server.auth.authenticate(auth_token):
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+
                 self.wfile.write(self.get_valid_host_page(auth_token))
 
                 # # Test how a web browser handles partial update of a web page
@@ -103,6 +109,7 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
         pass
 
     def do_POST(self):
+        # TODO: Expand JSON-RPC support
         assert isinstance(self.server, AdminHTTPServer)
         admin = self.server.admin
 
@@ -114,14 +121,23 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         if self.server.auth.authenticate(self.get_auth_token()):
-            if "method" in json_data and "params" in json_data:
-                res = admin.call_by_method(json_data["method"], json_data["params"])
-                self.wfile.write(json.dumps(res if res is not None else {}).encode())
+            if "method" in json_data:
+                try:
+                    res = admin.call_by_method(
+                        json_data["method"], json_data.get("params", [])
+                    )
+                except Exception as error:
+                    self.__logger.error(error.with_traceback)
+                    print(traceback.format_exc())
+                    res = {"error": "Server error"}
+            else:
+                res = {"error": "Missing method"}
         else:
-            self.wfile.write(json.dumps({}).encode())
+            res = {"error": "Authentication failed"}  # TODO another http status?
+        self.wfile.write(json.dumps(res if res is not None else {}).encode())
 
     def get_auth_token(self) -> str:
-        return self.headers.get('Authorization', '').partition(" ")[-1]
+        return self.headers.get("Authorization", "").partition(" ")[-1]
 
 
 class AdminHTTPServer(socketserver.TCPServer):
@@ -154,13 +170,12 @@ class AdminHTTPServerThread(threading.Thread):
         )
         # TODO: Storage for credentials
         auth_token = self.server.auth.create_auth_token()
-        print(
-            "Admin auth token: "
-            f"{auth_token}"
-        )
+        print("Admin auth token: " f"{auth_token}")
         print("Use it with 'Authorization' header for POST requests")
-        print(f"Access admin portal with")
-        print(f"{self.server.server_address[0]}:{self.server.server_address[1]}/?token={auth_token}")
+        print(f"Access admin portal with:")
+        print(
+            f"http://{self.server.server_address[0]}:{self.server.server_address[1]}/?token={auth_token}"
+        )
         super().start()
 
     def run(self):
