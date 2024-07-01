@@ -26,6 +26,7 @@ class RPCAdminCalls:
 
         return res
 
+    # TODO where are these methods used
     @classmethod
     def get_query_user_plan(cls, user_api_key: str) -> dict:
         return cls.create_method_call_dict(cls.QUERY_USER_PLAN, user_api_key)
@@ -61,17 +62,17 @@ class RPCAdminCalls:
         )
 
     @classmethod
-    def get_endpoints(cls) -> dict:
+    def get_get_endpoints(cls) -> dict:
         return cls.create_method_call_dict(cls.GET_ENDPOINTS)
 
     @classmethod
-    def add_endpoint(cls, name: str, url: str) -> None:
+    def get_add_endpoint(cls, name: str, url: str) -> dict:
         return cls.create_method_call_dict(cls.ADD_ENDPOINT, name, url)
 
     @classmethod
-    def remove_endpoint(cls, name: str) -> None:
+    def get_remove_endpoint(cls, name: str) -> dict:
         return cls.create_method_call_dict(cls.REMOVE_ENDPOINT, name)
 
     @classmethod
-    def update_endpoint(cls, name: str, url: str) -> None:
+    def get_update_endpoint(cls, name: str, url: str) -> dict:
         return cls.create_method_call_dict(cls.UPDATE_ENDPOINT, name, url)
