@@ -7,7 +7,7 @@ from typing import List
 from web3pi_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import (
     EndpointConnectionPool,
 )
-from web3_reverse_proxy.utils.logger import get_logger
+from web3pi_proxy.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
