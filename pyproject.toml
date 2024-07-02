@@ -1,24 +1,9 @@
-[build-system]
-requires = ["setuptools>=65.5"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "web3pi-reverse-proxy"
-version = "0.0.0a1"
-dependencies = [
-    "httptools>=0.6.1",
-    "python-dotenv>=1.0.1",
-    "requests>=2.31.0",
-    "urllib3>=2.1.0",
-    "upnpclient>=1.0.3",
-    "WhatIsMyIP>=2022.7.10",
-]
-requires-python = ">= 3.11"
-authors = [
-    { name = "jimmyisthis" },
-]
+[tool.poetry]
+name = "web3pi-proxy"
+version = "0.0.1a0"
 description = "A reverse proxy service for Geth"
-readme = "README.md"
+authors = []
+license = "GNU GENERAL PUBLIC LICENSE Version 3"
 keywords = ["web3pi", "web3", "rpi", "raspberry", "geth", "ethereum", "proxy"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -26,9 +11,56 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: POSIX :: Linux",
 ]
+repository = "https://github.com/Web3-Pi/web3-reverse-proxy"
+readme = "README.md"
 
-[project.urls]
-Repository = "https://github.com/Web3-Pi/web3-reverse-proxy"
+include = [
+    "web3-reverse-proxy-admin/**/*.html"
+]
 
-[project.scripts]
-"rproxy-run" = "web3_reverse_proxy.rproxy:main"
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.dependencies]
+python = "^3.11"
+httptools = ">=0.6.1"
+python-dotenv = ">=1.0.1"
+requests = ">=2.31.0"
+urllib3 = ">=2.1.0"
+upnpclient = ">=1.0.3"
+whatismyip = ">=2022.7.10"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+isort = "^5.13.2"
+mypy = "^1.10.1"
+pylint = "^3.2.5"
+pytest = "^8.2.2"
+pytest-subtests = "^0.12.1"
+poethepoet = "^0.27.0"
+
+[tool.poetry.scripts]
+web3pi-proxy = "web3pi_proxy.rproxy:main"
+
+
+[tool.mypy]
+disallow_untyped_defs = true
+color_output = true
+pretty = true
+exclude = """
+(?x)(
+    test
+  )
+"""
+
+
+[tool.poe.tasks]
+checks = {sequence = ["check_format", "check_lint", "check_typing"], help = "Run all available code checks"}
+check_format = {sequence = ["_check_format_isort", "_check_format_black"]}
+_check_format_isort = "isort --check-only --diff ."
+_check_format_black = "black --check --diff ."
+check_lint = "pylint ./web3pi_proxy"
+check_typing = "mypy ."
