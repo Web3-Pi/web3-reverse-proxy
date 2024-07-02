@@ -14,10 +14,10 @@ Web3Pi Reverse Proxy comes out-of-the-box with several features:
  
 ## Setup
 
-Simply install `web3pi-reverse-proxy` package using your Python package manager, using **pip** for example:
+Simply install `web3pi-proxy` package using your Python package manager, using **pip** for example:
 
 ```bash
-pip install web3pi-reverse-proxy
+pip install web3pi-proxy
 ```
 
 Web3Pi Reverse Proxy expects you to provide **ETH_ENDPOINTS** environment variable to your system.
