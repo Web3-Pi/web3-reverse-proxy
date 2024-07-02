@@ -37,7 +37,7 @@ You can define as many endpoints as you wish and chose their names however suits
 After configuring endpoints, you can run your reverse proxy with command
 
 ```bash
-rproxy-run
+web3pi-proxy
 ```
 
 ## Admin service
