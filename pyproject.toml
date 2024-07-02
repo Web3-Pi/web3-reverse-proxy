@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "web3pi-proxy"
-version = "0.0.1a0"
+version = "0.0.1a1"
 description = "A reverse proxy service for Geth"
 authors = []
 license = "GNU GENERAL PUBLIC LICENSE Version 3"
