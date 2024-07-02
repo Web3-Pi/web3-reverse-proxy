@@ -14,6 +14,9 @@ class RPCEndpoint:
         self.name = name
         self.conn_stats = EndpointConnectionStats()
 
+    def __str__(self):
+        return f"{self.__class__.__name__}(name={self.name}, addr={self.get_endpoint_addr()})"
+
     def get_endpoint_addr(self) -> str:
         return f"{self.conn_descr.host}:{self.conn_descr.port}"
 

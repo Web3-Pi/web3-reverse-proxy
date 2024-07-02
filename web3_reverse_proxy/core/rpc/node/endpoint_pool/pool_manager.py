@@ -51,7 +51,7 @@ class DamageController:
 
     def __is_broken(self, pool: EndpointConnectionPool) -> bool:
         failure_rate = pool.stats.get_failure_rate(self.__INTERVAL_NS)
-        self.__logger.debug(f"Conncetion pool: {pool}")
+        self.__logger.debug(f"Connection pool: {pool}")
         self.__logger.debug(f"Failure rate: {failure_rate}")
         all_records = pool.stats.count_all(self.__INTERVAL_NS)
         self.__logger.debug(f"All records: {all_records}")
@@ -74,7 +74,7 @@ class DamageController:
         for pool in pools:
             if self.__is_broken(pool):
                 self.__logger.warn(
-                    f"Endpoint {pool.endpoint.name} has high connection failure rate"
+                    f"Endpoint `{pool.endpoint.name}`: connection failure rate excessive."
                 )
                 Thread(
                     target=self.__suspend_pool,
@@ -83,7 +83,9 @@ class DamageController:
                 ).start()
 
             if self.__is_outdated(pool):
-                self.__logger.warn(f"Endpoint {pool.endpoint.name} is falling behind")
+                self.__logger.warn(f"Endpoint `{pool.endpoint.name}`: falling behind")
+
+            self.__logger.debug(f"Endpoint `{pool.endpoint.name}`: okay.")
 
 
 class EndpointConnectionPoolManager:
@@ -125,7 +127,7 @@ class EndpointConnectionPoolManager:
 
     def __damage_control(self):
         while True:
-            self.__logger.info("Running check on endpoint connections")
+            self.__logger.debug("Running check on endpoint connections")
             self.damage_controller.check_connections(self.__get_active_pools())
             time.sleep(self.__DAMAGE_CONTROLLER_TIMEOUT_SECONDS)
 

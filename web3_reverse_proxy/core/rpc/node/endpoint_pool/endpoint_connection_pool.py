@@ -31,14 +31,6 @@ class PoolStats:
         self.connection_creation_error_timestamps = []
         self.__lock = RLock()
 
-    def get_all_connections(self) -> int:
-        with self.__lock:
-            return self.busy_connections + self.free_connections
-
-    def get_usage_rate(self) -> float:
-        all_connections = self.get_all_connections()
-        return self.busy_connections / all_connections if all_connections > 0 else 0.0
-
     def register_leased_connection(self) -> None:
         with self.__lock:
             self.free_connections -= 1
@@ -123,6 +115,9 @@ class EndpointConnectionPool(ConnectionPool):
         self.status = self.PoolStatus.ACTIVE.value
         self.__lock = Lock()
         self.__logger = get_logger(f"EndpointConnectionPool.{id(self)}")
+
+    def __str__(self):
+        return f"{self.__class__.__name__}({self.endpoint})"
 
     class PoolStatus(Enum):
         ACTIVE = "ACTIVE"
