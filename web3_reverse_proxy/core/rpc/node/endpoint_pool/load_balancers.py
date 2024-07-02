@@ -13,6 +13,8 @@ logger = get_logger(__name__)
 
 
 class LoadBalancer(metaclass=ABCMeta):
+    """Load Balancer interface."""
+
     @abstractmethod
     def pick_pool(self, pools: List[EndpointConnectionPool]) -> EndpointConnectionPool:
         pass
@@ -29,7 +31,7 @@ class LeastBusyLoadBalancer(RandomLoadBalancer):
     """Picks one of the connection pools with the least utilization."""
 
     def pick_pool(self, pools: List[EndpointConnectionPool]) -> EndpointConnectionPool:
-        pools_utilization = [(pool.stats.busy_connections, pool) for pool in pools]
+        pools_utilization = [(len(pool.busy_connections), pool) for pool in pools]
         min_utilization = min(pu[0] for pu in pools_utilization)
         chosen_pool = super().pick_pool(
             [pu[1] for pu in pools_utilization if pu[0] <= min_utilization]

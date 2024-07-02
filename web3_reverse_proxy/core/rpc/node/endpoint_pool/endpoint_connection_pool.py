@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from typing import Set
 from enum import Enum
 from queue import SimpleQueue
 from threading import Lock, RLock
@@ -22,7 +23,6 @@ from web3_reverse_proxy.utils.logger import get_logger
 # TODO: Remove old timestamps, if time-based checks are still applied
 class PoolStats:
     def __init__(self) -> None:
-        self.free_connections = 0
         self.busy_connections = 0
 
         self.successful_connection_timestamps = []
@@ -31,30 +31,17 @@ class PoolStats:
         self.connection_creation_error_timestamps = []
         self.__lock = RLock()
 
-    def register_leased_connection(self) -> None:
-        with self.__lock:
-            self.free_connections -= 1
-            self.busy_connections += 1
-
-    def register_new_connection(self) -> None:
-        with self.__lock:
-            self.busy_connections += 1
-
     def register_successful_connection(self) -> None:
         with self.__lock:
             self.successful_connection_timestamps.append(time.time_ns())
-            self.busy_connections -= 1
-            self.free_connections += 1
 
     def register_error_on_connection(self) -> None:
         with self.__lock:
             self.error_timestamps.append(time.time_ns())
-            self.busy_connections -= 1
 
     def register_error_on_new_connection(self) -> None:
         with self.__lock:
             self.new_connection_error_timestamps.append(time.time_ns())
-            self.busy_connections -= 1
 
     def register_error_on_connection_creation(self) -> None:
         with self.__lock:
@@ -110,7 +97,8 @@ class EndpointConnectionPool(ConnectionPool):
         endpoint: RPCEndpoint,
     ):
         self.endpoint = endpoint
-        self.connections = SimpleQueue()
+        self.connections: SimpleQueue[EndpointConnection] = SimpleQueue()
+        self.busy_connections: Set[EndpointConnection] = set()
         self.stats = PoolStats()
         self.status = self.PoolStatus.ACTIVE.value
         self.__lock = Lock()
@@ -123,17 +111,6 @@ class EndpointConnectionPool(ConnectionPool):
         ACTIVE = "ACTIVE"
         DISABLED = "DISABLED"
         CLOSED = "CLOSED"
-
-    class ConnectionHolder:
-        def __init__(self, connection: EndpointConnection) -> None:
-            self.connection = connection
-            self.timestamp = time.time_ns()
-
-        def get_time_interval(self) -> float:
-            return time.time_ns() - self.timestamp
-
-        def get_connection(self) -> EndpointConnection:
-            return self.connection
 
     def __cleanup(self) -> None:
         excessive_connections = self.connections.qsize() - self.MAX_CONNECTIONS
@@ -150,8 +127,7 @@ class EndpointConnectionPool(ConnectionPool):
                     self.__logger.error(f"Failure on closing connection {connection}")
 
     def __get_connection(self) -> EndpointConnection:
-        connection_holder = self.connections.get_nowait()
-        return connection_holder.get_connection()
+        return self.connections.get_nowait()
 
     def __close(self) -> None:
         while not self.connections.empty():
@@ -191,21 +167,19 @@ class EndpointConnectionPool(ConnectionPool):
                 self.__lock.release()
 
         self.__logger.debug(f"Return connection {connection}")
-        if is_new:
-            self.stats.register_new_connection()
-        else:
-            self.stats.register_leased_connection()
+        self.busy_connections.add(connection)
         return EndpointConnectionHandler(connection, self, is_new)
 
     def put(self, connection: EndpointConnection) -> None:
         self.__logger.debug(f"Putting connection {connection} to pool")
+        self.busy_connections.remove(connection)
         if self.is_active():
             self.stats.register_successful_connection()
             with self.__lock:
-                self.connections.put(self.ConnectionHolder(connection))
+                self.connections.put(connection)
                 self.__cleanup()
         else:
-            self.__logger.warn(f"Connection returned on status {self.status}")
+            self.__logger.warning(f"Connection returned on status {self.status}")
             self.__logger.debug(f"Shutting down connection {connection}")
             connection.close()
 
@@ -227,7 +201,8 @@ class EndpointConnectionPool(ConnectionPool):
         self.__logger.info("Pool has been activated")
 
     def handle_broken_connection(self, connection: EndpointConnection, is_new=False):
-        self.__logger.warn(f"Reported failure for connection {connection}")
+        self.__logger.warning(f"Reported failure for connection {connection}")
+        self.busy_connections.remove(connection)
         if is_new:
             self.stats.register_error_on_new_connection()
         else:
