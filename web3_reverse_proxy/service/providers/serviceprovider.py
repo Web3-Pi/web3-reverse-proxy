@@ -47,7 +47,7 @@ class ServiceComponentsProvider:
             for entrypoint in endpoint_config
         ]
         # TODO: Settle on most suitable place for plugging in load balancer for interchangeability
-        load_balancer = load_balancers.RandomLoadBalancer()
+        load_balancer = load_balancers.LeastBusyLoadBalancer()
         return EndpointConnectionPoolManager(descriptors, load_balancer)
 
     @classmethod

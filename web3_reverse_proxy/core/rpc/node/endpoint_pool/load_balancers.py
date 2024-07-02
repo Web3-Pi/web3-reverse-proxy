@@ -7,27 +7,34 @@ from typing import List
 from web3_reverse_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import (
     EndpointConnectionPool,
 )
+from web3_reverse_proxy.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class LoadBalancer(metaclass=ABCMeta):
+    """Load Balancer interface."""
+
     @abstractmethod
     def pick_pool(self, pools: List[EndpointConnectionPool]) -> EndpointConnectionPool:
         pass
 
 
-class LeastBusyLoadBalancer(LoadBalancer):
-    def pick_pool(self, pools: List[EndpointConnectionPool]) -> EndpointConnectionPool:
-        min_occupance = 10**10
-        chosen_pool = None
-        for pool in pools:
-            occupance = pool.stats.free_connections * pool.stats.get_usage_rate()
-            if occupance < min_occupance:
-                min_occupance = occupance
-                chosen_pool = pool
-        return chosen_pool
-
-
 class RandomLoadBalancer(LoadBalancer):
+    """Picks a connection pool at random."""
     def pick_pool(self, pools: List[EndpointConnectionPool]) -> EndpointConnectionPool:
         random_index = randint(0, len(pools) - 1)
         return pools[random_index]
+
+
+class LeastBusyLoadBalancer(RandomLoadBalancer):
+    """Picks one of the connection pools with the least utilization."""
+
+    def pick_pool(self, pools: List[EndpointConnectionPool]) -> EndpointConnectionPool:
+        pools_utilization = [(len(pool.busy_connections), pool) for pool in pools]
+        min_utilization = min(pu[0] for pu in pools_utilization)
+        chosen_pool = super().pick_pool(
+            [pu[1] for pu in pools_utilization if pu[0] <= min_utilization]
+        )
+        logger.debug("Chosen pool: %s, min_utilization: %s", chosen_pool, min_utilization)
+        return chosen_pool

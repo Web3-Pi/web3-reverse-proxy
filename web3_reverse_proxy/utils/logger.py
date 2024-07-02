@@ -7,5 +7,5 @@ logger = logging.getLogger("Web3ReverseProxy")
 logger.setLevel(getattr(logging, Config.LOG_LEVEL, logging.INFO))
 
 
-def get_logger(name: str):
+def get_logger(name: str) -> logging.Logger:
     return logger.getChild(name)
