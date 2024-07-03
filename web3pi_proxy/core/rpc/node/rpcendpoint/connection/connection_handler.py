@@ -7,7 +7,7 @@ class ConnectionHandler(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def receive(self) -> bytearray:
+    def receive(self) -> None:
         pass
 
     @abstractmethod

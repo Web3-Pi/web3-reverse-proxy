@@ -9,6 +9,7 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.connection.connection_handler import
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import (
     EndpointConnection,
 )
+from web3pi_proxy.core.rpc.node.rpcendpoint.connection.receiver import ConnectionClosedError
 from web3pi_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3pi_proxy.utils.logger import get_logger
 
@@ -87,8 +88,11 @@ class EndpointConnectionHandler(ConnectionHandler):
             raise BrokenConnectionError
 
     @_acquired_connection
-    def receive(self, callback: Callable) -> bytearray:
-        return self.connection.res_receiver.recv_response(callback)
+    def receive(self, callback: Callable) -> None:
+        try:
+            self.connection.res_receiver.recv_response(callback)
+        except ConnectionClosedError:
+            raise BrokenConnectionError
 
     def update_request_stats(self, request: RPCRequest):
         self.connection.update_endpoint_stats(request.last_queried_bytes, bytearray())

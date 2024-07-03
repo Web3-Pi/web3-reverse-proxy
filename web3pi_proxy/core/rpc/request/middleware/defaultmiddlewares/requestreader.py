@@ -57,7 +57,7 @@ class RequestReader(RequestReaderMiddleware):
                 if not cs.is_ready_read(
                     timeout=0.1
                 ):  # TODO total timeout for request reading, TODO parametrization
-                    self.__logger.warn("client socket read timeout")
+                    self.__logger.warning("client socket read timeout")
                     req.keep_alive = False  # just in case
                     return None, None
                 data = cs.recv(buf_size)

@@ -26,6 +26,10 @@ class HttpResponseParserListener:
         self.chunk_completed = False
 
 
+class ConnectionClosedError(Exception):
+    message = "Connection is closed"
+
+
 class ResponseReceiver(ABC):
 
     @abstractmethod
@@ -54,7 +58,7 @@ class ResponseReceiverGeth(ResponseReceiver):
             assert self.socket.is_ready_read()
             data = self.socket.recv(buf_size)
             if not data:
-                raise IOError
+                raise ConnectionClosedError
             response_parser.feed_data(data)
             self.__logger.debug(f"Raw response -> {data}")
             callback(data)

@@ -178,7 +178,23 @@ class Web3RPCProxy:
             response_handler = self.__create_response_handler(
                 endpoint_connection_handler, cs, req
             )
-            endpoint_connection_handler.receive(response_handler)  # TODO errors
+            try:
+                endpoint_connection_handler.receive(response_handler)
+            except (
+                BrokenConnectionError
+            ):  # TODO: Pick up new connection from pool if fresh connection failed
+                self.__logger.error(
+                    f"Failed to receive response with {endpoint_connection_handler}"
+                )
+                cs.send_all(
+                    ErrorResponses.connection_error(req.id)
+                )  # TODO: detect wether client connection is closed
+                self.__manage_client_connection(
+                    req.keep_alive, cs, client_poller, active_client_connections
+                )
+                endpoint_connection_handler.close()
+                return
+
             # if self.is_cache_available and \  # TODO cache
             #         self.response_cache.is_writeable(response.request) and \
             #         self.response_cache.get(response.request.method) is None:
