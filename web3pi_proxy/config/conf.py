@@ -1,8 +1,15 @@
 import json
 import os
 from typing import List, Union, get_type_hints
+from enum import Enum
 
 from dotenv import dotenv_values
+
+
+class ProxyMode(Enum):
+    DEV = "DEV"
+    SIM = "SIM"
+    PROD = "PROD"
 
 
 def _parse_bool(val: Union[str, bool]) -> bool:
@@ -77,8 +84,8 @@ class AppConfig:
     PROXY_NAME: str = "Web3 RPC Reverse Proxy - RPI4 Edition"
     PROXY_VER: str = "0.0.1"
 
-    # convenience flag - default users creation
-    FORCE_REGISTER_DEFAULT_USERS: bool = True
+    # convenience setting - default users creation if DEV
+    MODE: ProxyMode = ProxyMode.PROD
 
     def __init__(self):
         env = {
@@ -97,6 +104,12 @@ class AppConfig:
             # Cast env var value to expected type
             if field == "ETH_ENDPOINTS":
                 value = json.loads(env_value)
+            elif field == "MODE":
+                try:
+                    value = ProxyMode(env_value.upper())
+                except ValueError:
+                    print("Unrecognized MODE", env_value, "available modes: DEV, SIM, PROD")
+                    raise Exception("Unrecognized MODE")
             else:
                 var_type = get_type_hints(AppConfig)[field]
                 if var_type == bool:

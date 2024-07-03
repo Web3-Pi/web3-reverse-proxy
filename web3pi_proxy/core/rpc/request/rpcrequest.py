@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class RPCRequest:
-    user_api_key: str = ""
+    user_api_key: str | None = None
     headers: bytearray | None = None
     content_len: int = -1
     content: bytearray | None = None

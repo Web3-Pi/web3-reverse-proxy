@@ -123,8 +123,9 @@ class ServiceActivitySummary:
             num_calls = 1
             req_bytes = len(request.last_queried_bytes)
 
-        uas_entry = self._get_or_create_uas(request.user_api_key)
-        uas_entry.update(request.method, req_bytes, len(response), num_calls)
+        if request.user_api_key:  # in the ProxyMode.SIM there can be no user context
+            uas_entry = self._get_or_create_uas(request.user_api_key)
+            uas_entry.update(request.method, req_bytes, len(response), num_calls)
 
     def to_dict(self) -> Dict[str, Any]:
         # with self.__lock:
