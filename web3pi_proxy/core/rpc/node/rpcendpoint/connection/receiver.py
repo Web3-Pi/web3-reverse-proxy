@@ -55,7 +55,8 @@ class ResponseReceiverGeth(ResponseReceiver):
 
         self.__logger.debug("Loop starting")
         while response_listener.need_more_data:
-            assert self.socket.is_ready_read()
+            if not self.socket.is_ready_read(5):  # TODO parametrize?
+                raise ConnectionClosedError
             data = self.socket.recv(buf_size)
             if not data:
                 raise ConnectionClosedError

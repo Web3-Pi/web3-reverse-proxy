@@ -258,7 +258,7 @@ class Web3RPCProxy:
                 events = client_poller.poll(Config.BLOCKING_ACCEPT_TIMEOUT)
                 for fd, _ in events:
                     if fd == srv_socket.socket.fileno():
-                        cs = srv_socket.accept(0)  # TODO connection hang up? errors?
+                        cs = srv_socket.accept_awaiting_connection()  # TODO connection hang up? errors?
                         active_client_connections.add_cs_pending(cs)
                         client_poller.register(
                             cs.socket, select.EPOLLIN | select.EPOLLONESHOT

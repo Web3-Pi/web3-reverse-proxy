@@ -72,11 +72,10 @@ class BaseSocket:
         cls.__logger.debug("Creating socket")
         s_dst = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         cls.__logger.debug("Connecting socket")
-        try:
-            s_dst.connect((host_ip, port))
-        except TimeoutError as error:
-            cls.__logger.error(error)
-            raise error
+
+        s_dst.settimeout(5.0)  # TODO parametrize?
+        s_dst.connect((host_ip, port))
+        s_dst.settimeout(None)
 
         cls.__logger.debug("Finished connecting socket")
 

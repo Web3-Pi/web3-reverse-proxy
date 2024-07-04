@@ -31,6 +31,17 @@ class ServerSocket:
 
         return res
 
+    def accept_awaiting_connection(self) -> ClientSocket:
+        """It must be checked in advance that there is an awaiting connection"""
+        try:
+            s_src, _ = self.socket.accept()
+            res = ClientSocket.from_socket(s_src)
+        except ssl.SSLError as ssl_err:  # TODO handle errors
+            logging.error(ssl_err)
+            res = None
+
+        return res
+
     @classmethod
     def create(
         cls,
