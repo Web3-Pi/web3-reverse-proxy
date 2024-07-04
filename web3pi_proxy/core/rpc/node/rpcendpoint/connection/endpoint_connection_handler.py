@@ -93,6 +93,8 @@ class EndpointConnectionHandler(ConnectionHandler):
             self.connection.res_receiver.recv_response(callback)
         except ConnectionClosedError:
             raise BrokenConnectionError
+        except ConnectionError:
+            raise BrokenConnectionError
 
     def update_request_stats(self, request: RPCRequest):
         self.connection.update_endpoint_stats(request.last_queried_bytes, bytearray())
