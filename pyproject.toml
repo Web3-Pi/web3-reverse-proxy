@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "web3pi-proxy"
-version = "0.0.1a2"
-description = "A reverse proxy service for Geth"
+version = "0.1a1"
+description = "A Web3 Pi Node Manager - proxy to Web3 Pi Ethereum nodes"
 authors = []
 license = "GNU GENERAL PUBLIC LICENSE Version 3"
 keywords = ["web3pi", "web3", "rpi", "raspberry", "geth", "ethereum", "proxy"]
