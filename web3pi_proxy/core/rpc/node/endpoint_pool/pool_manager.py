@@ -99,7 +99,7 @@ class EndpointConnectionPoolManager:
     ):
         self.load_balancer = load_balancer
         self.damage_controller = DamageController()
-        self.pools = {}
+        self.pools: dict[str, EndpointConnectionPool] = {}
         self.__lock = RLock()
 
         for index in range(len(descriptors)):
@@ -128,7 +128,9 @@ class EndpointConnectionPoolManager:
     def __damage_control(self):
         while True:
             self.__logger.debug("Running check on endpoint connections")
-            self.damage_controller.check_connections(self.__get_active_pools())
+            with self.__lock:
+                active_pools = self.__get_active_pools()
+            self.damage_controller.check_connections(active_pools)
             time.sleep(self.__DAMAGE_CONTROLLER_TIMEOUT_SECONDS)
 
     def add_pool(
