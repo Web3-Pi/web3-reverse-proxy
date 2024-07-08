@@ -27,12 +27,12 @@ class SampleStateManager:
         self.billing_service = billing
         self.activity_ledger = activity
 
-        self.admin_impl = RPCServiceAdmin(billing, activity, console_buffer)
+        self.admin = RPCServiceAdmin(billing, activity, console_buffer)
 
         self.started_at = datetime.datetime.utcnow()
 
     def set_console_buffer(self, console_buffer: StringIO):
-        self.admin_impl.set_console_buffer(console_buffer)
+        self.admin.set_console_buffer(console_buffer)
 
     def mark_next_startup(self) -> None:
         self.started_at = datetime.datetime.utcnow()
@@ -50,19 +50,19 @@ class SampleStateManager:
         return self.activity_ledger
 
     def get_admin_instance(self) -> RPCServiceAdmin:
-        return self.admin_impl
+        return self.admin
 
     def register_proxy_stats(self, stats: RPCProxyStats) -> None:
-        self.admin_impl.register_proxy_stats(stats)
+        self.admin.register_proxy_stats(stats)
 
     def register_endpoints(self, endpoints: Iterable[RPCEndpoint]) -> None:
         for e in endpoints:
-            self.admin_impl.register_endpoint_stats(
+            self.admin.register_endpoint_stats(
                 e.get_name(), e.get_connection_stats()
             )
 
     def clear_transient_fields(self):
-        self.admin_impl.clear_transient_fields()
+        self.admin.clear_transient_fields()
 
     def get_uptime(self, round_seconds: bool = True):
         dt = datetime.datetime.utcnow() - self.started_at
@@ -75,4 +75,4 @@ class SampleStateManager:
     def create_endpoint_manager(self, endpoint_pool_manager):
         self.register_endpoints(endpoint_pool_manager.endpoints)
         endpoint_manager = EndpointManagerService(endpoint_pool_manager)
-        self.admin_impl.register_endpoint_manager(endpoint_manager)
+        self.admin.register_endpoint_manager(endpoint_manager)

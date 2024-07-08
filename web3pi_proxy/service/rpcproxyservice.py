@@ -20,7 +20,7 @@ class DefaultRPCProxyService:
         self.state_manager = StateManagerProvider.create_state_manager(console_buffer)
 
         if Config.MODE == ProxyMode.DEV:
-            self._init_test_accounts(self.state_manager.admin_impl)
+            self._init_test_accounts(self.state_manager.admin)
 
     @classmethod
     def __print_pre_init_info(cls):
