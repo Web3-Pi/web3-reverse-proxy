@@ -4,7 +4,7 @@ import time
 from typing import Set
 from enum import Enum
 from queue import SimpleQueue
-from threading import Lock, RLock
+from threading import Lock, RLock, Thread
 
 from web3pi_proxy.config.conf import Config
 from web3pi_proxy.core.rpc.node.endpoint_pool.connection_pool import (
@@ -103,6 +103,19 @@ class EndpointConnectionPool(ConnectionPool):
         self.status = self.PoolStatus.ACTIVE.value
         self.__lock = Lock()
         self.__logger = get_logger(f"EndpointConnectionPool.{id(self)}")
+        self.connection_close_queue: SimpleQueue[EndpointConnection | None] = SimpleQueue()
+
+        self.closing_thread = Thread(
+            target=self.__run_closing_thread,
+            daemon=True,
+        )
+        self.closing_thread.start()
+
+        self.cleanup_thread = Thread(
+            target=self.__run_cleanup_thread,
+            daemon=True,
+        )
+        self.cleanup_thread.start()
 
     def __str__(self):
         return f"{self.__class__.__name__}({self.endpoint})"
@@ -110,32 +123,48 @@ class EndpointConnectionPool(ConnectionPool):
     class PoolStatus(Enum):
         ACTIVE = "ACTIVE"
         DISABLED = "DISABLED"
+        CLOSING = "CLOSING"
         CLOSED = "CLOSED"
 
-    def __cleanup(self) -> None:
-        excessive_connections = self.connections.qsize() - self.MAX_CONNECTIONS
-        if excessive_connections > 0:
-            self.__logger.debug(
-                f"Detected {excessive_connections} excessive connections"
-            )
-            for _ in range(excessive_connections):
-                connection = self.__get_connection()
-                self.__logger.debug(f"Removed connection {connection}")
-                try:
-                    connection.close()  # TODO: Move out of lock for better performance
-                except OSError:
-                    self.__logger.error(f"Failure on closing connection {connection}")
+    def __run_closing_thread(self):
+        while True:
+            connection = self.connection_close_queue.get()
+            if not connection:  # None is the sentinel
+                break
+            try:
+                connection.close()
+            except Exception as ex:
+                self.__logger.error(f"Error while closing a connection", ex)
+
+    def __run_cleanup_thread(self) -> None:
+        while True:
+            with self.__lock:
+                if self.status == self.PoolStatus.CLOSED.value or self.status == self.PoolStatus.CLOSING.value:
+                    break
+                if self.status == self.PoolStatus.ACTIVE.value:
+                    excessive_connections = self.connections.qsize() - self.MAX_CONNECTIONS
+                    if excessive_connections > 0:
+                        for _ in range(excessive_connections):
+                            connection = self.__get_connection()  # no need to catch an error, guarded with the lock
+                            self.connection_close_queue.put(connection)
+                    obsolete_connections = 0
+                    if self.connections.qsize() > 0:
+                        validity_timestamp = time.time_ns() - Config.IDLE_CONNECTION_TIMEOUT * 1_000_000_000
+                        for _ in range(self.connections.qsize()):  # this rotates the whole queue
+                            connection = self.__get_connection()
+                            if connection.last_use_timestamp < validity_timestamp:
+                                obsolete_connections += 1
+                                self.connection_close_queue.put(connection)
+                            else:
+                                self.connections.put(connection)
+            if excessive_connections > 0:
+                self.__logger.debug(f"Scheduled {excessive_connections} excessive connections for removal.")
+            if obsolete_connections > 0:
+                self.__logger.debug(f"Scheduled {obsolete_connections} obsolete connections for removal.")
+            time.sleep(Config.IDLE_CONNECTION_TIMEOUT)
 
     def __get_connection(self) -> EndpointConnection:
         return self.connections.get_nowait()
-
-    def __close(self) -> None:
-        while not self.connections.empty():
-            connection = self.__get_connection()
-            try:
-                connection.close()
-            except OSError:
-                self.__logger.error(f"Failure on closing connection {connection}")
 
     def __update_status(self, status: str):
         self.status = status
@@ -148,10 +177,7 @@ class EndpointConnectionPool(ConnectionPool):
             raise Exception("the pool is disabled")  # TODO better exception
         if self.connections.empty():
             self.__lock.release()
-            self.__logger.debug(
-                "No existing connections available, establishing new connection"
-            )
-
+            self.__logger.debug("No existing connections available, establishing new connection")
             try:
                 connection = EndpointConnection(self.endpoint)
             except Exception as error:
@@ -167,36 +193,43 @@ class EndpointConnectionPool(ConnectionPool):
                 self.__lock.release()
 
         self.__logger.debug(f"Return connection {connection}")
-        self.busy_connections.add(connection)
+        with self.__lock:
+            self.busy_connections.add(connection)
         return EndpointConnectionHandler(connection, self, is_new)
 
     def put(self, connection: EndpointConnection) -> None:
         self.__logger.debug(f"Putting connection {connection} to pool")
-        self.busy_connections.remove(connection)
-        if self.is_active():
-            self.stats.register_successful_connection()
-            with self.__lock:
+        with self.__lock:
+            self.busy_connections.remove(connection)
+            if self.is_active():
+                self.stats.register_successful_connection()
                 self.connections.put(connection)
-                self.__cleanup()
-        else:
-            self.__logger.warning(f"Connection returned on status {self.status}")
-            self.__logger.debug(f"Shutting down connection {connection}")
-            connection.close()
+                connection.last_use_timestamp = time.time_ns()
+            else:
+                self.connection_close_queue.put(connection)
+                if self.status == self.PoolStatus.CLOSING.value:  # cant be CLOSED
+                    if len(self.busy_connections) == 0:
+                        self.connection_close_queue.put(None)  # sentinel
+                        self.__update_status(self.PoolStatus.CLOSED.value)
+                        self.__logger.info("Pool has been closed")
 
     def is_active(self):
         return self.status == self.PoolStatus.ACTIVE.value
 
     def disable(self):
         with self.__lock:
+            if self.status == self.PoolStatus.CLOSED.value or self.status == self.PoolStatus.CLOSING.value:
+                raise Exception("Tried to disable after close")  # TODO better exception
             self.__update_status(self.PoolStatus.DISABLED.value)
-            self.__close()
+            while not self.connections.empty():
+                self.connection_close_queue.put(self.__get_connection())
             self.stats = PoolStats()
         self.__logger.info("Pool has been disabled")
 
     def activate(self):
-        if self.status == self.PoolStatus.CLOSED.value:
-            self.__logger.error("Tried to activate after closure")
         with self.__lock:
+            if self.status == self.PoolStatus.CLOSED.value or self.status == self.PoolStatus.CLOSING.value:
+                raise Exception("Tried to activate after close")  # TODO better exception
             self.__update_status(self.PoolStatus.ACTIVE.value)
         self.__logger.info("Pool has been activated")
 
@@ -207,9 +240,17 @@ class EndpointConnectionPool(ConnectionPool):
             self.stats.register_error_on_new_connection()
         else:
             self.stats.register_error_on_connection()
-        connection.close()
+        self.connection_close_queue.put(connection)
 
     def close(self) -> None:
         with self.__lock:
-            self.__update_status(self.PoolStatus.CLOSED.value)
-            self.__close()
+            self.__update_status(self.PoolStatus.CLOSING.value)
+            while not self.connections.empty():
+                self.connection_close_queue.put(self.__get_connection())
+            if len(self.busy_connections) == 0:
+                self.connection_close_queue.put(None)  # sentinel
+                self.__update_status(self.PoolStatus.CLOSED.value)
+                self.__logger.info("Pool has been closed")
+            else:
+                self.__logger.info("Pool is closing")
+

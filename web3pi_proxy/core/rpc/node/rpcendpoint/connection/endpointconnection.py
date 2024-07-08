@@ -1,4 +1,5 @@
 from __future__ import annotations
+import time
 
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
     EndpointConnectionDescriptor,
@@ -18,6 +19,7 @@ class EndpointConnection:
     socket: BaseSocket
     req_sender: RequestSender
     res_receiver: ResponseReceiver
+    last_use_timestamp: int
 
     ip: str
     host: str
@@ -38,6 +40,8 @@ class EndpointConnection:
         )
 
         self.res_receiver = ResponseReceiverGeth(self.socket)
+
+        self.last_use_timestamp = time.time_ns()
 
     @property
     def conn_descr(self) -> EndpointConnectionDescriptor:

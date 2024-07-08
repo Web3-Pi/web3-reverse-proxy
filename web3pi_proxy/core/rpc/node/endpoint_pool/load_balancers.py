@@ -17,6 +17,10 @@ class LoadBalancer(metaclass=ABCMeta):
 
     @abstractmethod
     def pick_pool(self, pools: List[EndpointConnectionPool]) -> EndpointConnectionPool:
+        """
+        Choose one connection pool from passed active connection pools.
+        The implementation cannot be blocking because of connection pools manager lock.
+        """
         pass
 
 

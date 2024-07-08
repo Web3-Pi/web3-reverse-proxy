@@ -38,6 +38,8 @@ class AppConfig:
     MAX_PENDING_CLIENT_SOCKETS: int = 10_000
     MAX_CONCURRENT_CONNECTIONS: int = 21
     MAX_SATURATED_ITERATIONS_LISTEN_PARAM: int = 2
+    # unused conn to eth rpc node is closed between IDLE_CONNECTION_TIMEOUT and 2*IDLE_CONNECTION_TIMEOUT, seconds
+    IDLE_CONNECTION_TIMEOUT: int = 300
     SSL_ENABLED: bool = False
     SSL_CERT_FILE: str = "cert.pem"
     SSL_KEY_FILE: str = "key.pem"

@@ -121,7 +121,6 @@ class Web3RPCProxy:
 
     def handle_client(
         self,
-        connection_getter: Callable,
         cs: ClientSocket,
         client_poller: select.epoll,
         active_client_connections: ClientSocketPool,
@@ -146,7 +145,7 @@ class Web3RPCProxy:
             # if self.is_cache_available:  # TODO cache
             #     self.read_cache()
             try:
-                endpoint_connection_handler = connection_getter()
+                endpoint_connection_handler = self.connection_pool.get_connection()
             except Exception as error:
                 self.__logger.error(error)
                 self.__logger.error("Failed to establish endpoint connection")
@@ -270,7 +269,6 @@ class Web3RPCProxy:
                         # TODO connection hang up?
                         executor.submit(
                             self.handle_client,
-                            self.connection_pool.get_connection,
                             cs,
                             client_poller,
                             active_client_connections,
