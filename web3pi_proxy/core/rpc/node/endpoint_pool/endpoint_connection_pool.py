@@ -111,6 +111,12 @@ class EndpointConnectionPool(ConnectionPool):
         )
         self.closing_thread.start()
 
+        self.cleanup_thread = Thread(
+            target=self.__run_cleanup_thread,
+            daemon=True,
+        )
+        self.cleanup_thread.start()
+
     def __str__(self):
         return f"{self.__class__.__name__}({self.endpoint})"
 
@@ -130,16 +136,32 @@ class EndpointConnectionPool(ConnectionPool):
             except Exception as ex:
                 self.__logger.error(f"Error while closing a connection", ex)
 
-    def __cleanup(self) -> None:
-        excessive_connections = self.connections.qsize() - self.MAX_CONNECTIONS
-        if excessive_connections > 0:
-            self.__logger.debug(
-                f"Detected {excessive_connections} excessive connections"
-            )
-            for _ in range(excessive_connections):
-                connection = self.__get_connection()
-                self.__logger.debug(f"Removed connection {connection}")
-                self.connection_close_queue.put(connection)
+    def __run_cleanup_thread(self) -> None:
+        while True:
+            with self.__lock:
+                if self.status == self.PoolStatus.CLOSED.value or self.status == self.PoolStatus.CLOSING.value:
+                    break
+                if self.status == self.PoolStatus.ACTIVE.value:
+                    excessive_connections = self.connections.qsize() - self.MAX_CONNECTIONS
+                    if excessive_connections > 0:
+                        for _ in range(excessive_connections):
+                            connection = self.__get_connection()
+                            self.connection_close_queue.put(connection)
+                    obsolete_connections = 0
+                    if self.connections.qsize() > 0:
+                        validity_timestamp = time.time_ns() - Config.IDLE_CONNECTION_TIMEOUT * 1_000_000_000
+                        for _ in range(self.connections.qsize()):  # this rotates the whole queue
+                            connection = self.__get_connection()
+                            if connection.last_use_timestamp < validity_timestamp:
+                                obsolete_connections += 1
+                                self.connection_close_queue.put(connection)
+                            else:
+                                self.connections.put(connection)
+            if excessive_connections > 0:
+                self.__logger.debug(f"Removed {excessive_connections} excessive connections")
+            if obsolete_connections > 0:
+                self.__logger.debug(f"Removed {obsolete_connections} obsolete connections")
+            time.sleep(Config.IDLE_CONNECTION_TIMEOUT)
 
     def __get_connection(self) -> EndpointConnection:
         return self.connections.get_nowait()
@@ -171,7 +193,8 @@ class EndpointConnectionPool(ConnectionPool):
                 self.__lock.release()
 
         self.__logger.debug(f"Return connection {connection}")
-        self.busy_connections.add(connection)
+        with self.__lock:
+            self.busy_connections.add(connection)
         return EndpointConnectionHandler(connection, self, is_new)
 
     def put(self, connection: EndpointConnection) -> None:
@@ -182,7 +205,6 @@ class EndpointConnectionPool(ConnectionPool):
                 self.stats.register_successful_connection()
                 self.connections.put(connection)
                 connection.last_use_timestamp = time.time_ns()
-                self.__cleanup()
             else:
                 self.connection_close_queue.put(connection)
                 if self.status == self.PoolStatus.CLOSING.value:  # cant be CLOSED
