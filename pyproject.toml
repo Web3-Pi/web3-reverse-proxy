@@ -15,7 +15,7 @@ repository = "https://github.com/Web3-Pi/web3-reverse-proxy"
 readme = "README.md"
 
 include = [
-    "web3-reverse-proxy-admin/**/*.html"
+    "admin/**/*.html"
 ]
 
 [build-system]
