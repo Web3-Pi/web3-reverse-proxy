@@ -43,7 +43,7 @@ pytest-subtests = "^0.12.1"
 poethepoet = "^0.27.0"
 
 [tool.poetry.scripts]
-web3pi-proxy = "web3pi_proxy.rproxy:main"
+web3pi-proxy = "web3pi_proxy.__main__:main"
 
 
 [tool.mypy]
