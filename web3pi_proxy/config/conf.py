@@ -75,7 +75,7 @@ class AppConfig:
     ADMIN_ROOT_DIR: str = os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     )
-    ADMIN_HTML_FILE: str = f"{ADMIN_ROOT_DIR}/web3-reverse-proxy-admin/admin/admin.html"
+    ADMIN_HTML_FILE: str = f"{ADMIN_ROOT_DIR}/admin/admin/admin.html"
 
     # console info
     SERVICE_NAME: str = "Web3 RPC Reverse Proxy Service  - RPI4 Edition"

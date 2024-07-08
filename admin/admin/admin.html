@@ -1,0 +1,825 @@
+<!-- https://w3schools.com/bootstrap/tryit.asp?filename=trybs_temp_analytics&stacked=h -->
+<!-- https://www.bootdey.com/snippets/tagged/dashboard/page/2 -->
+<!--https://www.bootdey.com/snippets/view/Gradients-dashboard-cards-->
+<!--https://codepen.io/eduarde/pen/MWwvbjL-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>RPC Proxy Remote Admin</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <!--    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>-->
+    <!--    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>-->
+    <style>
+        /* Set height of the grid so .sidenav can be 100% (adjust as needed) */
+
+        /* Set gray background color and 100% height */
+
+        .json-display {
+            resize:none;
+            font-family: monospace;
+            /*white-space: pre;*/
+            font-size: 8pt;
+            /*background-color: #000000 !important;*/
+            /*color: #80FF80;*/
+        }
+
+        .lab-l {
+            color: #337ab7;
+        }
+
+        /* On small screens, set height to 'auto' for the grid */
+        /*@media screen and (max-width: 992px) {*/
+        /*}*/
+
+        .order-card {
+            color: #fff;
+        }
+
+        .bg-c-blue {
+            background: linear-gradient(45deg,#4099ff,#73b4ff);
+        }
+
+        .bg-c-green {
+            background: linear-gradient(45deg,#2ed8b6,#59e0c5);
+        }
+
+        .bg-c-yellow {
+            background: linear-gradient(45deg,#FFB64D,#ffcb80);
+        }
+
+        .bg-c-pink {
+            background: linear-gradient(45deg,#FF5370,#ff869a);
+        }
+
+        .card {
+            border-radius: 8px;
+            -webkit-box-shadow: 0 1px 2.94px 0.06px rgba(4,26,55,0.16);
+            box-shadow: 0 1px 2.94px 0.06px rgba(4,26,55,0.16);
+            border: none;
+            /*margin-bottom: 8px;*/
+            margin-bottom: 7px;
+            -webkit-transition: all 0.3s ease-in-out;
+            transition: all 0.3s ease-in-out;
+            width: 100%
+        }
+
+        .card .card-block {
+            /*padding: 9px 12px 6px 12px;*/
+            padding: 8px 12px 5px 12px;
+        }
+
+        .card:hover{
+            /*transform: scale(1.01);*/
+            box-shadow: 0 8px 16px rgba(0,0,0,.12), 0 2px 4px rgba(0,0,0,.06);
+            opacity: 0.85;
+        }
+
+        .reset-cursor:hover {
+            cursor:default;
+        }
+
+        small, h5, p:hover {
+            cursor:default;
+        }
+
+        .scale-down-font {
+            margin-top: 0.075rem;
+            font-size: 85%;
+        }
+
+        .f-right {
+            float: right;
+        }
+
+        .smallMarginTop{
+            margin-top: 1px !important;
+        }
+
+        .smallMarginBottom{
+            margin-bottom: 1px !important;
+        }
+
+        .mediumMarginBottom{
+            margin-bottom: 6px !important;
+        }
+
+        .largeMarginBottom{
+            margin-bottom: 8px !important;
+        }
+
+        .deselect {
+            user-select: none;
+        }
+
+        .deselect::selection {
+            background: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="top-nav" class="navbar navbar-inverse navbar-static-top">
+    <div class="container bootstrap">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-toggle"></span>
+            </button>
+            <div class="navbar-brand reset-cursor" id="proxy_admin_panel">Proxy Admin Panel</div>
+        </div>
+    </div><!-- /container -->
+</div>
+<!-- /Header -->
+
+<!-- Main -->
+<div class="container bootstrap">
+
+    <!-- upper section -->
+    <div class="row">
+        <div class="col-md-3">
+            <!-- left -->
+            <a href="#" id="rpc_methods"><strong><i class="glyphicon glyphicon-cog"></i> RPC methods</strong></a>
+            <hr>
+
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="#" id="list_users"><i class="glyphicon glyphicon-user"></i> List Users</a></li>
+                <li><a href="#" id="list_activities_basic"><i class="glyphicon glyphicon-th-list"></i> Activities (basic)</a></li>
+                <li><a href="#" id="list_activities_detailed"><i class="glyphicon glyphicon-list-alt"></i> Activities (detailed)</a></li>
+            </ul>
+            <hr>
+
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="#" id="query_user_billing_plan"><i class="glyphicon glyphicon-usd"></i> User Billing Plan</a></li>
+                <li><a href="#" id="query_user_billing_status"><i class="glyphicon glyphicon-stats"></i> User Billing Stats</a></li>
+            </ul>
+            <form class="navbar-form" name="user_api_key_form">
+                <small class="lab-l">API key</small>
+                <label for="billing_api_key"></label><input id="billing_api_key" type="text" class="form-control pull-right" placeholder="User API key" style="width: 150px; height: 25px;">
+            </form>
+            <hr>
+
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="#" id="register_user"><i class="glyphicon glyphicon-plus"></i> Register User</a></li>
+                <li><a href="#" id="remove_user"><i class="glyphicon glyphicon-trash"></i> Remove User</a></li>
+                <li><a href="#" id="update_user_plan"><i class="glyphicon glyphicon-refresh"></i> Update User</a></li>
+            </ul>
+            <form class="navbar-form" name="manage_api_key_form">
+                <small class="lab-l">API key</small>
+                <label for="manage_api_key"></label><input id="manage_api_key" type="text" class="form-control pull-right" placeholder="User API key" style="width: 150px; height: 25px;">
+            </form>
+            <form class="navbar-form" name="manage_free_calls_form">
+                <small class="lab-l">Free Calls</small>
+                <label for="free_calls"></label><input id="free_calls" type="number" class="form-control pull-right" placeholder="E.g., 100" style="width: 130px; height: 25px;">
+            </form>
+            <form class="navbar-form" name="manage_free_bytes_form">
+                <small class="lab-l">Free Bytes</small>
+                <label for="free_bytes"></label><input id="free_bytes" type="number" class="form-control pull-right" placeholder="E.g., 10000" style="width: 130px; height: 25px;">
+            </form>
+            <form class="navbar-form" name="manage_priority_form">
+                <small class="lab-l">User Priority</small>
+                <label for="user_priority"></label><input id="user_priority" type="number" class="form-control pull-right deselect reset-cursor" value="2" min="0" max="2"  onkeydown="return false" style="width: 75px; height: 25px;">
+            </form>
+
+        </div><!-- /span-3 -->
+
+        <div class="col-md-9">
+            <!-- column 2 -->
+            <a href="#" id="crude_dashboard"><strong><i class="glyphicon glyphicon-dashboard"></i> Crude dashboard</strong></a>
+            <hr>
+            <div class="row">
+
+                <!-- center left-->
+                <div class="col-md-9">
+                    <div class="well reset-cursor">Processed proxy queries<span class="badge pull-right" id="num_processed_requests">0</span></div>
+                    <hr>
+                    <div class="panel panel-default">
+                        <div class="well reset-cursor">Last processed request <span class="label label-default label-large pull-right" id="last_processed_request" style="font-size:small;"></span></div>
+                        <div class="panel-body">
+                            <small>Proxy response</small>
+                            <div class="form-outline"><label for="json_display" class="hidden"></label><textarea class="form-control json-display" rows="21" id="json_display" readonly></textarea></div>
+                        </div><!--/panel-body-->
+                    </div><!--/panel-->
+                </div><!--/col-->
+                <!--center-right-->
+
+                <div class="col-md-3" id ="terre">
+                    <div class="well reset-cursor">Active endpoints <span class="badge pull-right" id="num_active_endpoints">0</span></div>
+                    <hr id="endpoints_placeholder">
+                </div> <!--/col-span-3-->
+
+            </div><!--/row-->
+        </div><!--/col-span-9-->
+
+    </div><!--/row-->
+    <!-- /upper section -->
+</div><!--/container-->
+<!-- /Main -->
+</body>
+
+<script>
+
+    const conf = {
+        tag: {
+            main_display: "json_display",
+
+            req_count_display: 'num_processed_requests',
+            req_name_display: 'last_processed_request',
+
+            endpoints_count_display: 'num_active_endpoints',
+
+            billing_api_key: 'billing_api_key',
+
+            db_manage_api_key: 'manage_api_key',
+            db_manage_free_calls: 'free_calls',
+            db_manage_free_bytes: 'free_bytes',
+            db_manage_user_priority: 'user_priority',
+
+            list_users: 'list_users',
+            list_activities_basic: 'list_activities_basic',
+            list_activities_detailed: 'list_activities_detailed',
+
+            query_user_billing_plan: 'query_user_billing_plan',
+            query_user_billing_status: 'query_user_billing_status',
+
+            register_user: 'register_user',
+            remove_user: 'remove_user',
+            update_user_plan: 'update_user_plan',
+
+            proxy_admin_panel: 'proxy_admin_panel',
+            rpc_methods: "rpc_methods",
+            crude_dashboard: 'crude_dashboard',
+            query_list_endpoints: 'query_list_endpoints',
+            query_endpoint_stats: 'query_endpoint_stats',
+
+            endpoints_placeholder: 'endpoints_placeholder'
+        },
+        query: {
+            queryUserPlan: "query_user_plan",
+            queryUserState: "query_user_state",
+            queryListRegisteredUsers: "query_list_registered_users",
+            queryListUsersActivitiesBasic: "query_list_users_activities_basic",
+            queryListUsersActivitiesDetailed: "query_list_users_activities_detailed",
+
+            registerUser: "register_user",
+            removeUser: "remove_user",
+            updateUserPlan: "update_user_plan",
+
+            queryProxyStats: "query_proxy_stats",
+            queryListEndpoints: "query_list_endpoints",
+            queryEndpointStats: "query_endpoint_stats",
+
+            queryServiceConsole: "query_service_console"
+        }
+    }
+    
+    class Helpers {
+
+        static defaultIntervalMillis() {
+            return 2500;
+        }
+
+        static defaultHost() {
+            //HOST_MARKER_S
+            return "http://127.0.0.1:8561";
+            //HOST_MARKER_E
+        }
+
+        static authToken() {
+            //TOKEN_MARKER_S
+            return "";
+            //TOKEN_MARKER_E
+        }
+
+        static toJSONCall(method, params) {
+            return JSON.stringify({
+                'jsonrpc': '2.0',
+                'method': method,
+                'params': params
+            });
+        }
+
+        static async requestPOST(json_params) {
+            const request = {
+                method: "POST",
+                body: json_params,
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8",
+                    "Authorization": "Basic " + this.authToken()
+                }
+            }
+
+            return fetch(this.defaultHost(), request).then((response) => response.json());
+        }
+
+        static jsonToDisplayJSON(json) {
+            return JSON.stringify(json, undefined, 4)
+        }
+
+        static millisSincePythonTimestamp(ts) {
+            return Date.now() - Math.floor(ts * 1000);
+        }
+
+        static integerToHumanReadable(val) {
+            const formatter = Intl.NumberFormat('en');
+            return formatter.format(val);
+        }
+
+        static bytesToHumanReadable(size) {
+            let sizes = [' Bytes', ' KB', ' MB', ' GB',
+                ' TB', ' PB', ' EB', ' ZB', ' YB'];
+
+            for (let i = 1; i < sizes.length; i++) {
+                if (size < Math.pow(1024, i))
+                    return (Math.round((size / Math.pow(
+                        1024, i - 1)) * 100) / 100) + sizes[i - 1];
+            }
+            return size;
+        }
+
+        static timestampPythonToHumanReadable(ts) {
+            const date = new Date(ts * 1000);
+            return date.toLocaleString();
+        }
+
+        static timeDeltaToHumanReadable(delta) {
+            let s = Math.floor(delta / 1000);
+
+            const d = Math.floor(s / 86400);
+            s %= 86400;
+
+            const h = Math.floor(s / 3600);
+            s %= 3600;
+
+            const m = Math.floor(s / 60);
+            s %= 60;
+
+            let days = "";
+            const rest = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+
+            if (d === 1) {
+                days = d + " day ";
+            }
+            if (d > 1) {
+                days = d + " days ";
+            }
+
+            return days + rest;
+        }
+
+        static getElt(eltId) {
+            return document.getElementById(eltId);
+        }
+
+        static addClickEventListener(eltId, listener) {
+            this.getElt(eltId).addEventListener("click", listener);
+        }
+
+        static addDOMContentLoadedListener(listener) {
+            document.addEventListener("DOMContentLoaded", listener);
+        }
+
+        static is_valid_key(api_key) {
+            return !(api_key.length === 0 || api_key.indexOf(' ') !== -1);
+        }
+
+        static validate_user_data(userdata) {
+            if (!this.is_valid_key(userdata.key) || userdata.free_calls.length === 0 || userdata.free_bytes.length === 0) {
+                return false;
+            }
+
+            if (isNaN(userdata.free_calls) || isNaN(userdata.free_bytes)) {
+                return false;
+            }
+
+            return userdata.free_calls >= 0 && userdata.free_bytes >= 0;
+        }
+
+        static FieldReader = class {
+            constructor(eltId) {
+                this.elt = Helpers.getElt(eltId)
+            }
+
+            read() {
+                return this.elt.value;
+            }
+        }
+
+        static FieldWriter = class {
+            constructor(eltId, formatter = null) {
+                this.formatter = formatter;
+                this.elt = Helpers.getElt(eltId)
+            }
+
+            writeRaw(msg) {
+                this.elt.textContent = msg;
+            }
+
+            write(msg) {
+                let res = msg;
+                if (this.formatter) {
+                    res = this.formatter(res);
+                }
+
+                this.writeRaw(res);
+            }
+        }
+    }
+    
+    class UserInput {
+        constructor() {
+            this.billing_api_key = new Helpers.FieldReader(conf.tag.billing_api_key);
+            this.db_manage_api_key = new Helpers.FieldReader(conf.tag.db_manage_api_key);
+            this.db_manage_free_calls = new Helpers.FieldReader(conf.tag.db_manage_free_calls);
+            this.db_manage_free_bytes = new Helpers.FieldReader(conf.tag.db_manage_free_bytes);
+            this.db_manage_user_priority = new Helpers.FieldReader(conf.tag.db_manage_user_priority);
+        }
+
+        billingAPIKey() {
+            return this.billing_api_key.read().trim();
+        }
+
+        dbManageAPIKey() {
+            return this.db_manage_api_key.read().trim();
+
+        }
+
+        dbManageFreeCalls() {
+            return this.db_manage_free_calls.read();
+
+        }
+
+        dbManageFreeBytes() {
+            return this.db_manage_free_bytes.read();
+
+        }
+
+        dbManageUserPriority() {
+            return this.db_manage_user_priority.read();
+
+        }
+
+        dbManageUserData() {
+            return {
+                key: this.dbManageAPIKey(),
+                free_calls: this.dbManageFreeCalls(),
+                free_bytes: this.dbManageFreeBytes(),
+                user_priority: this.dbManageUserPriority()
+            }
+        }
+    }
+
+    class Display {
+
+        constructor() {
+            this.requestCount = new Helpers.FieldWriter(conf.tag.req_count_display);
+            this.endpointsCount = new Helpers.FieldWriter(conf.tag.endpoints_count_display);
+            this.lastProcessedMethod = new Helpers.FieldWriter(conf.tag.req_name_display);
+            this.main = new Helpers.FieldWriter(conf.tag.main_display, Helpers.jsonToDisplayJSON);
+
+            this.endpointWriters = {}
+
+            this.consoleViewActive = false;
+            this.mainTextarea = Helpers.getElt(conf.tag.main_display);
+            this.view = new this.View();
+        }
+
+        set_console_view_active_flag(active) {
+            this.consoleViewActive = active;
+        }
+
+        is_console_view_active() {
+            return this.consoleViewActive;
+        }
+
+        update_request_count(reqCount) {
+            this.requestCount.write(reqCount);
+        }
+
+        update_endpoints_count(endpointsCount) {
+            this.endpointsCount.write(endpointsCount);
+        }
+
+        update_last_processed_request(method) {
+            this.lastProcessedMethod.write(method);
+        }
+
+        update_main_display(data, write_raw=false, use_console_color_scheme=false) {
+            if (use_console_color_scheme && this.is_console_view_active()) {
+                this.setConsoleDisplayColorScheme();
+            }
+            else {
+                this.setFormDisplayColorScheme();
+                this.set_console_view_active_flag(false);
+            }
+
+            if (write_raw) {
+                this.main.writeRaw(data)
+            }
+            else {
+                this.main.write(data);
+            }
+        }
+
+        update_display_method_error(err_msg) {
+            this.update_last_processed_request("");
+            this.update_main_display(err_msg, true);
+        }
+
+        update_dynamic_endpoint(key, endpointIds, stats){
+            if (!(key in this.endpointWriters)) {
+
+                this.endpointWriters[key] = {
+                    reqWriter: new Helpers.FieldWriter(endpointIds.requestId, Helpers.integerToHumanReadable),
+                    outboundWriter: new Helpers.FieldWriter(endpointIds.outboundId, Helpers.bytesToHumanReadable),
+                    inboundWriter: new Helpers.FieldWriter(endpointIds.inboundId, Helpers.bytesToHumanReadable),
+                    dateWriter: new Helpers.FieldWriter(endpointIds.dateId, Helpers.timeDeltaToHumanReadable)
+                }
+            }
+
+            const writer = this.endpointWriters[key];
+
+            writer.reqWriter.write(stats.req_no);
+            writer.outboundWriter.write(stats.bytes_sent);
+            writer.inboundWriter.write(stats.bytes_received);
+            writer.dateWriter.write(Helpers.millisSincePythonTimestamp(stats.started_at_timestamp));
+        }
+
+        setConsoleDisplayColorScheme() {
+            this.mainTextarea.setAttribute("style", "color: white; background-color: #000000 !important; color: #80FF80;")
+            this.consoleColorSchemeActive = true;
+        }
+
+        setFormDisplayColorScheme() {
+            this.mainTextarea.setAttribute("style", "")
+        }
+
+        View = class {
+
+            #endpointHTML(name, endpoint, viewIds) {
+                const deltaMillis = Helpers.millisSincePythonTimestamp(endpoint.started_at_timestamp);
+
+                let cardColor = "bg-c-blue";
+
+                if (name.toLowerCase().includes("infura")) {
+                    cardColor = "bg-c-pink";
+                }
+
+                return `<div class="card ${cardColor} order-card">
+                                <div class="card-block" id="${name}">
+                                    <h5 class="smallMarginTop largeMarginBottom">Endpoint: <span class="scale-down-font pull-right">${name}</span></h5>
+                                    <hr class="smallMarginTop mediumMarginBottom">
+                                    <p class="small smallMarginBottom">Requests<span class="f-right" id="${viewIds.requestId}">${Helpers.integerToHumanReadable(endpoint.req_no)}</span></p>
+                                    <p class="small smallMarginBottom">Inbound<span class="f-right" id="${viewIds.inboundId}">${Helpers.bytesToHumanReadable(endpoint.bytes_received)}</span></p>
+                                    <p class="small smallMarginBottom">Outbound<span class="f-right" id ="${viewIds.outboundId}">${Helpers.bytesToHumanReadable(endpoint.bytes_sent)}</span></p>
+                                    <hr class="smallMarginTop mediumMarginBottom">
+                                    <p class="small smallMarginBottom">Uptime<span class="f-right small" style="margin-top: 1px" id="${viewIds.dateId}">${Helpers.timeDeltaToHumanReadable(deltaMillis)}</span></p>
+                                </div>
+                             </div>`;
+            }
+
+            appendEndpointView(name, endpoint, viewIds) {
+                const endpointsPanel = Helpers.getElt(conf.tag.endpoints_placeholder);
+                const html = this.#endpointHTML(name, endpoint, viewIds);
+
+                endpointsPanel.insertAdjacentHTML('afterend', html);
+            }
+
+        }
+
+    }
+
+    class DynamicContent {
+        constructor(display) {
+            this.endpoints = {}
+
+            this.display = display;
+        }
+
+        addEndpoint(name, endpoint) {
+             const ids = {
+                requestId: name + "_req_no",
+                outboundId: name + "_outbound",
+                inboundId: name + "_inbound",
+                dateId: name + "_date"
+            }
+
+            this.endpoints[name] = ids;
+
+            this.display.view.appendEndpointView(name, endpoint, ids);
+        }
+
+        addClickListener(name, listener) {
+            Helpers.addClickEventListener(name, listener);
+        }
+
+        addIntervalUpdater(updater, millis=null) {
+            if (!millis) {
+                millis = Helpers.defaultIntervalMillis();
+            }
+            return setInterval(updater, millis);
+        }
+
+        getEndpoint(name) {
+            return this.endpoints[name];
+        }
+    }
+
+    class QueryCaller {
+
+        constructor(userInput, display) {
+            this.calls_count = 0;
+
+            this.userInput = userInput;
+            this.display = display;
+        }
+
+        billingKeyReader = () => {
+            return this.userInput.billingAPIKey();
+        }
+
+        manageDBKeyReader = () => {
+            return this.userInput.dbManageAPIKey();
+        }
+
+        keyValidator = (key) => {
+            return Helpers.is_valid_key(key);
+        }
+
+        keyParamToCallParam = (key) => {
+            return [key];
+        }
+
+        manageDBUserReader = () => {
+            return this.userInput.dbManageUserData();
+        }
+
+        userValidator = (user) => {
+            return Helpers.validate_user_data(user);
+        }
+
+        manageDBUserToCallParam = (user) => {
+            return Object.values(user);
+        }
+
+        async callPOST(method, params) {
+            return Helpers.requestPOST(Helpers.toJSONCall(method, params));
+        }
+
+        async asyncCall(method, params, update_count=true) {
+            if (update_count) {
+                this.calls_count++;
+            }
+            return this.callPOST(method, params);
+        }
+
+        handleBasicQuery(method, params = []) {
+            this.asyncCall(method, params).then((json) => this.display.update_main_display(json));
+            this.display.update_request_count(this.calls_count);
+            this.display.update_last_processed_request(method);
+        }
+
+        updateConsoleView(json) {
+            if (this.display.is_console_view_active()) {
+                this.display.update_main_display(Object.values(json)[0], true, true);
+                setTimeout(() => {
+                    this.asyncCall(conf.query.queryServiceConsole, []).then((json) => this.updateConsoleView(json))
+                }, Helpers.defaultIntervalMillis());
+            }
+        }
+
+        handleDisplayContentsQuery(method, params = []) {
+            this.display.set_console_view_active_flag(true);
+            this.asyncCall(method, params).then((json) => this.updateConsoleView(json));
+            this.display.update_request_count(this.calls_count);
+            this.display.update_last_processed_request(method);
+        }
+
+        handleValidatedQuery(method, reader, validator, paramFormatter, err_msg) {
+            const ids = reader();
+
+            if (validator(ids)) {
+                this.handleBasicQuery(method, paramFormatter(ids));
+            }
+            else {
+                this.display.update_display_method_error(err_msg);
+            }
+        }
+
+        getBasicQueryHandler(query, ...args) {
+            return () => {this.handleBasicQuery(query, ...args)};
+        }
+
+        getBasicQueryContentsHandler(query, ...args) {
+            return () => {this.handleDisplayContentsQuery(query, ...args)};
+
+        }
+
+        getUserBillingQueryHandler(query, ...args) {
+            return () => {this.handleValidatedQuery(query, this.billingKeyReader, this.keyValidator, this.keyParamToCallParam, ...args)};
+        }
+
+        getRemoveUserQueryHandler(query, ...args) {
+            return () => {this.handleValidatedQuery(query, this.manageDBKeyReader, this.keyValidator, this.keyParamToCallParam, ...args)};
+        }
+
+        getDBManageQueryHandler(query, ...args) {
+            return () => {this.handleValidatedQuery(query, this.manageDBUserReader, this.userValidator, this.manageDBUserToCallParam, ...args)};
+        }
+
+    }
+
+    class DynamicEndpointsHandler {
+        constructor(caller, display) {
+            this.display = display;
+            this.caller = caller;
+
+            this.dynamicContent = new DynamicContent(this.display);
+        }
+
+        handleEndpointQuery(key) {
+            this.caller.asyncCall(conf.query.queryEndpointStats, [key]).
+            then((json) => {
+                this.display.update_main_display(json)
+                this.display.update_dynamic_endpoint(key, this.dynamicContent.getEndpoint(key), json);
+            });
+
+            this.display.update_request_count(this.caller.calls_count);
+            this.display.update_last_processed_request(conf.query.queryEndpointStats);
+        }
+
+        handleEndpointUpdateViewQuery(key) {
+            this.caller.asyncCall(conf.query.queryEndpointStats, [key], false).
+            then((json) => {
+                this.display.update_dynamic_endpoint(key, this.dynamicContent.getEndpoint(key), json);
+            });
+        }
+
+        registerEndpoints = (json) => {
+            let activeEndpoints = 0;
+            const endpoints = Object.keys(json);
+            endpoints.reverse().forEach(endpointKey => {
+                this.dynamicContent.addEndpoint(endpointKey, json[endpointKey]);
+                this.dynamicContent.addClickListener(endpointKey, () => {this.handleEndpointQuery(endpointKey)});
+                this.dynamicContent.addIntervalUpdater(() => {this.handleEndpointUpdateViewQuery(endpointKey)});
+
+                activeEndpoints++;
+            })
+
+            this.display.update_endpoints_count(activeEndpoints);
+        }
+
+        handle_init_endpoints = () => {
+            this.caller.asyncCall(conf.query.queryListEndpoints, [], false).
+            then(json =>
+                this.registerEndpoints(json)
+            );
+        }
+
+    }
+
+    class QueryHandlers {
+
+        constructor() {
+            this.display = new Display();
+            this.userInput = new UserInput();
+            this.caller = new QueryCaller(this.userInput, this.display);
+            this.endpointHandler = new DynamicEndpointsHandler(this.caller, this.display);
+        }
+
+        registerHandlers() {
+            Helpers.addClickEventListener(conf.tag.list_users, this.caller.getBasicQueryHandler(conf.query.queryListRegisteredUsers));
+            Helpers.addClickEventListener(conf.tag.list_activities_basic, this.caller.getBasicQueryHandler(conf.query.queryListUsersActivitiesBasic));
+            Helpers.addClickEventListener(conf.tag.list_activities_detailed, this.caller.getBasicQueryHandler(conf.query.queryListUsersActivitiesDetailed));
+
+            Helpers.addClickEventListener(conf.tag.query_user_billing_plan, this.caller.getUserBillingQueryHandler(conf.query.queryUserPlan, "Billing plan not queried - invalid api key provided"));
+            Helpers.addClickEventListener(conf.tag.query_user_billing_status, this.caller.getUserBillingQueryHandler(conf.query.queryUserState, "Billing stats not queried - invalid api key provided"));
+
+            Helpers.addClickEventListener(conf.tag.register_user, this.caller.getDBManageQueryHandler(conf.query.registerUser, "Invalid input data - user won't be registered"));
+            Helpers.addClickEventListener(conf.tag.remove_user, this.caller.getRemoveUserQueryHandler(conf.query.removeUser, "Invalid API key - user not removed"));
+            Helpers.addClickEventListener(conf.tag.update_user_plan, this.caller.getDBManageQueryHandler(conf.query.updateUserPlan, "Invalid input data - user won't be updated"));
+
+            Helpers.addClickEventListener(conf.tag.proxy_admin_panel, this.caller.getBasicQueryContentsHandler(conf.query.queryServiceConsole));
+            Helpers.addClickEventListener(conf.tag.crude_dashboard, this.caller.getBasicQueryHandler(conf.query.queryProxyStats));
+
+            Helpers.addClickEventListener(conf.tag.rpc_methods, () => {this.display.update_main_display(Object.values(conf.query))});
+
+            Helpers.addDOMContentLoadedListener(this.endpointHandler.handle_init_endpoints);
+        }
+
+    }
+
+    class Main {
+        static main() {
+            this.queryHandlers = new QueryHandlers();
+            this.queryHandlers.registerHandlers();
+        }
+    }
+
+    Main.main();
+
+</script>
+
+</html>
+

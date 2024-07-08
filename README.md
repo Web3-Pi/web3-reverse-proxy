@@ -44,11 +44,17 @@ web3pi-proxy
 
 Admin service starts alongside the reverse proxy.
 
+
 You can access admin webpage with your browser using admin server's URL and providing **admin auth token** as a 'token' query param, like so:
 
 ```
 http://0.0.0.0:6561/?token=<ADMIN_AUTH_TOKEN>
 ```
+
+### Reference Image
+
+![Admin Panel](./admin/docs/screenshot_admin_example.jpg)
+
 
 The **admin auth token** will be output to your terminal, during the launch.
 
