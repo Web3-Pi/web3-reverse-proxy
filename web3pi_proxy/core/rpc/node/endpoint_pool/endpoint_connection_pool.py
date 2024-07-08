@@ -158,7 +158,7 @@ class EndpointConnectionPool(ConnectionPool):
                             else:
                                 self.connections.put(connection)
             if excessive_connections > 0:
-                self.__logger.debug(f"Removed {excessive_connections} excessive connections")
+                self.__logger.debug(f"Scheduled {excessive_connections} excessive connections for removal.")
             if obsolete_connections > 0:
                 self.__logger.debug(f"Scheduled {obsolete_connections} obsolete connections for removal.")
             time.sleep(Config.IDLE_CONNECTION_TIMEOUT)
