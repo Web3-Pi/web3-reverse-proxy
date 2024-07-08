@@ -145,7 +145,7 @@ class EndpointConnectionPool(ConnectionPool):
                     excessive_connections = self.connections.qsize() - self.MAX_CONNECTIONS
                     if excessive_connections > 0:
                         for _ in range(excessive_connections):
-                            connection = self.__get_connection()
+                            connection = self.__get_connection()  # no need to catch an error, guarded with the lock
                             self.connection_close_queue.put(connection)
                     obsolete_connections = 0
                     if self.connections.qsize() > 0:
