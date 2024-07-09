@@ -32,6 +32,8 @@ urllib3 = ">=2.1.0"
 upnpclient = ">=1.0.3"
 whatismyip = ">=2022.7.10"
 
+peewee = "^3.17.6"
+peewee-migrate = "^1.12.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"
@@ -64,3 +66,5 @@ _check_format_isort = "isort --check-only --diff ."
 _check_format_black = "black --check --diff ."
 check_lint = "pylint ./web3pi_proxy"
 check_typing = "mypy ."
+
+create_migrations = "python -c 'from web3pi_proxy.db import create_migrations; create_migrations()'"

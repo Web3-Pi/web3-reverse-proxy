@@ -549,6 +549,31 @@ files = [
 ]
 
 [[package]]
+name = "peewee"
+version = "3.17.6"
+description = "a little orm"
+optional = false
+python-versions = "*"
+files = [
+    {file = "peewee-3.17.6.tar.gz", hash = "sha256:cea5592c6f4da1592b7cff8eaf655be6648a1f5857469e30037bf920c03fb8fb"},
+]
+
+[[package]]
+name = "peewee-migrate"
+version = "1.12.2"
+description = "Support for migrations in Peewee ORM"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "peewee_migrate-1.12.2-py3-none-any.whl", hash = "sha256:2930bf83ef802cdb5fb123116c5eb87cbf3756cb27674f674923be6bb27dabee"},
+    {file = "peewee_migrate-1.12.2.tar.gz", hash = "sha256:c8187c97b756909ea57e77cce06ae66395219e86764ef0b286a7bc72ff7405ad"},
+]
+
+[package.dependencies]
+click = "*"
+peewee = ">=3,<4"
+
+[[package]]
 name = "platformdirs"
 version = "4.2.2"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
@@ -804,4 +829,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "37a7b3146e300986e368751667894016ea6deace3fdb7196e3f3eed09e5299f1"
+content-hash = "1f384658dbc65f6e964526a839137b9bfbab63bad09ca1540c6c1b21f001d9b6"
