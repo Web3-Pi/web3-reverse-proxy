@@ -18,17 +18,13 @@ class BasicBillingServiceWithLedger(CallPermissions):
     # FIXME: priorities and GLM settlements should also be verified here (although they should be read only when
     #  necessary, and definitely not every time rpc call is invoked by user
     def is_allowed(self, user_api_key: str, method: str) -> bool:
-        user_summary = self.get_user_summary_fun(user_api_key)
-
-        num_calls_so_far = 0
-        num_bytes_so_far = 0
-
-        if user_summary is not None:
-            num_calls_so_far = user_summary.total_num_calls
-            num_bytes_so_far = user_summary.total_bytes_processed()
+        user_summary = self.get_user_summary_fun(user_api_key) or UserActivitySummary(None)
 
         return self.billing_service.is_allowed(
-            user_api_key, method, num_calls_so_far, num_bytes_so_far
+            user_api_key,
+            method,
+            user_summary.total_stats.num_calls,
+            user_summary.total_stats.total_bytes,
         )
 
     def get_call_priority(self, user_api_key: str, method: str) -> int:

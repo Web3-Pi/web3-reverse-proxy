@@ -6,8 +6,8 @@ from web3pi_proxy.service.ioredirect.stdoutcapture import StdOutCaptureStreamTee
 from web3pi_proxy.service.providers.serviceprovider import (
     ServiceComponentsProvider,
 )
-from web3pi_proxy.service.providers.statemanagerprovider import (
-    StateManagerProvider,
+from web3pi_proxy.service.providers.db_statemanagerprovider import (
+    DbStateManagerProvider,
 )
 from web3pi_proxy.service.providers.upnpserviceprovider import UPnPServiceProvider
 
@@ -17,7 +17,7 @@ class DefaultRPCProxyService:
     def __init__(self, console_buffer: StringIO):
         self.__print_pre_init_info()
 
-        self.state_manager = StateManagerProvider.create_state_manager(console_buffer)
+        self.state_manager = DbStateManagerProvider.create_state_manager(console_buffer)
 
         if Config.MODE == ProxyMode.DEV:
             self._init_test_accounts(self.state_manager.admin)
@@ -72,7 +72,7 @@ class DefaultRPCProxyService:
 
         admin_thread.shutdown()
 
-        StateManagerProvider.close_state_manager(self.state_manager)
+        DbStateManagerProvider.close_state_manager(self.state_manager)
 
     @classmethod
     def launch_service(

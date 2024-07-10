@@ -41,9 +41,8 @@ class SampleStateManager:
         return SimpleAuthenticatorFromBilling(self.billing_service)
 
     def get_call_permissions_instance(self) -> CallPermissions:
-        user_summary_getter_fun = self.activity_ledger.get_all_time_user_summary
         return BasicBillingServiceWithLedger(
-            self.billing_service, user_summary_getter_fun
+            self.billing_service, self.activity_ledger.get_all_time_user_summary
         )
 
     def get_service_state_updater_instance(self) -> StateUpdater:
