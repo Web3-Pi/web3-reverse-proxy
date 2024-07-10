@@ -17,6 +17,7 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import
     EndpointConnection,
 )
 from web3pi_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
+from web3pi_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3pi_proxy.utils.logger import get_logger
 
 
@@ -232,6 +233,47 @@ class EndpointConnectionPool(ConnectionPool):
                 raise Exception("Tried to activate after close")  # TODO better exception
             self.__update_status(self.PoolStatus.ACTIVE.value)
         self.__logger.info("Pool has been activated")
+
+    def test_conn(self) -> bool:
+        """Should not throw any exceptions.
+        Always creates a new connection outside a pool and tests a node."""
+        req = RPCRequest()
+        req.content = \
+            bytearray(b"{"
+                      b"\"jsonrpc\":\"2.0\", "
+                      b"\"method\":\"eth_getBlockByNumber\", "
+                      b"\"params\":[\"latest\", false], "
+                      b"\"id\":1"
+                      b"}")
+        req.headers = (
+            bytearray(b"User-Agent: web3pi/proxy\r\n"
+                      b"Accept: */*\r\n"
+                      b"Content-Type: application/json\r\n"
+                      b"Content-Length: 86\r\n"))
+
+        valid_response = False
+
+        def response_handler(res):
+            nonlocal valid_response
+            valid_response = valid_response or len(res) > 0  # TODO better response validation
+
+        try:
+            connection = EndpointConnection(self.endpoint)
+        except Exception:
+            return False
+
+        try:
+            connection.req_sender.send_request(req)
+            connection.res_receiver.recv_response(response_handler)
+        except Exception:
+            return False
+        finally:
+            try:
+                connection.close()
+            except Exception:
+                return False
+
+        return valid_response
 
     def handle_broken_connection(self, connection: EndpointConnection, is_new=False):
         self.__logger.warning(f"Reported failure for connection {connection}")
