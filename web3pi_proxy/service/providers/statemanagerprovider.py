@@ -3,6 +3,7 @@ import pickle
 from io import StringIO
 
 from web3pi_proxy.config.conf import Config
+from web3pi_proxy.service.billing.billingplan import SimplestBillingPlan
 from web3pi_proxy.service.billing.billingservice import BasicBillingService
 from web3pi_proxy.service.ledger.activityledger import SimpleActivityLedger
 from web3pi_proxy.state.statemanager import SampleStateManager
@@ -26,7 +27,7 @@ class StateManagerProvider:
         else:
             print(f"Creating new instance of State Manager")
             res = SampleStateManager(
-                BasicBillingService(), SimpleActivityLedger(), console_buffer
+                BasicBillingService(SimplestBillingPlan), SimpleActivityLedger(), console_buffer
             )
 
         return res
