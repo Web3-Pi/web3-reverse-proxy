@@ -13,7 +13,7 @@ class BaseModel(Model):
         return f"{self.to_dict()}"
 
     def to_dict(self):
-        return model_to_dict(self)
+        return model_to_dict(self, extra_attrs=getattr(self.__class__._meta, "extra_attrs", list()))
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):

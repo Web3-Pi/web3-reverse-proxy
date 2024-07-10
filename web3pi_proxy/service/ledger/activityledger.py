@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Dict
 
 from web3pi_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3pi_proxy.interfaces.servicestate import StateUpdater
@@ -16,6 +17,9 @@ class SimpleActivityLedger(StateUpdater):
     ALL_TIME_SUMMARY = "all_time_summary"
     DAILY_USE_SUMMARY = "daily_use_summary"
 
+    daily_usage: Dict[str, ServiceActivitySummary]
+    all_time_summary: ServiceActivitySummary
+
     def __init__(self):
         self.daily_usage = {}
         self.all_time_summary = ServiceActivitySummary()
@@ -23,7 +27,7 @@ class SimpleActivityLedger(StateUpdater):
         # self.__lock = Lock()
 
     @staticmethod
-    def utc_now_as_key():
+    def utc_now_as_key() -> str:
         return datetime.utcnow().strftime("%Y-%m-%d")
 
     def get_all_time_user_summary(self, user_api_key: str) -> UserActivitySummary:

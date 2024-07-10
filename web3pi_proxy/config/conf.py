@@ -24,7 +24,6 @@ class AppConfig:
 
     # default rpc service conf
     PUBLIC_SERVICE: bool = False
-    USE_PICKLE_DB: bool = True
 
     # UPnP
     USE_UPNP: bool = True and PUBLIC_SERVICE
