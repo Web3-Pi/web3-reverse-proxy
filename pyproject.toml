@@ -71,3 +71,5 @@ check_lint = "pylint ./web3pi_proxy"
 check_typing = "mypy ."
 
 create_migrations = "python -c 'from web3pi_proxy.db import create_migrations; create_migrations()'"
+
+init_test_accounts = "python -c 'from web3pi_proxy.utils.test_accounts import init_test_accounts; init_test_accounts()'"

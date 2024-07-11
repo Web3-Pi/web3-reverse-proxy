@@ -8,11 +8,11 @@ from .user import User
 class BillingPlan(BaseModel):
     user: Optional[User] = ForeignKeyField(User)
 
-    num_free_calls: int = IntegerField()
-    num_free_bytes: int = IntegerField()
-    glm_call_price: float = FloatField()
-    glm_byte_price: float = FloatField()
-    user_priority: int = IntegerField()
+    num_free_calls: int = IntegerField(default=0)
+    num_free_bytes: int = IntegerField(default=0)
+    glm_call_price: float = FloatField(default=0.0)
+    glm_byte_price: float = FloatField(default=0.0)
+    user_priority: int = IntegerField(default=0)
 
     class Meta:
         indexes = (
