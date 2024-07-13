@@ -167,7 +167,7 @@ class EndpointConnectionPoolManager:
         self.__logger.debug("Selecting endpoint")
         with self.__lock:
             active_pools = self.__get_active_pools()
-            if len(active_pools) == 0:
+            if not active_pools:
                 raise NoActivePoolsError()
             pool = self.load_balancer.pick_pool(active_pools)
         self.__logger.debug(f"Selected endpoint{pool.endpoint}")
