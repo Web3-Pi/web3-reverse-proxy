@@ -65,15 +65,21 @@ class DamageController:
         return False
 
     def __suspend_pool(self, pool) -> None:
-        if pool.is_active():
-            pool.disable()
+        if not pool.is_active():
+            return
+        pool.disable()
+        while True:
             time.sleep(self.__SUSPENSION_TIMEOUT_SECONDS)
-            pool.activate()
+            if pool.test_conn():
+                pool.activate()
+                break
+            else:
+                continue
 
     def check_connections(self, pools: List[EndpointConnectionPool]):
         for pool in pools:
             if self.__is_broken(pool):
-                self.__logger.warn(
+                self.__logger.warning(
                     f"Endpoint `{pool.endpoint.name}`: connection failure rate excessive."
                 )
                 Thread(
@@ -83,7 +89,7 @@ class DamageController:
                 ).start()
 
             if self.__is_outdated(pool):
-                self.__logger.warn(f"Endpoint `{pool.endpoint.name}`: falling behind")
+                self.__logger.warning(f"Endpoint `{pool.endpoint.name}`: falling behind")
 
             self.__logger.debug(f"Endpoint `{pool.endpoint.name}`: okay.")
 
@@ -160,11 +166,12 @@ class EndpointConnectionPoolManager:
     def get_connection(self) -> EndpointConnectionHandler:
         self.__logger.debug("Selecting endpoint")
         with self.__lock:
-            pool = self.load_balancer.pick_pool(self.__get_active_pools())
-            if pool is None:
+            active_pools = self.__get_active_pools()
+            if not active_pools:
                 raise NoActivePoolsError()
-            self.__logger.debug(f"Selected endpoint{pool.endpoint}")
-            return pool.get()
+            pool = self.load_balancer.pick_pool(active_pools)
+        self.__logger.debug(f"Selected endpoint{pool.endpoint}")
+        return pool.get()
 
     def close(self) -> None:
         with self.__lock:

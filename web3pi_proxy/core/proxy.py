@@ -147,7 +147,7 @@ class Web3RPCProxy:
             try:
                 endpoint_connection_handler = self.connection_pool.get_connection()
             except Exception as error:
-                self.__logger.error(error)
+                self.__logger.error("%s: %s", error.__class__, error)
                 self.__logger.error("Failed to establish endpoint connection")
                 cs.send_all(
                     ErrorResponses.connection_error(req.id)
