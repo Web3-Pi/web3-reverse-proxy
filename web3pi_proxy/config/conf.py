@@ -24,7 +24,6 @@ class AppConfig:
 
     # default rpc service conf
     PUBLIC_SERVICE: bool = False
-    USE_PICKLE_DB: bool = True
 
     # UPnP
     USE_UPNP: bool = True and PUBLIC_SERVICE
@@ -70,7 +69,7 @@ class AppConfig:
     ADMIN_LISTEN_PORT: int = 6561
 
     # default pickle database to store stats
-    DB_FILE: str = "basic_state_db.pickle"
+    DB_FILE: str = "web3pi_proxy.sqlite3"
     STATE_STORAGE_FILE: str = f"{os.getcwd()}/.w3appdata/{DB_FILE}"
 
     # admin panel

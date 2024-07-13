@@ -6,7 +6,7 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpointconnectionstats i
     EndpointConnectionStats,
 )
 from web3pi_proxy.core.stats.proxystats import RPCProxyStats
-from web3pi_proxy.service.billing.billingplan import SimplestBillingPlan
+from web3pi_proxy.interfaces.billing import BillingPlanProtocol
 from web3pi_proxy.service.billing.billingservice import BasicBillingService
 from web3pi_proxy.service.endpoints.endpoint_manager import EndpointManagerService
 from web3pi_proxy.service.http.rpcadmincalls import RPCAdminCalls
@@ -52,17 +52,6 @@ class RPCServiceAdmin:
             RPCAdminCalls.REMOVE_ENDPOINT: self.remove_endpoint,
             RPCAdminCalls.UPDATE_ENDPOINT: self.update_endpoint,
         }
-
-    @classmethod
-    def create_plan(
-        cls, free_calls: int | str, free_bytes: int | str, priority: int | str
-    ):
-        # FIXME: naive type handling
-        free_calls_num = int(free_calls)
-        free_bytes_num = int(free_bytes)
-        priority = int(priority)
-
-        return SimplestBillingPlan(free_calls_num, free_bytes_num, 0.0, 0.0, priority)
 
     @classmethod
     def as_dict(cls, entry) -> Dict[str, Any]:
@@ -133,7 +122,7 @@ class RPCServiceAdmin:
         return self.as_dict(self.activity_ledger)
 
     def register_user(
-        self, user_api_key: str, user_plan: SimplestBillingPlan
+        self, user_api_key: str, user_plan: BillingPlanProtocol
     ) -> ReturnType:
         if not self.billing_service.is_registered(user_api_key):
             self.billing_service.register_user(user_api_key, user_plan)
@@ -144,7 +133,7 @@ class RPCServiceAdmin:
         self, user_api_key: str, free_calls: int, free_bytes: int, priority: int
     ) -> ReturnType:
         return self.register_user(
-            user_api_key, self.create_plan(free_calls, free_bytes, priority)
+            user_api_key, self.billing_service.create_plan(free_calls, free_bytes, priority)
         )
 
     def remove_user(self, user_api_key: str) -> ReturnType:
@@ -155,7 +144,7 @@ class RPCServiceAdmin:
             return self.query_list_registered_users()
 
     def update_user_plan(
-        self, user_api_key: str, user_plan: SimplestBillingPlan
+        self, user_api_key: str, user_plan: BillingPlanProtocol
     ) -> ReturnType:
         if self.billing_service.is_registered(user_api_key):
             self.billing_service.update_user_plan(user_api_key, user_plan)
@@ -166,7 +155,7 @@ class RPCServiceAdmin:
         self, user_api_key: str, free_calls: int, free_bytes: int, priority: int
     ) -> ReturnType:
         return self.update_user_plan(
-            user_api_key, self.create_plan(free_calls, free_bytes, priority)
+            user_api_key, self.billing_service.create_plan(free_calls, free_bytes, priority)
         )
 
     # #########################################################

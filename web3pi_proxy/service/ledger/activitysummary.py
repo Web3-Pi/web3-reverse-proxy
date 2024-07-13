@@ -2,41 +2,8 @@
 # from threading import Lock, RLock
 from typing import Any, Dict, Optional
 
+from web3pi_proxy.db.models import User, CallStats
 from web3pi_proxy.core.rpc.request.rpcrequest import RPCRequest
-
-
-class CallStats:
-
-    REQ_BYTES = "request_bytes"
-    RESP_BYTES = "response_bytes"
-    TOTAL_BYTES = "total_bytes"
-    NUM_CALLS = "num_calls"
-
-    def __init__(self, _rqb: int = 0, _rsb: int = 0) -> None:
-        self.req_bytes = _rqb
-        self.resp_bytes = _rsb
-        self.num_calls = 0
-
-        # self.__lock = RLock()
-
-    def update(self, req_bytes: int, resp_bytes: int, num_calls: int) -> None:
-        # with self.__lock:
-        self.req_bytes += req_bytes
-        self.resp_bytes += resp_bytes
-        self.num_calls += num_calls
-
-    def total_bytes_processed(self) -> int:
-        # with self.__lock:
-        return self.req_bytes + self.resp_bytes
-
-    def to_dict(self) -> Dict[str, Any]:
-        # with self.__lock:
-        return {
-            self.NUM_CALLS: self.num_calls,
-            self.TOTAL_BYTES: self.total_bytes_processed(),
-            self.REQ_BYTES: self.req_bytes,
-            self.RESP_BYTES: self.resp_bytes,
-        }
 
 
 class UserActivitySummary:
@@ -44,71 +11,64 @@ class UserActivitySummary:
     TOTAL_NUM_BYTES = "total_num_bytes"
     TOTAL_NUM_CALLS = "total_num_calls"
 
-    def __init__(self) -> None:
-        self.calls_stats = {}
+    user: Optional[User]
+    method_stats: Dict[str, CallStats]
+    total_stats: CallStats
 
-        self.total_request_bytes = 0
-        self.total_response_bytes = 0
-        self.total_num_calls = 0
+    def __init__(self, user: Optional[User]) -> None:
+        self.user = user
+        self.total_stats = CallStats(user=User, method=None)
+        self.method_stats = {}
 
         # self.__lock = RLock()
+
+    def __repr__(self):
+       return f"<{self.__class__.__name__}: user={self.user}>"
 
     def update(
         self, method: str, req_bytes: int, resp_bytes: int, num_calls: int
     ) -> None:
         # with self.__lock:
-        if method not in self.calls_stats:
-            self.calls_stats[method] = CallStats()
+        if method not in self.method_stats:
+            self.method_stats[method] = CallStats(user=self.user, method=method)
 
-        self.calls_stats[method].update(req_bytes, resp_bytes, num_calls)
-
-        self.total_num_calls += num_calls
-        self.total_request_bytes += req_bytes
-        self.total_response_bytes += resp_bytes
-
-    def total_bytes_processed(self) -> int:
-        # with self.__lock:
-        return self.total_request_bytes + self.total_response_bytes
+        self.method_stats[method].update_stats(req_bytes, resp_bytes, num_calls)
+        self.total_stats.update_stats(req_bytes, resp_bytes, num_calls)
 
     def to_dict(self) -> dict:
         # with self.__lock:
         return {
-            self.CALLS_STATS: {k: v.to_dict() for k, v in self.calls_stats.items()},
-            self.TOTAL_NUM_CALLS: self.total_num_calls,
-            self.TOTAL_NUM_BYTES: self.total_request_bytes + self.total_response_bytes,
+            self.CALLS_STATS: {k: v.to_dict() for k, v in self.method_stats.items()},
+            self.TOTAL_NUM_CALLS: self.total_stats.num_calls,
+            self.TOTAL_NUM_BYTES: self.total_stats.total_bytes,
         }
 
 
 class ServiceActivitySummary:
+    user_summaries: Dict[str, UserActivitySummary]
 
     def __init__(self) -> None:
-        self.users_summaries = {}
+        self.user_summaries = {}
         # self.__lock = Lock()
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}: {self.user_summaries}>"
 
     def add_new_user(self, user_api_key: str) -> None:
         self._get_or_create_uas(user_api_key)
 
     def remove_user(self, user_api_key: str) -> None:
         # with self.__lock:
-        if user_api_key in self.users_summaries:
-            del self.users_summaries[user_api_key]
+        self.user_summaries.pop(user_api_key, None)
 
     def _get_or_create_uas(self, user_api_key: str) -> UserActivitySummary:
         # with self.__lock:
-        if user_api_key not in self.users_summaries:
-            self.users_summaries[user_api_key] = UserActivitySummary()
-
-        return self.users_summaries[user_api_key]
+        return self.user_summaries.setdefault(user_api_key, UserActivitySummary(None))
 
     def get_user_activity_summary(
         self, user_api_key: str
     ) -> Optional[UserActivitySummary]:
-        res = None
-        # with self.__lock:
-        if user_api_key in self.users_summaries:
-            res = self.users_summaries[user_api_key]
-
-        return res
+        return self.user_summaries.get(user_api_key)
 
     def update(
         self,
@@ -129,4 +89,4 @@ class ServiceActivitySummary:
 
     def to_dict(self) -> Dict[str, Any]:
         # with self.__lock:
-        return {k: v.to_dict() for k, v in self.users_summaries.items()}
+        return {k: v.to_dict() for k, v in self.user_summaries.items()}
