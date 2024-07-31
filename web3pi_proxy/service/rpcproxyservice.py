@@ -30,19 +30,19 @@ class DefaultRPCProxyService:
     def _init_test_accounts(cls, admin):
         print("Default user registration flag set, registering users:")
         if not admin.is_user_registered("aaa"):
-            admin.register_user_flat("aaa", 100000000, 1500 * 1024**3, 0)
+            admin.register_user_flat("aaa", 100000000, 1500 * 1024**3, 0, None)
             print(
                 f"  Adding user: aaa, free calls: 100000000, free bytes: {1500 * 1024 ** 3:11}, priority: 0"
             )
 
         if not admin.is_user_registered("bbb"):
-            admin.register_user_flat("bbb", 1000000, 2 * 1024**3, 1)
+            admin.register_user_flat("bbb", 1000000, 2 * 1024**3, 1, None)
             print(
                 f"  Adding user: bbb, free calls: 1000000, free bytes: {2 * 1024 ** 3:11}, priority: 1"
             )
 
         if not admin.is_user_registered("ccc"):
-            admin.register_user_flat("ccc", 1000000, 1 * 1024**3, 2)
+            admin.register_user_flat("ccc", 1000000, 1 * 1024**3, 2, None)
             print(
                 f"  Adding user: ccc, free calls: 1000000, free bytes: {1 * 1024 ** 3:11}, priority: 2"
             )

@@ -7,3 +7,4 @@ class BillingPlanProtocol(Protocol):
     glm_call_price: float
     glm_byte_price: float
     user_priority: int
+    constant_pool: str | None

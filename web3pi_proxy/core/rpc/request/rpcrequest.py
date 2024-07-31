@@ -10,6 +10,7 @@ class RPCRequest:
     method: str = ""
     id: int | str | None = None
     priority: int = 0
+    constant_pool: str | None = None
     last_queried_bytes: bytearray | None = None
     keep_alive: bool = True
 

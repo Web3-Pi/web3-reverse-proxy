@@ -130,10 +130,12 @@ class RPCServiceAdmin:
             return self.query_list_registered_users()
 
     def register_user_flat(
-        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int
+        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int, constant_pool: str | None
     ) -> ReturnType:
+        if constant_pool == "":
+            constant_pool = None
         return self.register_user(
-            user_api_key, self.billing_service.create_plan(free_calls, free_bytes, priority)
+            user_api_key, self.billing_service.create_plan(free_calls, free_bytes, priority, constant_pool)
         )
 
     def remove_user(self, user_api_key: str) -> ReturnType:
@@ -152,10 +154,12 @@ class RPCServiceAdmin:
             return self.query_user_plan(user_api_key)
 
     def update_user_plan_flat(
-        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int
+        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int, constant_pool: str | None
     ) -> ReturnType:
+        if constant_pool == "":
+            constant_pool = None
         return self.update_user_plan(
-            user_api_key, self.billing_service.create_plan(free_calls, free_bytes, priority)
+            user_api_key, self.billing_service.create_plan(free_calls, free_bytes, priority, constant_pool)
         )
 
     # #########################################################
@@ -165,7 +169,17 @@ class RPCServiceAdmin:
         return self.as_dict(self.proxy_stats)
 
     def query_list_endpoints(self) -> ReturnType:
-        return {k: self.as_dict(v) for k, v in self.endpoint_stats.items()}
+        endpoints = self.endpoint_manager.get_endpoints()
+        return_endpoints = {k: self.as_dict(v) for k, v in self.endpoint_stats.items()}
+        if return_endpoints is None:
+            return return_endpoints
+        for k, v in return_endpoints.items():
+            endpoint_entry = endpoints.get(k)
+            if endpoint_entry:
+                v["url"] = endpoint_entry["url"]
+            else:
+                v["url"] = ""
+        return return_endpoints
 
     def query_endpoint_stats(self, endpoint_name: str) -> ReturnType:
         if endpoint_name in self.endpoint_stats:

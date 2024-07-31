@@ -88,6 +88,8 @@ class AppConfig:
     # convenience setting - default users creation if DEV
     MODE: ProxyMode = ProxyMode.PROD
 
+    LOADBALANCER: str = "LeastBusyLoadBalancer"
+
     def __init__(self):
         env = {
             **dotenv_values(".env"),  # load shared development variables
@@ -111,6 +113,12 @@ class AppConfig:
                 except ValueError:
                     print("Unrecognized MODE", env_value, "available modes: DEV, SIM, PROD")
                     raise Exception("Unrecognized MODE")
+            elif field == "LOADBALANCER":
+                if env_value in ["RandomLoadBalancer", "LeastBusyLoadBalancer", "ConstantLoadBalancer"]:
+                    value = env_value
+                else:
+                    print("Unrecognized LOADBALANCER, switching to the default")
+                    value = "LeastBusyLoadBalancer"
             else:
                 var_type = get_type_hints(AppConfig)[field]
                 if var_type == bool:

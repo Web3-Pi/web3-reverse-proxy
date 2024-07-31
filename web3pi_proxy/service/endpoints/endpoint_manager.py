@@ -45,11 +45,11 @@ class EndpointManagerService:
         nodes_data = {}
         for endpoint in self.endpoint_pool_manager.endpoints:
             endpoint_entry = {}
-            endpoint.conn_descr
             endpoint_entry["host"] = endpoint.conn_descr.host
             endpoint_entry["port"] = endpoint.conn_descr.port
             endpoint_entry["auth_key"] = endpoint.conn_descr.auth_key
             endpoint_entry["is_ssl"] = endpoint.conn_descr.is_ssl
+            endpoint_entry["url"] = endpoint.conn_descr.url
             nodes_data[endpoint.get_name()] = endpoint_entry
         return nodes_data
 

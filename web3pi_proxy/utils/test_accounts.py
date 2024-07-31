@@ -5,16 +5,19 @@ TEST_ACCOUNT_DATA = {
         "num_free_calls": 100_000_000,
         "num_free_bytes": 1500 * 1024 ** 3,
         "user_priority": 0,
+        "constant_pool": "",
     },
     "bbb": {
         "num_free_calls": 1_000_000,
         "num_free_bytes": 2 * 1024 ** 3,
         "user_priority": 1,
+        "constant_pool": "",
     },
     "ccc": {
         "num_free_calls": 1_000_000,
         "num_free_bytes": 1 * 1024 ** 3,
         "user_priority": 2,
+        "constant_pool": "",
     },
 }
 
