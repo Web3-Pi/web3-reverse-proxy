@@ -79,11 +79,11 @@ class AppConfig:
     ADMIN_HTML_FILE: str = f"{ADMIN_ROOT_DIR}/admin/admin/admin.html"
 
     # console info
-    SERVICE_NAME: str = "Web3 RPC Reverse Proxy Service  - RPI4 Edition"
-    SERVICE_VER: str = "0.0.1"
+    SERVICE_NAME: str = "Web3 RPC Reverse Proxy Service"
+    SERVICE_VER: str = "0.0.2"
 
-    PROXY_NAME: str = "Web3 RPC Reverse Proxy - RPI4 Edition"
-    PROXY_VER: str = "0.0.1"
+    PROXY_NAME: str = "Web3 RPC Reverse Proxy"
+    PROXY_VER: str = "0.0.2"
 
     # convenience setting - default users creation if DEV
     MODE: ProxyMode = ProxyMode.PROD
