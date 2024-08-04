@@ -154,7 +154,7 @@
                 <li><a href="#" id="query_user_billing_plan"><i class="glyphicon glyphicon-usd"></i> User Billing Plan</a></li>
                 <li><a href="#" id="query_user_billing_status"><i class="glyphicon glyphicon-stats"></i> User Billing Stats</a></li>
             </ul>
-            <form class="navbar-form" name="user_api_key_form">
+            <form class="navbar-form" name="user_api_key_form" onkeydown="return event.key != 'Enter';">
                 <small class="lab-l">API key</small>
                 <label for="billing_api_key"></label><input id="billing_api_key" type="text" class="form-control pull-right" placeholder="User API key" style="width: 150px; height: 25px;">
             </form>
@@ -165,7 +165,7 @@
                 <li><a href="#" id="remove_user"><i class="glyphicon glyphicon-trash"></i> Remove User</a></li>
                 <li><a href="#" id="update_user_plan"><i class="glyphicon glyphicon-refresh"></i> Update User</a></li>
             </ul>
-            <form class="navbar-form" name="manage_api_key_form">
+            <form class="navbar-form" name="manage_api_key_form" onkeydown="return event.key != 'Enter';">
                 <small class="lab-l">API key</small>
                 <label for="manage_api_key"></label><input id="manage_api_key" type="text" class="form-control pull-right" placeholder="User API key" style="width: 150px; height: 25px;">
             </form>
