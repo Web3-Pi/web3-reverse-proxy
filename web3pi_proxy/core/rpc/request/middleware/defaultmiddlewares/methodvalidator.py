@@ -19,6 +19,7 @@ class AcceptMethodRequestReader(RequestReaderMiddleware):
     ) -> RequestReaderMiddleware.ReturnType:
         if Config.MODE == ProxyMode.SIM:
             req.priority = 0
+            req.constant_pool = None
         else:
             if not self.call_acceptor.is_allowed(req.user_api_key, req.method):
                 return self.failure(ErrorResponses.forbidden_payment_required(req.id), req)
@@ -27,6 +28,8 @@ class AcceptMethodRequestReader(RequestReaderMiddleware):
                 req.user_api_key, req.method
             )
             req.priority = user_priority
+            user_constant_pool = self.call_acceptor.get_user_constant_pool(req.user_api_key)
+            req.constant_pool = user_constant_pool
 
         if self.next_reader:
             return self.next_reader.read_request(cs, req)

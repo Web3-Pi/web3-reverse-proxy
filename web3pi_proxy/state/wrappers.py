@@ -30,6 +30,9 @@ class BasicBillingServiceWithLedger(CallPermissions):
     def get_call_priority(self, user_api_key: str, method: str) -> int:
         return self.billing_service.get_call_priority(user_api_key, method)
 
+    def get_user_constant_pool(self, user_api_key: str) -> str | None:
+        return self.billing_service.get_user_constant_pool(user_api_key)
+
 
 class SimpleAuthenticatorFromBilling(ClientPermissions):
     def __init__(self, billing: BasicBillingService) -> None:

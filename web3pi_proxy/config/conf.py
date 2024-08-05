@@ -79,14 +79,16 @@ class AppConfig:
     ADMIN_HTML_FILE: str = f"{ADMIN_ROOT_DIR}/admin/admin/admin.html"
 
     # console info
-    SERVICE_NAME: str = "Web3 RPC Reverse Proxy Service  - RPI4 Edition"
-    SERVICE_VER: str = "0.0.1"
+    SERVICE_NAME: str = "Web3 RPC Reverse Proxy Service"
+    SERVICE_VER: str = "0.0.2"
 
-    PROXY_NAME: str = "Web3 RPC Reverse Proxy - RPI4 Edition"
-    PROXY_VER: str = "0.0.1"
+    PROXY_NAME: str = "Web3 RPC Reverse Proxy"
+    PROXY_VER: str = "0.0.2"
 
     # convenience setting - default users creation if DEV
     MODE: ProxyMode = ProxyMode.PROD
+
+    LOADBALANCER: str = "LeastBusyLoadBalancer"
 
     def __init__(self):
         env = {
@@ -111,6 +113,12 @@ class AppConfig:
                 except ValueError:
                     print("Unrecognized MODE", env_value, "available modes: DEV, SIM, PROD")
                     raise Exception("Unrecognized MODE")
+            elif field == "LOADBALANCER":
+                if env_value in ["RandomLoadBalancer", "LeastBusyLoadBalancer", "ConstantLoadBalancer"]:
+                    value = env_value
+                else:
+                    print("Unrecognized LOADBALANCER, switching to the default")
+                    value = "LeastBusyLoadBalancer"
             else:
                 var_type = get_type_hints(AppConfig)[field]
                 if var_type == bool:

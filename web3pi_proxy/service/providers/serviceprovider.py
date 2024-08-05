@@ -38,7 +38,7 @@ class ServiceComponentsProvider:
         return RPCRequestMiddlewareFactory.create_default_descr(cli, call)
 
     @classmethod
-    def create_default_connection_pool(cls, endpoint_config: List[dict]):
+    def create_default_connection_pool(cls, endpoint_config: List[dict], loadbalancer_class: str):
         descriptors = [
             (
                 entrypoint["name"],
@@ -47,7 +47,14 @@ class ServiceComponentsProvider:
             for entrypoint in endpoint_config
         ]
         # TODO: Settle on most suitable place for plugging in load balancer for interchangeability
-        load_balancer = load_balancers.LeastBusyLoadBalancer()
+        if loadbalancer_class == "RandomLoadBalancer":
+            load_balancer = load_balancers.RandomLoadBalancer()
+        elif loadbalancer_class == "LeastBusyLoadBalancer":
+            load_balancer = load_balancers.LeastBusyLoadBalancer()
+        elif loadbalancer_class == "ConstantLoadBalancer":
+            load_balancer = load_balancers.ConstantLoadBalancer()
+        else:
+            raise Exception("fatal: inconsistent LOADBALANCER configuration")
         return EndpointConnectionPoolManager(descriptors, load_balancer)
 
     @classmethod
@@ -87,7 +94,7 @@ class ServiceComponentsProvider:
         cls, ssm: SampleStateManager, proxy_listen_port, num_proxy_workers: int
     ) -> Web3RPCProxy:
         # Create default components
-        connection_pool = cls.create_default_connection_pool(Config.ETH_ENDPOINTS)
+        connection_pool = cls.create_default_connection_pool(Config.ETH_ENDPOINTS, Config.LOADBALANCER)
 
         return cls.create_web3_rpc_proxy(
             ssm, connection_pool, proxy_listen_port, num_proxy_workers

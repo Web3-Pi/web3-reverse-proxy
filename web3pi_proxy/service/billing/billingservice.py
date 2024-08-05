@@ -64,8 +64,13 @@ class BasicBillingService(Generic[BPP]):
 
         return self.user_plans[user_api_key].user_priority
 
+    def get_user_constant_pool(self, user_api_key: str) -> str | None:
+        assert self.is_registered(user_api_key)
+
+        return self.user_plans[user_api_key].constant_pool
+
     def create_plan(
-        self, free_calls: int | str, free_bytes: int | str, priority: int | str
+        self, free_calls: int | str, free_bytes: int | str, priority: int | str, constant_pool: str | None
     ) -> BPP:
         # FIXME: naive type handling
         return self.billing_plan_type(
@@ -73,5 +78,6 @@ class BasicBillingService(Generic[BPP]):
             num_free_bytes=int(free_bytes),
             glm_call_price=0.0,
             glm_byte_price=0.0,
-            user_priority=int(priority)
+            user_priority=int(priority),
+            constant_pool=constant_pool
         )

@@ -19,9 +19,16 @@ class HttpRequestParserListener:
         if len(url) < 2:  # empty or /
             self.req.user_api_key = None
         else:
-            self.req.user_api_key = str(
-                url[1:], "utf-8"
-            )  # TODO is it utf-8? TODO do we need str?
+            i = url.find(b'/', 1)
+            if i > 0:
+                self.req.user_api_key = str(
+                    url[1:i], "utf-8"
+                )  # TODO is it utf-8? TODO do we need str?
+                self.req.url_path = url[i+1:]
+            else:
+                self.req.user_api_key = str(
+                    url[1:], "utf-8"
+                )  # TODO is it utf-8? TODO do we need str?
 
     def on_header(self, name: bytes, value: bytes):
         if name.lower() == b"host":

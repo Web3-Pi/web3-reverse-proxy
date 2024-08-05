@@ -9,7 +9,6 @@ from web3pi_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import (
 )
 from web3pi_proxy.core.rpc.node.endpoint_pool.load_balancers import (
     LoadBalancer,
-    RandomLoadBalancer,
 )
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
     EndpointConnectionDescriptor,
@@ -18,6 +17,7 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handl
     EndpointConnectionHandler,
 )
 from web3pi_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
+from web3pi_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3pi_proxy.utils.logger import get_logger
 
 
@@ -27,6 +27,10 @@ class ConnectionPoolError(Exception):
 
 class NoActivePoolsError(ConnectionPoolError):
     message = "No connection pools available"
+
+
+class NoPoolPickedError(ConnectionPoolError):
+    message = "Could not pick a connection pool"
 
 
 class PoolDoesNotExistError(ConnectionPoolError):
@@ -101,7 +105,7 @@ class EndpointConnectionPoolManager:
     def __init__(
         self,
         descriptors: List[Tuple[str, EndpointConnectionDescriptor]],
-        load_balancer: LoadBalancer = RandomLoadBalancer(),
+        load_balancer: LoadBalancer,
     ):
         self.load_balancer = load_balancer
         self.damage_controller = DamageController()
@@ -163,13 +167,15 @@ class EndpointConnectionPoolManager:
             del self.pools[name]
             return endpoint
 
-    def get_connection(self) -> EndpointConnectionHandler:
+    def get_connection(self, req: RPCRequest) -> EndpointConnectionHandler:
         self.__logger.debug("Selecting endpoint")
         with self.__lock:
             active_pools = self.__get_active_pools()
             if not active_pools:
                 raise NoActivePoolsError()
-            pool = self.load_balancer.pick_pool(active_pools)
+            pool = self.load_balancer.pick_pool(req, active_pools)
+            if pool is None:
+                raise NoPoolPickedError()
         self.__logger.debug(f"Selected endpoint{pool.endpoint}")
         return pool.get()
 

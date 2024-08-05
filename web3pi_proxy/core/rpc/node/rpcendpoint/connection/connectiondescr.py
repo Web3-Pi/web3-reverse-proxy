@@ -11,6 +11,7 @@ class EndpointConnectionDescriptor:
     port: int
     auth_key: str
     is_ssl: bool
+    url: str
 
     @classmethod
     def from_url(cls, url) -> EndpointConnectionDescriptor | None:
@@ -36,4 +37,4 @@ class EndpointConnectionDescriptor:
             else:
                 return None
 
-        return EndpointConnectionDescriptor(host, int(port), auth_key, is_ssl)
+        return EndpointConnectionDescriptor(host, int(port), auth_key, is_ssl, url)
