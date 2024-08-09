@@ -37,7 +37,10 @@ class AdminServerAuthentication:
         )
 
     def create_auth_token(self) -> str:
-        auth_token = self.generate_secret()
+        if Config.ADMIN_AUTH_TOKEN:
+            auth_token = Config.ADMIN_AUTH_TOKEN
+        else:
+            auth_token = self.generate_secret()
         self.admin_token_hash = self.hash(auth_token)
         return auth_token
 
