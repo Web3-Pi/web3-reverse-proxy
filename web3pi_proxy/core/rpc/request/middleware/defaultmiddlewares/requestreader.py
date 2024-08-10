@@ -31,12 +31,15 @@ class HttpRequestParserListener:
                 )  # TODO is it utf-8? TODO do we need str?
 
     def on_header(self, name: bytes, value: bytes):
-        if name.lower() == b"host":
+        name_lower = name.lower()
+        if name_lower == b"host":
             pass
-        elif name.lower() == b"connection":
+        elif name_lower == b"connection":
             self.req.keep_alive = (
                 value != b"close"
             )  # TODO is value already trimmed? TODO value is case sensitive?
+        elif name_lower == b"origin":
+            self.req.cors_origin = value
         else:
             self.req.headers = self.req.headers + name + b": " + value + b"\r\n"
 
@@ -85,11 +88,15 @@ class RequestReader(RequestReaderMiddleware):
             req.keep_alive = False
             return None, None
 
-        if request_parser.get_method() != b"POST":
-            return self.failure(ErrorResponses.http_method_not_allowed(), req)
+        req.http_method = request_parser.get_method()
 
-        if req.content is None or req.content_len == 0 or len(req.content.strip()) == 0:
-            return self.failure(ErrorResponses.http_bad_request(), req)
+        if req.http_method == b"POST":
+            if req.content is None or req.content_len == 0 or len(req.content.strip()) == 0:
+                return self.failure(ErrorResponses.http_bad_request(), req)
+        elif req.http_method == b"OPTIONS":
+            return self.success(req)
+        else:
+            return self.failure(ErrorResponses.http_method_not_allowed(), req)
 
         if self.next_reader:
             return self.next_reader.read_request(cs, req)

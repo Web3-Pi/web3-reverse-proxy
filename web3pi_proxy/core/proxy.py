@@ -20,6 +20,7 @@ from web3pi_proxy.core.rpc.request.middleware.requestmiddlewaredescr import (
     RequestMiddlewareDescr,
 )
 from web3pi_proxy.core.rpc.request.rpcrequest import RPCRequest
+from web3pi_proxy.core.rpc.response.optionsresponse import OptionsResponses
 from web3pi_proxy.core.sockets.clientsocket import ClientSocket
 from web3pi_proxy.core.utilhttp.errors import ErrorResponses
 from web3pi_proxy.interfaces.servicestate import StateUpdater
@@ -112,9 +113,15 @@ class Web3RPCProxy:
         cs: ClientSocket,
         req: RPCRequest,
     ) -> Callable:
-        def response_handler(res):
+        add_cors = req.cors_origin is not None  # TODO CORS support here is very crude, needs improvement
+
+        def response_handler(res: bytes):
+            nonlocal add_cors
+            if add_cors:
+                add_cors = False
+                res = res.replace(b"\r\n", b"\r\nAccess-Control-Allow-Origin: " + req.cors_origin + b"\r\n", 1)
             cs.send_all(res)
-            endpoint_connection_handler.update_response_stats(res)
+            endpoint_connection_handler.update_response_stats(res)  # TODO do we need bytearray here?
             self.state_updater.record_rpc_response(req, res)
 
         return response_handler
@@ -139,6 +146,15 @@ class Web3RPCProxy:
                 cs.send_all(err.raw)  # TODO: detect whether client connection is closed
                 self.__manage_client_connection(
                     err.request.keep_alive, cs, client_poller, active_client_connections
+                )
+                return
+
+            if req.http_method == b"OPTIONS":  # TODO CORS are always included, is that right?
+                cs.send_all(
+                    OptionsResponses.options_response(req)
+                )
+                self.__manage_client_connection(
+                    req.keep_alive, cs, client_poller, active_client_connections
                 )
                 return
 
@@ -187,7 +203,7 @@ class Web3RPCProxy:
                 )
                 cs.send_all(
                     ErrorResponses.connection_error(req.id)
-                )  # TODO: detect wether client connection is closed
+                )  # TODO: detect whether client connection is closed
                 self.__manage_client_connection(
                     req.keep_alive, cs, client_poller, active_client_connections
                 )

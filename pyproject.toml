@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "web3pi-proxy"
-version = "0.2"
+version = "0.3"
 description = "A Web3 Pi Node Manager - proxy to Web3 Pi Ethereum nodes"
 authors = []
 license = "GNU GENERAL PUBLIC LICENSE Version 3"
