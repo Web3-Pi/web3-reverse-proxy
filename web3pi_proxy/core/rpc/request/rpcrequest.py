@@ -14,6 +14,8 @@ class RPCRequest:
     constant_pool: str | None = None
     last_queried_bytes: bytearray | None = None
     keep_alive: bool = True
+    http_method: bytearray | None = None
+    cors_origin: bytes | None = None
 
     def as_bytearray(
         self, request_line_1: bytearray, url_context: bytearray, request_line_2: bytearray, host_header: bytearray
