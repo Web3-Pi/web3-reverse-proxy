@@ -32,6 +32,7 @@ class Web3RPCProxy:
 
     def __init__(
         self,
+        proxy_listen_address: str,
         proxy_listen_port: int,
         num_proxy_workers: int,
         middlewares: RequestMiddlewareDescr,
@@ -44,12 +45,12 @@ class Web3RPCProxy:
         self.__print_pre_init_info(self.request_reader, connection_pool)
 
         self.inbound_srv = InboundServer(
-            proxy_listen_port, Config.BLOCKING_ACCEPT_TIMEOUT
+            proxy_listen_address, proxy_listen_port, Config.BLOCKING_ACCEPT_TIMEOUT
         )
         self.connection_pool = connection_pool
         self.state_updater = state_updater
 
-        self.__print_post_init_info(proxy_listen_port)
+        self.__print_post_init_info(proxy_listen_address, proxy_listen_port)
 
         self.num_workers = num_proxy_workers
 
@@ -232,10 +233,10 @@ class Web3RPCProxy:
                 endpoint_connection_handler.release()
 
     @classmethod
-    def __print_post_init_info(cls, proxy_listen_port: int) -> None:
+    def __print_post_init_info(cls, proxy_listen_address, proxy_listen_port: int) -> None:
         print(
             "Proxy initialized and listening on {}".format(
-                f"{Config.PROXY_LISTEN_ADDRESS}:{proxy_listen_port}"
+                f"{proxy_listen_address}:{proxy_listen_port}"
             )
         )
 

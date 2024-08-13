@@ -11,6 +11,7 @@ class InboundServer:
 
     def __init__(
         self,
+        listen_address: str,
         listen_port: int,
         blocking_accept_timeout: int,
         max_concurrent_conn: int = Config.MAX_CONCURRENT_CONNECTIONS,
@@ -25,7 +26,7 @@ class InboundServer:
 
         self.no_saturated_iterations = 0
 
-        self.server_s = ServerSocket.create(listen_port)
+        self.server_s = ServerSocket.create(listen_address, listen_port)
 
     @classmethod
     def _receive_dev_null(cls, rejected: Iterable[ClientSocket]) -> None:
