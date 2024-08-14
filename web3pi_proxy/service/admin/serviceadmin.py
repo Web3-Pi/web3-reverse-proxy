@@ -93,7 +93,7 @@ class RPCServiceAdmin:
 
     # FIXME: parameter type handling should be implemented in a more generic way
     def call_by_method(self, method: str, params: list) -> ReturnType:
-        return self.mapping[method](*params) if method in self.mapping else None
+        return self.mapping[method](*params)
 
     # #########################################################
     # #                USER DOMAIN QUERIES                    #

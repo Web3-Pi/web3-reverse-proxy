@@ -117,26 +117,45 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
         admin = self.server.admin
 
         content_length = int(self.headers["Content-Length"])
-        json_data = json.loads(self.rfile.read(content_length).decode("utf-8"))
+        try:
+            json_data = json.loads(self.rfile.read(content_length).decode("utf-8"))
+        except json.JSONDecodeError:
+            json_data = {}
 
-        self.send_response(200)
+        http_status = 200
+
+        if self.server.auth.authenticate(self.get_auth_token()):
+            if json_data:
+                method = json_data.get("method")
+                if method:
+                    try:
+                        res = admin.call_by_method(
+                            json_data["method"], json_data.get("params", [])
+                        )
+                    except KeyError:
+                        http_status = 400
+                        msg = f"Unknown method: {method}"
+                        self.__logger.error(msg)
+                        res = {"error": msg}
+                    except Exception as error:
+                        http_status = 500
+                        self.__logger.error(error.with_traceback)
+                        print(traceback.format_exc())
+                        res = {"error": "Server error"}
+                else:
+                    http_status = 400
+                    res = {"error": "Missing method"}
+            else:
+                http_status = 400
+                res = {"error": "Bad request"}
+        else:
+            http_status = 403
+            res = {"error": "Authentication failed"}
+
+        self.send_response(http_status)
         self.send_header("Content-type", "application/json")
         self.end_headers()
 
-        if self.server.auth.authenticate(self.get_auth_token()):
-            if "method" in json_data:
-                try:
-                    res = admin.call_by_method(
-                        json_data["method"], json_data.get("params", [])
-                    )
-                except Exception as error:
-                    self.__logger.error(error.with_traceback)
-                    print(traceback.format_exc())
-                    res = {"error": "Server error"}
-            else:
-                res = {"error": "Missing method"}
-        else:
-            res = {"error": "Authentication failed"}  # TODO another http status?
         self.wfile.write(json.dumps(res if res is not None else {}).encode())
 
     def get_auth_token(self) -> str:
