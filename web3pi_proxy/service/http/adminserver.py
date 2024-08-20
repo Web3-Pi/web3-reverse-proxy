@@ -177,7 +177,7 @@ class AdminHTTPServerThread(threading.Thread):
         print("Use it with 'Authorization' header for POST requests")
         print(f"Access admin portal with:")
         print(
-            f"http://{self.server.server_address[0]}:{self.server.server_address[1]}/?token={auth_token}"
+            f"http://{Config.admin_connection_address}:{self.server.server_address[1]}/?token={auth_token}"
         )
         super().start()
 
