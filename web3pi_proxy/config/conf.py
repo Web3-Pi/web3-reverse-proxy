@@ -33,7 +33,11 @@ class AppConfig:
     UPNP_LEASE_TIME: int = 5 * 3600
 
     # server socket conf
+    # the address the proxy's listening socket is bound to
+    # by default, set to 0.0.0.0 which makes it listen on all the interfaces
     PROXY_LISTEN_ADDRESS: str = "0.0.0.0"
+    # the address, which the proxy reports as the connection address
+    # iow, the address that the clients should use to connect to the proxy
     PROXY_CONNECTION_ADDRESS: Optional[str] = None
     PROXY_LISTEN_PORT: int = 6512
     NUM_PROXY_WORKERS: int = 150
@@ -69,7 +73,11 @@ class AppConfig:
     STATS_UPDATE_MIN_DELAY: float = 0.1
 
     # administration
+    # the address the admin panel's listening socket is bound to
+    # by default, set to 0.0.0.0 which makes it listen on all the interfaces
     ADMIN_LISTEN_ADDRESS: str = "0.0.0.0"
+    # the address, which the admin panel reports as the connection address
+    # iow, the address that the clients should use to connect to the admin
     ADMIN_CONNECTION_ADDRESS: Optional[str] = None
     ADMIN_LISTEN_PORT: int = 6561
     # empty value means to generate a new random
