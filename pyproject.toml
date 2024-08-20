@@ -70,6 +70,8 @@ _check_format_black = "black --check --diff ."
 check_lint = "pylint ./web3pi_proxy"
 check_typing = "mypy ."
 
+tests_unit = "pytest tests/web3pi_proxy/unit"
+
 create_migrations = "python -c 'from web3pi_proxy.db import create_migrations; create_migrations()'"
 
 init_test_accounts = "python -c 'from web3pi_proxy.utils.test_accounts import init_test_accounts; init_test_accounts()'"

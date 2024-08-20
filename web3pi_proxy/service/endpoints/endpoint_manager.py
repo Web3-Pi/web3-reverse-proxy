@@ -5,6 +5,7 @@ from dotenv import dotenv_values, find_dotenv, set_key
 
 from web3pi_proxy.core.rpc.node.endpoint_pool.pool_manager import (
     EndpointConnectionPoolManager,
+    EndpointConnectionPool,
     PoolAlreadyExistsError,
     PoolDoesNotExistError,
 )
@@ -40,6 +41,9 @@ class EndpointManagerService:
             endpoints_config.append({"name": name, "url": url})
 
         self.__write_conf_to_file({"ETH_ENDPOINTS": json.dumps(endpoints_config)})
+
+    def get_pool(self, name: str) -> EndpointConnectionPool:
+        return self.endpoint_pool_manager.get_pool(name)
 
     def get_endpoints(self) -> dict:
         nodes_data = {}
