@@ -6,6 +6,11 @@ from web3pi_proxy.interfaces.permissions import ClientPermissions
 from web3pi_proxy.config.conf import (Config, ProxyMode)
 
 
+from web3pi_proxy.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
 class AuthRequestReader(RequestReaderMiddleware):
 
     def __init__(
@@ -21,8 +26,10 @@ class AuthRequestReader(RequestReaderMiddleware):
     ) -> RequestReaderMiddleware.ReturnType:
         if not req.user_api_key:
             if Config.MODE != ProxyMode.SIM:
+                logger.error("No user API key supplied.")
                 return self.failure(ErrorResponses.unauthorized_invalid_API_key(), req)
         elif not self.auth.is_authorized(req.user_api_key):
+            logger.error("User API key unauthorized: `%s`", req.user_api_key)
             return self.failure(ErrorResponses.unauthorized_invalid_API_key(), req)
 
         return self.next_reader.read_request(cs, req)
