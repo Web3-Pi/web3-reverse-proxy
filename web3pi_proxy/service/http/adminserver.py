@@ -140,7 +140,6 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
                     except Exception as error:
                         http_status = 500
                         self.__logger.error(error.with_traceback)
-                        print(traceback.format_exc())
                         res = {"error": "Server error"}
                 else:
                     http_status = 400
