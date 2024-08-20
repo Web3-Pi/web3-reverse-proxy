@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from io import StringIO
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpointconnectionstats import (
     EndpointConnectionStats,
@@ -14,12 +14,17 @@ from web3pi_proxy.service.ledger.activityledger import SimpleActivityLedger
 
 
 class RPCServiceAdmin:
-
     CONSOLE_CONTENTS = "console_contents"
-
     USERS_API_KEYS = "users_api_keys"
 
     ReturnType = Dict[str, Any] | None
+
+    billing_service: BasicBillingService
+    activity_ledger: SimpleActivityLedger
+    console_buffer: StringIO
+    endpoint_manager: Optional[EndpointManagerService]
+    proxy_stats: Optional[RPCProxyStats]
+    endpoint_stats: Dict[str, EndpointConnectionStats]
 
     def __init__(
         self,
@@ -174,16 +179,17 @@ class RPCServiceAdmin:
         if return_endpoints is None:
             return return_endpoints
         for k, v in return_endpoints.items():
-            endpoint_entry = endpoints.get(k)
-            if endpoint_entry:
-                v["url"] = endpoint_entry["url"]
-            else:
-                v["url"] = ""
+            endpoint = endpoints.get(k)
+            v["url"] = endpoint["url"] if endpoint else ""
+            pool = self.endpoint_manager.get_pool(k)
+            v["status"] = pool.status if pool else ""
         return return_endpoints
 
     def query_endpoint_stats(self, endpoint_name: str) -> ReturnType:
         if endpoint_name in self.endpoint_stats:
-            return self.as_dict(self.endpoint_stats[endpoint_name])
+            v = self.as_dict(self.endpoint_stats[endpoint_name])
+            v["status"] = self.endpoint_manager.get_pool(endpoint_name).status
+            return v
 
         return {}
 
