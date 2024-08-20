@@ -121,7 +121,7 @@ class EndpointConnectionPool(ConnectionPool):
     def __str__(self):
         return f"{self.__class__.__name__}({self.endpoint})"
 
-    class PoolStatus(enum.StrEnum):
+    class PoolStatus(str, enum.Enum):
         ACTIVE = "ACTIVE"
         DISABLED = "DISABLED"
         CLOSING = "CLOSING"
