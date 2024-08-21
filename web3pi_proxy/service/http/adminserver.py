@@ -1,3 +1,4 @@
+import colorful
 import hashlib
 import json
 import random
@@ -175,9 +176,11 @@ class AdminHTTPServerThread(threading.Thread):
         auth_token = self.server.auth.create_auth_token()
         print("Admin auth token: " f"{auth_token}")
         print("Use it with 'Authorization' header for POST requests")
-        print(f"Access admin portal with:")
+        print(f"\n\nAccess admin portal with:")
         print(
-            f"http://{self.server.server_address[0]}:{self.server.server_address[1]}/?token={auth_token}"
+            colorful.cyan(
+                f"http://{self.server.server_address[0]}:{self.server.server_address[1]}/?token={auth_token}\n\n"
+            )
         )
         super().start()
 
