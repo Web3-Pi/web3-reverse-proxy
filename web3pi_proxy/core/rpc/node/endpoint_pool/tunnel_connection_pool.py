@@ -2,6 +2,7 @@ import socket
 
 from web3pi_proxy.config import Config
 from web3pi_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import EndpointConnectionPool
+from web3pi_proxy.core.rpc.node.endpoint_pool.tunnel_service import TunnelService
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.tunnelendpointconnection import TunnelEndpointConnection
 from web3pi_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
@@ -30,6 +31,8 @@ class TunnelConnectionPool(EndpointConnectionPool):
 
         self.status = self.PoolStatus.DISABLED.value
 
+        TunnelService.register(self.tunnel_api_key, self)
+
     def new_connection(self) -> EndpointConnection:
 
         def connection_factory() -> socket:  # TODO is it worth to move it to object level and reuse?
@@ -53,4 +56,4 @@ class TunnelConnectionPool(EndpointConnectionPool):
         if self.tunnel_service_socket:
             self.tunnel_service_socket.close()
             self.tunnel_service_socket = None
-
+        TunnelService.unregister(self.tunnel_api_key, self)
