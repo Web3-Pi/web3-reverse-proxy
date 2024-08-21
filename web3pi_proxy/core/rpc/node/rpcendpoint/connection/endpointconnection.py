@@ -32,7 +32,7 @@ class EndpointConnection:
         self.endpoint = endpoint
 
         self.__logger.debug(f"Creating socket for endpoint: {endpoint}")
-        self.socket = self.__create_socket()
+        self.socket = self.create_socket()
         self.__logger.debug(f"Socket created for description: {self.conn_descr}")
 
         self.req_sender = RequestSender(
@@ -51,17 +51,16 @@ class EndpointConnection:
     def ip(self) -> str:
         return self.socket.get_peer_name()[0]
 
-    def __create_socket(self) -> BaseSocket:
-        return BaseSocket.create_socket(
-            self.conn_descr.host, self.conn_descr.port, self.conn_descr.is_ssl
-        )
+    def create_socket(self) -> BaseSocket:
+        """Internal function, do not call directly"""
+        pass
 
     def close(self) -> None:
-        self.socket.close()
+        pass
 
     def reconnect(self) -> None:
         self.close()
-        self.socket = self.__create_socket()
+        self.socket = self.create_socket()
         self.req_sender = RequestSender(
             self.socket, self.conn_descr.host, self.conn_descr.auth_key
         )
@@ -71,3 +70,15 @@ class EndpointConnection:
         self, request_bytes: bytearray, response_bytes: bytearray
     ) -> None:
         self.endpoint.update_stats(request_bytes, response_bytes)
+
+
+class EndpointConnectionImpl(EndpointConnection):
+
+    def close(self) -> None:
+        self.socket.close()
+
+    def create_socket(self) -> BaseSocket:
+        return BaseSocket.create_socket(
+            self.conn_descr.host, self.conn_descr.port, self.conn_descr.is_ssl
+        )
+

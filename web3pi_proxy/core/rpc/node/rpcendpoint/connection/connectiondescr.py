@@ -12,6 +12,7 @@ class EndpointConnectionDescriptor:
     auth_key: str
     is_ssl: bool
     url: str
+    extras: dict
 
     @classmethod
     def from_url(cls, url) -> EndpointConnectionDescriptor | None:
@@ -37,4 +38,15 @@ class EndpointConnectionDescriptor:
             else:
                 return None
 
-        return EndpointConnectionDescriptor(host, int(port), auth_key, is_ssl, url)
+        return EndpointConnectionDescriptor(host, int(port), auth_key, is_ssl, url, dict())
+
+    @classmethod
+    def from_dict(cls, conf: dict) -> EndpointConnectionDescriptor | None:
+        url: str = conf["url"]
+        conn_descr = cls.from_url(url)
+        if not conn_descr:
+            return None
+        conn_descr.extras = conf.copy()
+        del conn_descr.extras["name"]
+        del conn_descr.extras["url"]
+        return conn_descr

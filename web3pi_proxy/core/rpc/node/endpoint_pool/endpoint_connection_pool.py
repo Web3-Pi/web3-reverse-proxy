@@ -14,7 +14,7 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handl
     EndpointConnectionHandler,
 )
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import (
-    EndpointConnection,
+    EndpointConnection, EndpointConnectionImpl,
 )
 from web3pi_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3pi_proxy.core.rpc.request.rpcrequest import RPCRequest
@@ -135,7 +135,8 @@ class EndpointConnectionPool(ConnectionPool):
             try:
                 connection.close()
             except Exception as ex:
-                self.__logger.error(f"Error while closing a connection", ex)
+                self.__logger.error("Error while closing a connection")
+                self.__logger.exception(ex)
 
     def __run_cleanup_thread(self) -> None:
         while True:
@@ -167,6 +168,10 @@ class EndpointConnectionPool(ConnectionPool):
     def __get_connection(self) -> EndpointConnection:
         return self.connections.get_nowait()
 
+    def new_connection(self) -> EndpointConnection:
+        """to be used only by overriding classes"""
+        return EndpointConnectionImpl(self.endpoint)
+
     def __update_status(self, status: str):
         self.status = status
         self.__logger.debug(f"Changed status to {status}")
@@ -180,7 +185,7 @@ class EndpointConnectionPool(ConnectionPool):
             self.__lock.release()
             self.__logger.debug("No existing connections available, establishing new connection")
             try:
-                connection = EndpointConnection(self.endpoint)
+                connection = self.new_connection()
             except Exception as error:
                 self.stats.register_error_on_connection_creation()
                 raise error
@@ -216,6 +221,9 @@ class EndpointConnectionPool(ConnectionPool):
 
     def is_active(self):
         return self.status == self.PoolStatus.ACTIVE.value
+
+    def is_open(self):
+        return self.status == self.PoolStatus.ACTIVE.value or self.status == self.PoolStatus.DISABLED.value
 
     def disable(self):
         with self.__lock:

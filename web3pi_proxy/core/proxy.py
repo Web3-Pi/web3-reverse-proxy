@@ -165,6 +165,7 @@ class Web3RPCProxy:
             except Exception as error:
                 self.__logger.error("%s: %s", error.__class__, error)
                 self.__logger.error("Failed to establish endpoint connection")
+                self.__logger.exception(error)
                 cs.send_all(
                     ErrorResponses.connection_error(req.id)
                 )  # TODO: detect wether client connection is closed

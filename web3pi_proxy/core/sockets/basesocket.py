@@ -75,9 +75,14 @@ class BaseSocket:
 
         s_dst.settimeout(5.0)  # TODO parametrize?
         s_dst.connect((host_ip, port))
-        s_dst.settimeout(None)
 
         cls.__logger.debug("Finished connecting socket")
+
+        return cls.wrap_socket(s_dst, host, is_ssl)
+
+    @classmethod
+    def wrap_socket(cls, s_dst: socket, host: str, is_ssl: bool) -> BaseSocket:
+        s_dst.settimeout(None)
 
         if is_ssl:
             context = ssl.create_default_context()
@@ -86,3 +91,4 @@ class BaseSocket:
         res = BaseSocket(s_dst)
 
         return res
+

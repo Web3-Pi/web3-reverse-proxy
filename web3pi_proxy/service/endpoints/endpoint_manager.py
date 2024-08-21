@@ -54,7 +54,7 @@ class EndpointManagerService:
         return nodes_data
 
     def add_endpoint(self, name: str, url: str) -> RPCEndpoint | dict:
-        descriptor = EndpointConnectionDescriptor.from_url(url)
+        descriptor = EndpointConnectionDescriptor.from_url(url)  # TODO from_dict
         try:
             endpoint = self.endpoint_pool_manager.add_pool(name, descriptor)
         except PoolAlreadyExistsError as error:
@@ -71,7 +71,7 @@ class EndpointManagerService:
         return endpoint
 
     def update_endpoint(self, name: str, url: str) -> RPCEndpoint | dict:
-        descriptor = EndpointConnectionDescriptor.from_url(url)
+        descriptor = EndpointConnectionDescriptor.from_url(url)  # TODO from_dict
         try:
             self.endpoint_pool_manager.remove_pool(name)
         except PoolDoesNotExistError as error:

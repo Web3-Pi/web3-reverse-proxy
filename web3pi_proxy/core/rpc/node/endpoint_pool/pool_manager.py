@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import select
+import socket
+
 import time
 from threading import RLock, Thread
 from typing import List, Tuple
@@ -10,6 +13,7 @@ from web3pi_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import (
 from web3pi_proxy.core.rpc.node.endpoint_pool.load_balancers import (
     LoadBalancer,
 )
+from web3pi_proxy.core.rpc.node.endpoint_pool.tunnel_connection_pool import TunnelConnectionPool
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
     EndpointConnectionDescriptor,
 )
@@ -19,6 +23,7 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handl
 from web3pi_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3pi_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3pi_proxy.utils.logger import get_logger
+from web3pi_proxy.config.conf import Config
 
 
 class ConnectionPoolError(Exception):
@@ -123,6 +128,17 @@ class EndpointConnectionPoolManager:
         )
         self.damage_controller_thread.start()
 
+        tunnel_srv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tunnel_srv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        tunnel_srv_socket.bind((Config.PROXY_LISTEN_ADDRESS, 7634))  # TODO ! config and if
+        tunnel_srv_socket.listen(Config.LISTEN_BACKLOG_PARAM)
+        self.tunnel_srv_socket = tunnel_srv_socket
+        self.tunnel_thread = Thread(
+            target=self.__tunnel_service,
+            daemon=True,
+        )
+        self.tunnel_thread.start()
+
     @property
     def endpoints(self) -> List[RPCEndpoint]:
         with self.__lock:
@@ -135,6 +151,13 @@ class EndpointConnectionPoolManager:
             if connection_pool.is_active()
         ]
 
+    def __get_open_pools(self):
+        return [
+            connection_pool
+            for connection_pool in self.pools.values()
+            if connection_pool.is_open()
+        ]
+
     def __damage_control(self):
         while True:
             self.__logger.debug("Running check on endpoint connections")
@@ -142,6 +165,36 @@ class EndpointConnectionPoolManager:
                 active_pools = self.__get_active_pools()
             self.damage_controller.check_connections(active_pools)
             time.sleep(self.__DAMAGE_CONTROLLER_TIMEOUT_SECONDS)
+
+    def __tunnel_service(self):
+        while True:
+            ready_read, _, _ = select.select([self.tunnel_srv_socket], [], [], Config.BLOCKING_ACCEPT_TIMEOUT)
+
+            if len(ready_read) == 0:
+                continue
+            tunnel_sock, cli_addr = self.tunnel_srv_socket.accept()
+            self.__logger.debug(
+                f"New tunnel request from {cli_addr}"
+            )
+
+            cli_api_key = tunnel_sock.recv(2048).decode("utf-8")  # TODO the attack: a tunnel client does not send api key
+            if not cli_api_key:
+                tunnel_sock.close()
+                continue
+
+            with self.__lock:
+                open_pools = self.__get_open_pools()
+                pool_found = False
+                for pool in open_pools:
+                    if issubclass(type(pool), TunnelConnectionPool):
+                        pool_: TunnelConnectionPool = pool
+                        if pool_.tunnel_api_key and cli_api_key == pool_.tunnel_api_key:
+                            tunnel_sock.sendall(f'ACPT|{Config.PROXY_LISTEN_ADDRESS}:{Config.PROXY_LISTEN_PORT}'.encode("utf-8"))  # TODO chyba inny port
+                            pool_.new_tunnel_service_socket(tunnel_sock)
+                            pool_found = True
+                            break
+                if not pool_found:
+                    tunnel_sock.close()  # TODO any response before close?
 
     def add_pool(
         self, name: str, conn_descr: EndpointConnectionDescriptor
@@ -153,7 +206,10 @@ class EndpointConnectionPoolManager:
                 f"Creating endpoint {name} with connection {conn_descr}"
             )
             endpoint = RPCEndpoint.create(name, conn_descr)
-            connection_pool = EndpointConnectionPool(endpoint)
+            if endpoint.conn_descr.extras.get("tunnel_proxy_establish_port"):
+                connection_pool = TunnelConnectionPool(endpoint)
+            else:
+                connection_pool = EndpointConnectionPool(endpoint)
             self.pools[name] = connection_pool
             return endpoint
 
