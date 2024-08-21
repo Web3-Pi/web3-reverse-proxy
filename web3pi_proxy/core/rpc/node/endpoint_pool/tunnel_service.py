@@ -29,7 +29,7 @@ class TunnelServiceImpl:
     def __initialize__(self):
         tunnel_srv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tunnel_srv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        tunnel_srv_socket.bind((Config.PROXY_LISTEN_ADDRESS, 7634))  # TODO ! config and if
+        tunnel_srv_socket.bind((Config.PROXY_LISTEN_ADDRESS, Config.TUNNEL_ESTABLISH_PORT))
         tunnel_srv_socket.listen(Config.LISTEN_BACKLOG_PARAM)
         self.tunnel_srv_socket = tunnel_srv_socket
         self.tunnel_thread = Thread(
@@ -59,7 +59,7 @@ class TunnelServiceImpl:
                 if not pool:
                     tunnel_sock.close()  # TODO any response before close?
                     continue
-                tunnel_sock.sendall(f'ACPT|{Config.PROXY_LISTEN_ADDRESS}:{Config.PROXY_LISTEN_PORT}'.encode("utf-8"))  # TODO chyba inny port
+                tunnel_sock.sendall(f'ACPT|{Config.PROXY_LISTEN_ADDRESS}:{pool.tunnel_proxy_establish_port}'.encode("utf-8"))
                 pool.new_tunnel_service_socket(tunnel_sock)
 
 

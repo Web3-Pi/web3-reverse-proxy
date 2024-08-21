@@ -20,10 +20,11 @@ class TunnelConnectionPool(EndpointConnectionPool):
         self.__logger = get_logger(f"TunnelConnectionPool.{id(self)}")
 
         self.tunnel_api_key = endpoint.conn_descr.extras["tunnel_service_auth_key"]
+        self.tunnel_proxy_establish_port = endpoint.conn_descr.extras["tunnel_proxy_establish_port"]
 
         tunnel_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tunnel_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        tunnel_socket.bind((Config.PROXY_LISTEN_ADDRESS, endpoint.conn_descr.extras["tunnel_proxy_establish_port"]))
+        tunnel_socket.bind((Config.PROXY_LISTEN_ADDRESS, self.tunnel_proxy_establish_port))
         tunnel_socket.listen(Config.LISTEN_BACKLOG_PARAM)
         self.tunnel_socket = tunnel_socket
 
