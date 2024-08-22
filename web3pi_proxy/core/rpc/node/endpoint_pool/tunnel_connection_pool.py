@@ -2,6 +2,7 @@ import socket
 
 from web3pi_proxy.config import Config
 from web3pi_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import EndpointConnectionPool
+from web3pi_proxy.core.rpc.node.endpoint_pool.tunnel_connection_pool_intf import TunnelConnectionPoolIntf
 from web3pi_proxy.core.rpc.node.endpoint_pool.tunnel_service import TunnelService
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.tunnelendpointconnection import TunnelEndpointConnection
@@ -10,7 +11,7 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3pi_proxy.utils.logger import get_logger
 
 
-class TunnelConnectionPool(EndpointConnectionPool):
+class TunnelConnectionPool(EndpointConnectionPool, TunnelConnectionPoolIntf):
 
     def __init__(
         self,
@@ -20,7 +21,7 @@ class TunnelConnectionPool(EndpointConnectionPool):
         self.__logger = get_logger(f"TunnelConnectionPool.{id(self)}")
 
         self.tunnel_api_key = endpoint.conn_descr.extras["tunnel_service_auth_key"]
-        self.tunnel_proxy_establish_port = endpoint.conn_descr.extras["tunnel_proxy_establish_port"]
+        self.tunnel_proxy_establish_port: int = endpoint.conn_descr.extras["tunnel_proxy_establish_port"]
 
         tunnel_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tunnel_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
