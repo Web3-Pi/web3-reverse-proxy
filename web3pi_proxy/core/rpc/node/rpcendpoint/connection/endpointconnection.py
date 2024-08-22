@@ -1,5 +1,8 @@
 from __future__ import annotations
+
+import socket
 import time
+from typing import Callable
 
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
     EndpointConnectionDescriptor,
@@ -27,12 +30,13 @@ class EndpointConnection:
     auth_key: str
     is_ssl: bool
 
-    def __init__(self, endpoint: RPCEndpoint) -> None:
+    def __init__(self, endpoint: RPCEndpoint, connection_factory: Callable) -> None:
         self.__logger = get_logger(f"EndpointConnection.{id(self)}")
         self.endpoint = endpoint
+        self.connection_factory = connection_factory
 
         self.__logger.debug(f"Creating socket for endpoint: {endpoint}")
-        self.socket = self.create_socket()
+        self.socket = self.__create_socket__()
         self.__logger.debug(f"Socket created for description: {self.conn_descr}")
 
         self.req_sender = RequestSender(
@@ -51,16 +55,18 @@ class EndpointConnection:
     def ip(self) -> str:
         return self.socket.get_peer_name()[0]
 
-    def create_socket(self) -> BaseSocket:
-        """Internal function, do not call directly"""
-        pass
+    def __create_socket__(self) -> BaseSocket:
+        s_dst: socket = self.connection_factory()
+        return BaseSocket.wrap_socket(
+            s_dst, self.conn_descr.host, self.conn_descr.is_ssl
+        )
 
     def close(self) -> None:
-        pass
+        self.socket.close()
 
     def reconnect(self) -> None:
         self.close()
-        self.socket = self.create_socket()
+        self.socket = self.__create_socket__()
         self.req_sender = RequestSender(
             self.socket, self.conn_descr.host, self.conn_descr.auth_key
         )
@@ -70,15 +76,3 @@ class EndpointConnection:
         self, request_bytes: bytearray, response_bytes: bytearray
     ) -> None:
         self.endpoint.update_stats(request_bytes, response_bytes)
-
-
-class EndpointConnectionImpl(EndpointConnection):
-
-    def close(self) -> None:
-        self.socket.close()
-
-    def create_socket(self) -> BaseSocket:
-        return BaseSocket.create_socket(
-            self.conn_descr.host, self.conn_descr.port, self.conn_descr.is_ssl
-        )
-

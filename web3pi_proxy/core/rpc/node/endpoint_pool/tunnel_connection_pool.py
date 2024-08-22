@@ -5,7 +5,6 @@ from web3pi_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import En
 from web3pi_proxy.core.rpc.node.endpoint_pool.tunnel_connection_pool_intf import TunnelConnectionPoolIntf
 from web3pi_proxy.core.rpc.node.endpoint_pool.tunnel_service import TunnelService
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import EndpointConnection
-from web3pi_proxy.core.rpc.node.rpcendpoint.connection.tunnelendpointconnection import TunnelEndpointConnection
 from web3pi_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 
 from web3pi_proxy.utils.logger import get_logger
@@ -44,7 +43,7 @@ class TunnelConnectionPool(EndpointConnectionPool, TunnelConnectionPoolIntf):
             self.__logger.debug("Finished connecting socket")
             return new_conn_sock
 
-        return TunnelEndpointConnection(self.endpoint, connection_factory)
+        return EndpointConnection(self.endpoint, connection_factory)
 
     def new_tunnel_service_socket(self, tunnel_service_socket: socket):
         with self._EndpointConnectionPool__lock:

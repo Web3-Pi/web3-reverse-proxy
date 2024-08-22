@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import socket
 import time
 from typing import Set
 from enum import Enum
@@ -14,10 +15,11 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handl
     EndpointConnectionHandler,
 )
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpointconnection import (
-    EndpointConnection, EndpointConnectionImpl,
+    EndpointConnection,
 )
 from web3pi_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3pi_proxy.core.rpc.request.rpcrequest import RPCRequest
+from web3pi_proxy.core.sockets.basesocket import BaseSocket
 from web3pi_proxy.utils.logger import get_logger
 
 
@@ -169,8 +171,10 @@ class EndpointConnectionPool(ConnectionPool):
         return self.connections.get_nowait()
 
     def new_connection(self) -> EndpointConnection:
-        """to be used only by overriding classes"""
-        return EndpointConnectionImpl(self.endpoint)
+        """Internal function, do not call directly"""
+        def connection_factory() -> socket:  # TODO is it worth to move it to object level and reuse?
+            return BaseSocket.create_socket(self.endpoint.conn_descr.host, self.endpoint.conn_descr.port)
+        return EndpointConnection(self.endpoint, connection_factory)
 
     def __update_status(self, status: str):
         self.status = status
