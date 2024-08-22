@@ -1,3 +1,4 @@
+
 from email.utils import formatdate
 
 
@@ -117,7 +118,7 @@ class ErrorResponses:
     @classmethod
     def unauthorized_invalid_API_key(cls) -> bytes:
         _now = cls.current_datetime()
-        _data = "invalid authentication id"
+        _data = '{"error": "invalid authentication id"}'
         _len = len(_data) + 1
         err_msg = cls.UNAUTH_RESPONSE_TEMPLATE.format(_now, _len, _data)
 

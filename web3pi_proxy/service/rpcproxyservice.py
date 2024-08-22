@@ -49,7 +49,9 @@ class DefaultRPCProxyService:
 
     def run_forever(
         self,
+        proxy_address=Config.PROXY_LISTEN_ADDRESS,
         proxy_port=Config.PROXY_LISTEN_PORT,
+        admin_address=Config.ADMIN_LISTEN_ADDRESS,
         admin_port=Config.ADMIN_LISTEN_PORT,
         num_proxy_workers=Config.NUM_PROXY_WORKERS,
     ):
@@ -59,10 +61,10 @@ class DefaultRPCProxyService:
         upnp_service.try_init_upnp()
 
         admin_thread = ServiceComponentsProvider.create_admin_http_server_thread(
-            self.state_manager, admin_port
+            self.state_manager, admin_address, admin_port,
         )
         proxy_server = ServiceComponentsProvider.create_default_web3_rpc_proxy(
-            self.state_manager, proxy_port, num_proxy_workers
+            self.state_manager, proxy_address, proxy_port, num_proxy_workers
         )
 
         admin_thread.start()
@@ -77,10 +79,12 @@ class DefaultRPCProxyService:
     @classmethod
     def launch_service(
         cls,
+        proxy_address=Config.PROXY_LISTEN_ADDRESS,
         proxy_port=Config.PROXY_LISTEN_PORT,
+        admin_address=Config.ADMIN_LISTEN_ADDRESS,
         admin_port=Config.ADMIN_LISTEN_PORT,
         num_proxy_workers=Config.NUM_PROXY_WORKERS,
     ):
         with redirect_stdout(StdOutCaptureStreamTee()) as new_stdout:
             service = DefaultRPCProxyService(new_stdout)
-            service.run_forever(proxy_port, admin_port, num_proxy_workers)
+            service.run_forever(proxy_address, proxy_port, admin_address, admin_port, num_proxy_workers)

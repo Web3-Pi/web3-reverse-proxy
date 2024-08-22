@@ -546,6 +546,7 @@
                     reqWriter: new Helpers.FieldWriter(endpointIds.requestId, Helpers.integerToHumanReadable),
                     outboundWriter: new Helpers.FieldWriter(endpointIds.outboundId, Helpers.bytesToHumanReadable),
                     inboundWriter: new Helpers.FieldWriter(endpointIds.inboundId, Helpers.bytesToHumanReadable),
+                    statusWriter: new Helpers.FieldWriter(endpointIds.statusId),
                     dateWriter: new Helpers.FieldWriter(endpointIds.dateId, Helpers.timeDeltaToHumanReadable)
                 }
             }
@@ -555,6 +556,7 @@
             writer.reqWriter.write(stats.req_no);
             writer.outboundWriter.write(stats.bytes_sent);
             writer.inboundWriter.write(stats.bytes_received);
+            writer.statusWriter.write(stats.status);
             writer.dateWriter.write(Helpers.millisSincePythonTimestamp(stats.started_at_timestamp));
         }
 
@@ -587,6 +589,7 @@
                                     <p class="small smallMarginBottom">Inbound<span class="f-right" id="${viewIds.inboundId}">${Helpers.bytesToHumanReadable(endpoint.bytes_received)}</span></p>
                                     <p class="small smallMarginBottom">Outbound<span class="f-right" id ="${viewIds.outboundId}">${Helpers.bytesToHumanReadable(endpoint.bytes_sent)}</span></p>
                                     <hr class="smallMarginTop mediumMarginBottom">
+                                    <p class="small smallMarginBottom">Status<span class="f-right small" style="margin-top: 1px" id="${viewIds.statusId}">${endpoint.status}</span></p>
                                     <p class="small smallMarginBottom">Uptime<span class="f-right small" style="margin-top: 1px" id="${viewIds.dateId}">${Helpers.timeDeltaToHumanReadable(deltaMillis)}</span></p>
                                 </div>
                              </div>`;
@@ -615,6 +618,7 @@
                 requestId: name + "_req_no",
                 outboundId: name + "_outbound",
                 inboundId: name + "_inbound",
+                statusId: name + "_status",
                 dateId: name + "_date"
             }
 

@@ -182,6 +182,10 @@ class EndpointConnectionPoolManager:
             del self.pools[name]
             return endpoint
 
+    def get_pool(self, name: str) -> EndpointConnectionPool:
+        with self.__lock:
+            return self.pools.get(name)
+
     def get_connection(self, req: RPCRequest) -> EndpointConnectionHandler:
         self.__logger.debug("Selecting endpoint")
         with self.__lock:

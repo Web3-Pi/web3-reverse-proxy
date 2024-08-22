@@ -66,7 +66,8 @@ class ServiceComponentsProvider:
         cls,
         ssm: SampleStateManager,
         connection_pool: EndpointConnectionPoolManager,
-        proxy_port,
+        proxy_address: str,
+        proxy_port: int,
         num_proxy_workers: int,
     ) -> Web3RPCProxy:
         # Create default components
@@ -74,6 +75,7 @@ class ServiceComponentsProvider:
 
         # Create proxy (do not launch it yet)
         proxy = Web3RPCProxy(
+            proxy_address,
             proxy_port,
             num_proxy_workers,
             middlewares,
@@ -91,21 +93,21 @@ class ServiceComponentsProvider:
 
     @classmethod
     def create_default_web3_rpc_proxy(
-        cls, ssm: SampleStateManager, proxy_listen_port, num_proxy_workers: int
+        cls, ssm: SampleStateManager, proxy_listen_address, proxy_listen_port, num_proxy_workers: int
     ) -> Web3RPCProxy:
         # Create default components
         connection_pool = cls.create_default_connection_pool(Config.ETH_ENDPOINTS, Config.LOADBALANCER)
 
         return cls.create_web3_rpc_proxy(
-            ssm, connection_pool, proxy_listen_port, num_proxy_workers
+            ssm, connection_pool, proxy_listen_address, proxy_listen_port, num_proxy_workers
         )
 
     @classmethod
     def create_admin_http_server_thread(
-        cls, state_manager: SampleStateManager, listen_port
+        cls, state_manager: SampleStateManager, listen_address, listen_port
     ):
         admin = state_manager.get_admin_instance()
 
         return AdminHTTPServerThread(
-            admin, ("", listen_port), AdminServerRequestHandler
+            admin, (listen_address, listen_port), AdminServerRequestHandler
         )

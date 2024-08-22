@@ -3,6 +3,10 @@ from threading import Lock
 
 
 class EndpointConnectionStats:
+    _started_at: float
+    _no_bytes_sent: int
+    _no_bytes_received: int
+    _no_requests_handled: int
 
     def __init__(self):
         self._started_at = time.time()
@@ -13,22 +17,21 @@ class EndpointConnectionStats:
 
         self.__lock = Lock()
 
-    def __get_started_at(self):
+    @property
+    def started_at(self):
         return self._started_at
 
-    def __get_no_bytes_sent(self):
+    @property
+    def no_bytes_sent(self):
         return self._no_bytes_sent
 
-    def __get_no_bytes_received(self):
+    @property
+    def no_bytes_received(self):
         return self._no_bytes_received
 
-    def __get_no_requests_handled(self):
+    @property
+    def no_requests_handled(self):
         return self._no_requests_handled
-
-    started_at = property(__get_started_at)
-    no_bytes_sent = property(__get_no_bytes_sent)
-    no_bytes_received = property(__get_no_bytes_received)
-    no_requests_handled = property(__get_no_requests_handled)
 
     def _update(
         self, no_bytes_received: int, no_bytes_sent: int, no_requests_handled: int

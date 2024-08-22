@@ -1,10 +1,12 @@
 import json
 import os
-from typing import List, Union, get_type_hints
+import socket
+from typing import List, Optional, Union, get_type_hints
 from enum import Enum
 
 from dotenv import dotenv_values
 
+IPV6_LOOPBACK = "::1"
 
 class ProxyMode(Enum):
     DEV = "DEV"
@@ -31,7 +33,12 @@ class AppConfig:
     UPNP_LEASE_TIME: int = 5 * 3600
 
     # server socket conf
+    # the address the proxy's listening socket is bound to
+    # by default, set to 0.0.0.0 which makes it listen on all the interfaces
     PROXY_LISTEN_ADDRESS: str = "0.0.0.0"
+    # the address, which the proxy reports as the connection address
+    # iow, the address that the clients should use to connect to the proxy
+    PROXY_CONNECTION_ADDRESS: Optional[str] = None
     PROXY_LISTEN_PORT: int = 6512
     NUM_PROXY_WORKERS: int = 150
     MAX_PENDING_CLIENT_SOCKETS: int = 10_000
@@ -67,6 +74,12 @@ class AppConfig:
     STATS_UPDATE_MIN_DELAY: float = 0.1
 
     # administration
+    # the address the admin panel's listening socket is bound to
+    # by default, set to 0.0.0.0 which makes it listen on all the interfaces
+    ADMIN_LISTEN_ADDRESS: str = "0.0.0.0"
+    # the address, which the admin panel reports as the connection address
+    # iow, the address that the clients should use to connect to the admin
+    ADMIN_CONNECTION_ADDRESS: Optional[str] = None
     ADMIN_LISTEN_PORT: int = 6561
     # empty value means to generate a new random
     ADMIN_AUTH_TOKEN: str = ""
@@ -130,6 +143,49 @@ class AppConfig:
                     value = var_type(env_value)
 
             self.__setattr__(field, value)
+
+    @staticmethod
+    def _resolve_connection_address(listen_address: str, connection_address: Optional[str] = None):
+        """Return the connection address.
+
+        Returns the `connection_address` if set explicitly.
+
+        Otherwise, if `listen_address` is set to socket.INADDR_ANY,
+        return either an IPv4 or IPv6 localhost address.
+
+        If no `connection_address` is given and `listen_address` is specified as some
+        specific address, returns that address.
+        """
+
+        if connection_address:
+            return connection_address
+        try:
+            if socket.inet_pton(socket.AF_INET, listen_address) == socket.INADDR_ANY.to_bytes(4, "big"):
+                return socket.inet_ntop(socket.AF_INET, socket.INADDR_LOOPBACK.to_bytes(4, "big"))
+        except OSError:
+            pass
+        try:
+            if socket.inet_pton(socket.AF_INET6, listen_address) == socket.INADDR_ANY.to_bytes(16, "big"):
+                return IPV6_LOOPBACK
+        except OSError:
+            pass
+
+        return listen_address
+
+
+    @property
+    def proxy_connection_address(self):
+        """Return the proxy's connection address."""
+        return self._resolve_connection_address(
+            self.PROXY_LISTEN_ADDRESS, self.PROXY_CONNECTION_ADDRESS
+        )
+
+    @property
+    def admin_connection_address(self):
+        """Return the admin panel connection address."""
+        return self._resolve_connection_address(
+            self.ADMIN_LISTEN_ADDRESS, self.ADMIN_CONNECTION_ADDRESS
+        )
 
 
 Config = AppConfig()

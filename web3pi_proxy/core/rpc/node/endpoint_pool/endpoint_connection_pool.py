@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import socket
+import enum
 import time
 from typing import Set
-from enum import Enum
 from queue import SimpleQueue
 from threading import Lock, RLock, Thread
 
@@ -103,7 +103,7 @@ class EndpointConnectionPool(ConnectionPool):
         self.connections: SimpleQueue[EndpointConnection] = SimpleQueue()
         self.busy_connections: Set[EndpointConnection] = set()
         self.stats = PoolStats()
-        self.status = self.PoolStatus.ACTIVE.value
+        self.status = self.PoolStatus.ACTIVE
         self.__lock = Lock()
         self.__logger = get_logger(f"EndpointConnectionPool.{id(self)}")
         self.connection_close_queue: SimpleQueue[EndpointConnection | None] = SimpleQueue()
@@ -123,7 +123,7 @@ class EndpointConnectionPool(ConnectionPool):
     def __str__(self):
         return f"{self.__class__.__name__}({self.endpoint})"
 
-    class PoolStatus(Enum):
+    class PoolStatus(str, enum.Enum):
         ACTIVE = "ACTIVE"
         DISABLED = "DISABLED"
         CLOSING = "CLOSING"
@@ -143,9 +143,9 @@ class EndpointConnectionPool(ConnectionPool):
     def __run_cleanup_thread(self) -> None:
         while True:
             with self.__lock:
-                if self.status == self.PoolStatus.CLOSED.value or self.status == self.PoolStatus.CLOSING.value:
+                if self.status == self.PoolStatus.CLOSED or self.status == self.PoolStatus.CLOSING:
                     break
-                if self.status == self.PoolStatus.ACTIVE.value:
+                if self.status == self.PoolStatus.ACTIVE:
                     excessive_connections = self.connections.qsize() - self.MAX_CONNECTIONS
                     if excessive_connections > 0:
                         for _ in range(excessive_connections):
@@ -178,7 +178,7 @@ class EndpointConnectionPool(ConnectionPool):
 
     def __update_status(self, status: str):
         self.status = status
-        self.__logger.debug(f"Changed status to {status}")
+        self.__logger.debug("Changed %s status to %s", str(self), status)
 
     def get(self) -> EndpointConnectionHandler:
         self.__lock.acquire()
@@ -217,23 +217,23 @@ class EndpointConnectionPool(ConnectionPool):
                 connection.last_use_timestamp = time.time_ns()
             else:
                 self.connection_close_queue.put(connection)
-                if self.status == self.PoolStatus.CLOSING.value:  # cant be CLOSED
+                if self.status == self.PoolStatus.CLOSING:  # cant be CLOSED
                     if len(self.busy_connections) == 0:
                         self.connection_close_queue.put(None)  # sentinel
-                        self.__update_status(self.PoolStatus.CLOSED.value)
+                        self.__update_status(self.PoolStatus.CLOSED)
                         self.__logger.info("Pool has been closed")
 
     def is_active(self):
-        return self.status == self.PoolStatus.ACTIVE.value
+        return self.status == self.PoolStatus.ACTIVE
 
     def is_open(self):
         return self.status == self.PoolStatus.ACTIVE.value or self.status == self.PoolStatus.DISABLED.value
 
     def disable(self):
         with self.__lock:
-            if self.status == self.PoolStatus.CLOSED.value or self.status == self.PoolStatus.CLOSING.value:
+            if self.status == self.PoolStatus.CLOSED or self.status == self.PoolStatus.CLOSING:
                 raise Exception("Tried to disable after close")  # TODO better exception
-            self.__update_status(self.PoolStatus.DISABLED.value)
+            self.__update_status(self.PoolStatus.DISABLED)
             while not self.connections.empty():
                 self.connection_close_queue.put(self.__get_connection())
             self.stats = PoolStats()
@@ -241,9 +241,9 @@ class EndpointConnectionPool(ConnectionPool):
 
     def activate(self):
         with self.__lock:
-            if self.status == self.PoolStatus.CLOSED.value or self.status == self.PoolStatus.CLOSING.value:
+            if self.status == self.PoolStatus.CLOSED or self.status == self.PoolStatus.CLOSING:
                 raise Exception("Tried to activate after close")  # TODO better exception
-            self.__update_status(self.PoolStatus.ACTIVE.value)
+            self.__update_status(self.PoolStatus.ACTIVE)
         self.__logger.info("Pool has been activated")
 
     def test_conn(self) -> bool:
@@ -298,12 +298,12 @@ class EndpointConnectionPool(ConnectionPool):
 
     def close(self) -> None:
         with self.__lock:
-            self.__update_status(self.PoolStatus.CLOSING.value)
+            self.__update_status(self.PoolStatus.CLOSING)
             while not self.connections.empty():
                 self.connection_close_queue.put(self.__get_connection())
             if len(self.busy_connections) == 0:
                 self.connection_close_queue.put(None)  # sentinel
-                self.__update_status(self.PoolStatus.CLOSED.value)
+                self.__update_status(self.PoolStatus.CLOSED)
                 self.__logger.info("Pool has been closed")
             else:
                 self.__logger.info("Pool is closing")
