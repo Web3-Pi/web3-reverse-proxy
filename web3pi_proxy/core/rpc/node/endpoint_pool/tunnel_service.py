@@ -8,6 +8,8 @@ from web3pi_proxy.utils.logger import get_logger
 
 
 class TunnelServiceImpl:
+    """The service is lazy initialized at the first pool registration
+    to avoid resource allocation when there is not pool with a tunnel"""
     def __init__(self):
         self.__registry = dict()
         self.__lock = Lock()

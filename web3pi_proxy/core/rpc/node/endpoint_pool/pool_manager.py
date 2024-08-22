@@ -15,7 +15,7 @@ from web3pi_proxy.core.rpc.node.endpoint_pool.load_balancers import (
 )
 from web3pi_proxy.core.rpc.node.endpoint_pool.tunnel_connection_pool import TunnelConnectionPool
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
-    EndpointConnectionDescriptor,
+    EndpointConnectionDescriptor, ConnectionType,
 )
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handler import (
     EndpointConnectionHandler,
@@ -165,7 +165,7 @@ class EndpointConnectionPoolManager:
                 f"Creating endpoint {name} with connection {conn_descr}"
             )
             endpoint = RPCEndpoint.create(name, conn_descr)
-            if endpoint.conn_descr.extras.get("tunnel_proxy_establish_port"):
+            if endpoint.conn_descr.connection_type == ConnectionType.TUNNEL:
                 connection_pool = TunnelConnectionPool(endpoint)
             else:
                 connection_pool = EndpointConnectionPool(endpoint)
