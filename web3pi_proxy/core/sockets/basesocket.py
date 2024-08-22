@@ -59,7 +59,7 @@ class BaseSocket:
 
     # FIXME: this call can fail (wrong address, endpoint no ready -> failed connection)
     @classmethod
-    def create_socket(cls, host: str, port: int, is_ssl: bool) -> BaseSocket:
+    def create_socket(cls, host: str, port: int) -> socket:
         # This hack allows multiple connections to a single endpoint (using mdns requires waiting some time between
         # sockets are successfully processed). Connecting with directly specified IP address solves this problem.
         # FIXME: it may fail for remote endpoints (such as infura), as there is no guarantee that the IP stays
@@ -75,9 +75,14 @@ class BaseSocket:
 
         s_dst.settimeout(5.0)  # TODO parametrize?
         s_dst.connect((host_ip, port))
-        s_dst.settimeout(None)
 
         cls.__logger.debug("Finished connecting socket")
+
+        return s_dst
+
+    @classmethod
+    def wrap_socket(cls, s_dst: socket, host: str, is_ssl: bool) -> BaseSocket:
+        s_dst.settimeout(None)
 
         if is_ssl:
             context = ssl.create_default_context()
@@ -86,3 +91,4 @@ class BaseSocket:
         res = BaseSocket(s_dst)
 
         return res
+

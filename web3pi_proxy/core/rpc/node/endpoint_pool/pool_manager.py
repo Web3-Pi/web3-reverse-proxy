@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import select
+import socket
+
 import time
 from threading import RLock, Thread
 from typing import List, Tuple
@@ -10,8 +13,9 @@ from web3pi_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import (
 from web3pi_proxy.core.rpc.node.endpoint_pool.load_balancers import (
     LoadBalancer,
 )
+from web3pi_proxy.core.rpc.node.endpoint_pool.tunnel_connection_pool import TunnelConnectionPool
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
-    EndpointConnectionDescriptor,
+    EndpointConnectionDescriptor, ConnectionType,
 )
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handler import (
     EndpointConnectionHandler,
@@ -19,6 +23,7 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.connection.endpoint_connection_handl
 from web3pi_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3pi_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3pi_proxy.utils.logger import get_logger
+from web3pi_proxy.config.conf import Config
 
 
 class ConnectionPoolError(Exception):
@@ -135,6 +140,13 @@ class EndpointConnectionPoolManager:
             if connection_pool.is_active()
         ]
 
+    def __get_open_pools(self):
+        return [
+            connection_pool
+            for connection_pool in self.pools.values()
+            if connection_pool.is_open()
+        ]
+
     def __damage_control(self):
         while True:
             self.__logger.debug("Running check on endpoint connections")
@@ -153,7 +165,10 @@ class EndpointConnectionPoolManager:
                 f"Creating endpoint {name} with connection {conn_descr}"
             )
             endpoint = RPCEndpoint.create(name, conn_descr)
-            connection_pool = EndpointConnectionPool(endpoint)
+            if endpoint.conn_descr.connection_type == ConnectionType.TUNNEL:
+                connection_pool = TunnelConnectionPool(endpoint)
+            else:
+                connection_pool = EndpointConnectionPool(endpoint)
             self.pools[name] = connection_pool
             return endpoint
 

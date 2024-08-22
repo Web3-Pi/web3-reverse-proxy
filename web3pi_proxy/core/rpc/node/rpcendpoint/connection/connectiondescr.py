@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-
+import enum
 import urllib3.util
+
+
+class ConnectionType(enum.Enum):
+    DIRECT = "DIRECT"
+    TUNNEL = "TUNNEL"
 
 
 @dataclass
@@ -12,6 +17,8 @@ class EndpointConnectionDescriptor:
     auth_key: str
     is_ssl: bool
     url: str
+    extras: dict
+    connection_type: ConnectionType
 
     @classmethod
     def from_url(cls, url) -> EndpointConnectionDescriptor | None:
@@ -37,4 +44,24 @@ class EndpointConnectionDescriptor:
             else:
                 return None
 
-        return EndpointConnectionDescriptor(host, int(port), auth_key, is_ssl, url)
+        return EndpointConnectionDescriptor(host, int(port), auth_key, is_ssl, url, dict(), ConnectionType.DIRECT)
+
+    @classmethod
+    def from_dict(cls, conf: dict) -> EndpointConnectionDescriptor | None:
+        url: str = conf["url"]
+        conn_descr = cls.from_url(url)
+        if not conn_descr:
+            return None
+        connection_type: str = conf.get("connection_type")
+        if connection_type:
+            try:
+                conn_descr.connection_type = ConnectionType(connection_type.upper())
+            except ValueError:
+                raise Exception(f"Unrecognized connection type {connection_type}")
+        else:
+            conn_descr.connection_type = ConnectionType.DIRECT
+        conn_descr.extras = conf.copy()
+        del conn_descr.extras["name"]
+        del conn_descr.extras["url"]
+        conn_descr.extras.pop("connection_type", None)
+        return conn_descr

@@ -49,6 +49,7 @@ class AppConfig:
     SSL_ENABLED: bool = False
     SSL_CERT_FILE: str = "cert.pem"
     SSL_KEY_FILE: str = "key.pem"
+    TUNNEL_ESTABLISH_PORT: int = 7634
 
     LISTEN_BACKLOG_PARAM: int = 21
     BLOCKING_ACCEPT_TIMEOUT: int = 5

@@ -42,7 +42,7 @@ class ServiceComponentsProvider:
         descriptors = [
             (
                 entrypoint["name"],
-                EndpointConnectionDescriptor.from_url(entrypoint["url"]),
+                EndpointConnectionDescriptor.from_dict(entrypoint),
             )
             for entrypoint in endpoint_config
         ]
