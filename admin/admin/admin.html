@@ -574,10 +574,11 @@
             #endpointHTML(name, endpoint, viewIds) {
                 const deltaMillis = Helpers.millisSincePythonTimestamp(endpoint.started_at_timestamp);
 
-                let cardColor = "bg-c-blue";
-
-                if (name.toLowerCase().includes("infura")) {
-                    cardColor = "bg-c-pink";
+                let cardColor = "bg-c-pink";
+                if (endpoint.status == "ACTIVE") {
+                    cardColor = "bg-c-blue";
+                } else if (endpoint.status == "OUT_OF_SYNC") {
+                    cardColor = "bg-c-yellow";
                 }
 
                 return `<div class="card ${cardColor} order-card">
