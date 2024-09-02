@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional, Union
 
 from web3pi_proxy.core.rpc.request.rpcrequest import RPCRequest
 from web3pi_proxy.core.rpc.response.rpcresponse import RPCResponse
@@ -9,10 +10,10 @@ class RequestReaderMiddleware(ABC):
     MAX_LINE_LEN = 65536
     MAX_NUM_HEADERS = 100
 
-    ReturnType = [RPCRequest | None, RPCResponse | None]
+    ReturnType = [Optional[RPCRequest], Optional[RPCResponse]]
 
     @staticmethod
-    def failure(err_res: RPCResponse | bytes, req: RPCRequest) -> ReturnType:
+    def failure(err_res: Union[RPCResponse, bytes], req: RPCRequest) -> ReturnType:
         if isinstance(err_res, bytes):
             err_res = RPCResponse(bytearray(err_res), req)
 
