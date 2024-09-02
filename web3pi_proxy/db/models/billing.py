@@ -13,7 +13,7 @@ class BillingPlan(BaseModel):
     glm_call_price: float = FloatField(default=0.0)
     glm_byte_price: float = FloatField(default=0.0)
     user_priority: int = IntegerField(default=0)
-    constant_pool: str | None = CharField(null=True)
+    constant_pool: Optional[str] = CharField(null=True)
 
     class Meta:
         indexes = (

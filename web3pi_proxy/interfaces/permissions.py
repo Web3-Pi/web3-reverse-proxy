@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-
+from typing import Optional
 
 class ClientPermissions(ABC):
 
@@ -18,5 +18,5 @@ class CallPermissions(ABC):
     def get_call_priority(self, user_api_key: str, method: str) -> int:
         pass
 
-    def get_user_constant_pool(self, user_api_key: str) -> str | None:
+    def get_user_constant_pool(self, user_api_key: str) -> Optional[str]:
         pass
