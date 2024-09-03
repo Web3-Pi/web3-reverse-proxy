@@ -1,21 +1,22 @@
 from dataclasses import dataclass
+from typing import Optional, Union
 
 
 @dataclass
 class RPCRequest:
-    user_api_key: str | None = None
-    url_path: bytearray | None = None
-    headers: bytearray | None = None
+    user_api_key: Optional[str] = None
+    url_path: Optional[bytearray] = None
+    headers: Optional[bytearray] = None
     content_len: int = -1
-    content: bytearray | None = None
+    content: Optional[bytearray] = None
     method: str = ""
-    id: int | str | None = None
+    id: Optional[Union[int, str]] = None
     priority: int = 0
-    constant_pool: str | None = None
-    last_queried_bytes: bytearray | None = None
+    constant_pool: Optional[str] = None
+    last_queried_bytes: Optional[bytearray] = None
     keep_alive: bool = True
-    http_method: bytearray | None = None
-    cors_origin: bytes | None = None
+    http_method: Optional[bytearray] = None
+    cors_origin: Optional[bytes] = None
 
     def as_bytearray(
         self, request_line_1: bytearray, url_context: bytearray, request_line_2: bytearray, host_header: bytearray

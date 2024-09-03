@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Optional
 
 from web3pi_proxy.interfaces.permissions import CallPermissions, ClientPermissions
 from web3pi_proxy.service.billing.billingservice import BasicBillingService
@@ -30,7 +30,7 @@ class BasicBillingServiceWithLedger(CallPermissions):
     def get_call_priority(self, user_api_key: str, method: str) -> int:
         return self.billing_service.get_call_priority(user_api_key, method)
 
-    def get_user_constant_pool(self, user_api_key: str) -> str | None:
+    def get_user_constant_pool(self, user_api_key: str) -> Optional[str]:
         return self.billing_service.get_user_constant_pool(user_api_key)
 
 

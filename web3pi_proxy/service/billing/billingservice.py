@@ -1,4 +1,4 @@
-from typing import Dict, Generic, List, Type, TypeVar
+from typing import Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from web3pi_proxy.interfaces.billing import BillingPlanProtocol
 
@@ -64,13 +64,17 @@ class BasicBillingService(Generic[BPP]):
 
         return self.user_plans[user_api_key].user_priority
 
-    def get_user_constant_pool(self, user_api_key: str) -> str | None:
+    def get_user_constant_pool(self, user_api_key: str) -> Optional[str]:
         assert self.is_registered(user_api_key)
 
         return self.user_plans[user_api_key].constant_pool
 
     def create_plan(
-        self, free_calls: int | str, free_bytes: int | str, priority: int | str, constant_pool: str | None
+        self,
+        free_calls: Union[int, str],
+        free_bytes: Union[int, str],
+        priority: Union[int, str],
+        constant_pool: Optional[str],
     ) -> BPP:
         # FIXME: naive type handling
         return self.billing_plan_type(
