@@ -144,27 +144,21 @@
             <hr>
 
             <ul class="nav nav-pills nav-stacked">
-                <li><a href="#" id="list_users"><i class="glyphicon glyphicon-user"></i> List Users</a></li>
-                <li><a href="#" id="list_activities_basic"><i class="glyphicon glyphicon-th-list"></i> Activities (basic)</a></li>
-                <li><a href="#" id="list_activities_detailed"><i class="glyphicon glyphicon-list-alt"></i> Activities (detailed)</a></li>
+                <li><a href="#" id="list_users"><i class="glyphicon glyphicon-user" style="color:darkgreen"></i> List Users</a></li>
+                <li><a href="#" id="list_activities_basic"><i class="glyphicon glyphicon-th-list" style="color:darkgreen"></i> Activities (basic)</a></li>
+                <li><a href="#" id="list_activities_detailed"><i class="glyphicon glyphicon-list-alt" style="color:darkgreen"></i> Activities (detailed)</a></li>
             </ul>
             <hr>
 
-            <ul class="nav nav-pills nav-stacked">
-                <li><a href="#" id="query_user_billing_plan"><i class="glyphicon glyphicon-usd"></i> User Billing Plan</a></li>
-                <li><a href="#" id="query_user_billing_status"><i class="glyphicon glyphicon-stats"></i> User Billing Stats</a></li>
-            </ul>
             <form class="navbar-form" name="user_api_key_form" onkeydown="return event.key != 'Enter';">
                 <small class="lab-l">API key</small>
                 <label for="billing_api_key"></label><input id="billing_api_key" type="text" class="form-control pull-right" placeholder="User API key" style="width: 150px; height: 25px;">
             </form>
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="#" id="query_user_billing_plan"><i class="glyphicon glyphicon-usd" style="color:darkgreen"></i> User Billing Plan</a></li>
+                <li><a href="#" id="query_user_billing_status"><i class="glyphicon glyphicon-stats" style="color:darkgreen"></i> User Billing Stats</a></li>            </ul>
             <hr>
 
-            <ul class="nav nav-pills nav-stacked">
-                <li><a href="#" id="register_user"><i class="glyphicon glyphicon-plus"></i> Register User</a></li>
-                <li><a href="#" id="remove_user"><i class="glyphicon glyphicon-trash"></i> Remove User</a></li>
-                <li><a href="#" id="update_user_plan"><i class="glyphicon glyphicon-refresh"></i> Update User</a></li>
-            </ul>
             <form class="navbar-form" name="manage_api_key_form" onkeydown="return event.key != 'Enter';">
                 <small class="lab-l">API key</small>
                 <label for="manage_api_key"></label><input id="manage_api_key" type="text" class="form-control pull-right" placeholder="User API key" style="width: 150px; height: 25px;">
@@ -177,15 +171,34 @@
                 <small class="lab-l">Free Bytes</small>
                 <label for="free_bytes"></label><input id="free_bytes" type="number" class="form-control pull-right" placeholder="E.g., 10000" style="width: 130px; height: 25px;">
             </form>
-            <form class="navbar-form" name="manage_priority_form">
-                <small class="lab-l">User Priority</small>
-                <label for="user_priority"></label><input id="user_priority" type="number" class="form-control pull-right deselect reset-cursor" value="2" min="0" max="2"  onkeydown="return false" style="width: 75px; height: 25px;">
-            </form>
-            <form class="navbar-form" name="manage_constant_pool_form">
-                <small class="lab-l">Constant Pool</small>
-                <label for="constant_pool"></label><input id="constant_pool" type="text" class="form-control pull-right deselect reset-cursor" placeholder="A pool name, optional" style="width: 150px; height: 25px;">
-            </form>
-
+            <script language="JavaScript">
+                function showOtherParams() {
+                    var x = document.getElementById("other-params");
+                    if (x.style.display === "none") {
+                        x.style.display = "block";
+                    } else {
+                        x.style.display = "none";
+                    }
+                }
+            </script>
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="#" id="show-other-params" onclick="showOtherParams()"><i class="glyphicon glyphicon-option-horizontal pull-right"></i></a></li>
+            </ul>
+            <div id="other-params" style="display: none">
+                <form class="navbar-form" name="manage_priority_form">
+                    <small class="lab-l">User Priority</small>
+                    <label for="user_priority"></label><input id="user_priority" type="number" class="form-control pull-right deselect reset-cursor" value="2" min="0" max="2"  onkeydown="return false" style="width: 75px; height: 25px;">
+                </form>
+                <form class="navbar-form" name="manage_constant_pool_form">
+                    <small class="lab-l">Constant Pool</small>
+                    <label for="constant_pool"></label><input id="constant_pool" type="text" class="form-control pull-right deselect reset-cursor" placeholder="A pool name, optional" style="width: 150px; height: 25px;">
+                </form>
+            </div>
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="#" id="register_user"><i class="glyphicon glyphicon-plus" style="color:red"></i> Add User</a></li>
+                <li><a href="#" id="remove_user"><i class="glyphicon glyphicon-trash" style="color:red"></i> Remove User</a></li>
+                <li><a href="#" id="update_user_plan"><i class="glyphicon glyphicon-refresh" style="color:red"></i> Update User</a></li>
+            </ul>
         </div><!-- /span-3 -->
 
         <div class="col-md-9">
