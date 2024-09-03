@@ -17,7 +17,7 @@ class RPCServiceAdmin:
     CONSOLE_CONTENTS = "console_contents"
     USERS_API_KEYS = "users_api_keys"
 
-    ReturnType = Dict[str, Any] | None
+    ReturnType = Optional[Dict[str, Any]]
 
     billing_service: BasicBillingService
     activity_ledger: SimpleActivityLedger
@@ -135,7 +135,7 @@ class RPCServiceAdmin:
             return self.query_list_registered_users()
 
     def register_user_flat(
-        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int, constant_pool: str | None
+        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int, constant_pool: Optional[str]
     ) -> ReturnType:
         if constant_pool == "":
             constant_pool = None
@@ -159,7 +159,7 @@ class RPCServiceAdmin:
             return self.query_user_plan(user_api_key)
 
     def update_user_plan_flat(
-        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int, constant_pool: str | None
+        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int, constant_pool: Optional[str]
     ) -> ReturnType:
         if constant_pool == "":
             constant_pool = None

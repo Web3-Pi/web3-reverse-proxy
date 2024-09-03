@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Optional, Protocol
 
 
 class BillingPlanProtocol(Protocol):
@@ -7,4 +7,4 @@ class BillingPlanProtocol(Protocol):
     glm_call_price: float
     glm_byte_price: float
     user_priority: int
-    constant_pool: str | None
+    constant_pool: Optional[str]
