@@ -201,34 +201,40 @@
             </ul>
         </div><!-- /span-3 -->
 
-        <div class="col-md-9">
+        <div class="col-md-6">
             <!-- column 2 -->
             <a href="#" id="crude_dashboard"><strong><i class="glyphicon glyphicon-dashboard"></i> Crude dashboard</strong></a>
             <hr>
-            <div class="row">
-
-                <!-- center left-->
-                <div class="col-md-9">
-                    <div class="well reset-cursor">Processed proxy queries<span class="badge pull-right" id="num_processed_requests">0</span></div>
-                    <hr>
-                    <div class="panel panel-default">
-                        <div class="well reset-cursor">Last processed request <span class="label label-default label-large pull-right" id="last_processed_request" style="font-size:small;"></span></div>
-                        <div class="panel-body">
-                            <small>Proxy response</small>
-                            <div class="form-outline"><label for="json_display" class="hidden"></label><textarea class="form-control json-display" rows="21" id="json_display" readonly></textarea></div>
-                        </div><!--/panel-body-->
-                    </div><!--/panel-->
-                </div><!--/col-->
-                <!--center-right-->
-
-                <div class="col-md-3" id ="terre">
-                    <div class="well reset-cursor">Active endpoints <span class="badge pull-right" id="num_active_endpoints">0</span></div>
-                    <hr id="endpoints_placeholder">
-                </div> <!--/col-span-3-->
-
-            </div><!--/row-->
+            <div class="well reset-cursor">Processed proxy queries<span class="badge pull-right" id="num_processed_requests">0</span></div>
+            <hr>
+            <div class="panel panel-default">
+                <div class="well reset-cursor">Last processed request <span class="label label-default label-large pull-right" id="last_processed_request" style="font-size:small;"></span></div>
+                <div class="panel-body">
+                    <small>Proxy response</small>
+                    <div class="form-outline"><label for="json_display" class="hidden"></label><textarea class="form-control json-display" rows="21" id="json_display" readonly></textarea></div>
+                </div><!--/panel-body-->
+            </div><!--/panel-->
         </div><!--/col-span-9-->
 
+        <div class="col-md-3" id ="terre">
+            <a href="#" id="refresh_endpoints"><strong><i class="glyphicon glyphicon-cog"></i> Endpoints</strong></a>
+            <hr>
+            <div class="well reset-cursor">Active endpoints <span class="badge pull-right" id="num_active_endpoints">0</span></div>
+            <hr id="endpoints_placeholder">
+            <form class="navbar-form" name="endpoint_name_form" onkeydown="return event.key != 'Enter';">
+                <small class="lab-l">Name</small>
+                <label for="endpoint_name"></label><input id="endpoint_name" type="text" class="form-control pull-right" placeholder="Endpoint Name" style="width: 150px; height: 25px;">
+            </form>
+            <form class="navbar-form" name="endpoint_url_form">
+                <small class="lab-l">URL</small>
+                <label for="endpoint_url"></label><input id="endpoint_url" type="text" class="form-control pull-right" placeholder="Endpoint URL" style="width: 150px; height: 25px;">
+            </form>
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="#" id="add_endpoint"><i class="glyphicon glyphicon-plus" style="color:red"></i> Add Endpoint</a></li>
+                <li><a href="#" id="remove_endpoint"><i class="glyphicon glyphicon-trash" style="color:red"></i> Remove Endpoint</a></li>
+                <li><a href="#" id="update_endpoint"><i class="glyphicon glyphicon-refresh" style="color:red"></i> Update Endpoint</a></li>
+            </ul>
+        </div> <!--/col-span-3-->
     </div><!--/row-->
     <!-- /upper section -->
 </div><!--/container-->
@@ -265,9 +271,17 @@
             remove_user: 'remove_user',
             update_user_plan: 'update_user_plan',
 
+            endpoint_name: 'endpoint_name',
+            endpoint_url: 'endpoint_url',
+
+            add_endpoint: 'add_endpoint',
+            remove_endpoint: 'remove_endpoint',
+            update_endpoint: 'update_endpoint',
+
             proxy_admin_panel: 'proxy_admin_panel',
             rpc_methods: "rpc_methods",
             crude_dashboard: 'crude_dashboard',
+            refresh_endpoints: 'refresh_endpoints',
             query_list_endpoints: 'query_list_endpoints',
             query_endpoint_stats: 'query_endpoint_stats',
 
@@ -283,6 +297,10 @@
             registerUser: "register_user",
             removeUser: "remove_user",
             updateUserPlan: "update_user_plan",
+
+            addEndpoint: "add_endpoint",
+            removeEndpoint: "remove_endpoint",
+            updateEndpoint: "update_endpoint",
 
             queryProxyStats: "query_proxy_stats",
             queryListEndpoints: "query_list_endpoints",
@@ -414,6 +432,23 @@
             return userdata.free_calls >= 0 && userdata.free_bytes >= 0;
         }
 
+        static isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        static validate_endpoint_data(endpointdata) {
+            if (!this.is_valid_key(endpointdata.name) || endpointdata.url.length === 0) {
+                return false;
+            }
+
+            return this.isValidUrl(endpointdata.url);
+        }
+
         static FieldReader = class {
             constructor(eltId) {
                 this.elt = Helpers.getElt(eltId)
@@ -491,6 +526,28 @@
                 free_bytes: this.dbManageFreeBytes(),
                 user_priority: this.dbManageUserPriority(),
                 constant_pool: this.dbManageConstantPool()
+            }
+        }
+    }
+
+    class EndpointInput {
+        constructor() {
+            this.endpoint_name = new Helpers.FieldReader(conf.tag.endpoint_name);
+            this.endpoint_url = new Helpers.FieldReader(conf.tag.endpoint_url);
+        }
+
+        endpointName() {
+            return this.endpoint_name.read().trim();
+        }
+
+        endpointUrl() {
+            return this.endpoint_url.read().trim();
+        }
+
+        manageEndpointData() {
+            return {
+                name: this.endpointName(),
+                url: this.endpointUrl()
             }
         }
     }
@@ -615,6 +672,10 @@
                 endpointsPanel.insertAdjacentHTML('afterend', html);
             }
 
+            removeEndpointView(name) {
+                Helpers.getElt(name).parentElement.remove();
+            }
+
         }
 
     }
@@ -640,6 +701,11 @@
             this.display.view.appendEndpointView(name, endpoint, ids);
         }
 
+        removeEndpoint(name) {
+            delete this.endpoints[name];
+            this.display.view.removeEndpointView(name);
+        }
+
         addClickListener(name, listener) {
             Helpers.addClickEventListener(name, listener);
         }
@@ -658,10 +724,11 @@
 
     class QueryCaller {
 
-        constructor(userInput, display) {
+        constructor(userInput, endpointInput, display) {
             this.calls_count = 0;
 
             this.userInput = userInput;
+            this.endpointInput = endpointInput;
             this.display = display;
         }
 
@@ -671,6 +738,10 @@
 
         manageDBKeyReader = () => {
             return this.userInput.dbManageAPIKey();
+        }
+
+        manageEndpointNameReader = () => {
+            return this.endpointInput.endpointName();
         }
 
         keyValidator = (key) => {
@@ -689,8 +760,20 @@
             return Helpers.validate_user_data(user);
         }
 
+        manageEndpointReader = () => {
+            return this.endpointInput.manageEndpointData();
+        }
+
+        endpointValidator = (endpoint) => {
+            return Helpers.validate_endpoint_data(endpoint);
+        }
+
         manageDBUserToCallParam = (user) => {
             return Object.values(user);
+        }
+
+        manageEndpointToCallParam = (endpoint) => {
+            return Object.values(endpoint);
         }
 
         async callPOST(method, params) {
@@ -758,10 +841,19 @@
             return () => {this.handleValidatedQuery(query, this.manageDBUserReader, this.userValidator, this.manageDBUserToCallParam, ...args)};
         }
 
+        getRemoveEndpointQueryHandler(query, ...args) {
+            return () => {this.handleValidatedQuery(query, this.manageEndpointNameReader, this.keyValidator, this.keyParamToCallParam, ...args)};
+        }
+
+        getManageEndpointQueryHandler(query, ...args) {
+            return () => {this.handleValidatedQuery(query, this.manageEndpointReader, this.endpointValidator, this.manageEndpointToCallParam, ...args)};
+        }
+
     }
 
     class DynamicEndpointsHandler {
         constructor(caller, display) {
+            this.endpointKeys = [];
             this.display = display;
             this.caller = caller;
 
@@ -790,6 +882,7 @@
             let activeEndpoints = 0;
             const endpoints = Object.keys(json);
             endpoints.reverse().forEach(endpointKey => {
+                this.endpointKeys.push(endpointKey);
                 this.dynamicContent.addEndpoint(endpointKey, json[endpointKey]);
                 this.dynamicContent.addClickListener(endpointKey, () => {this.handleEndpointQuery(endpointKey)});
                 this.dynamicContent.addIntervalUpdater(() => {this.handleEndpointUpdateViewQuery(endpointKey)});
@@ -807,6 +900,18 @@
             );
         }
 
+        handle_refresh_endpoints = () => {
+            for (const endpointKey of this.endpointKeys) {
+                this.dynamicContent.removeEndpoint(endpointKey);
+            }
+            this.endpointKeys = [];
+            // handle_init_endpoints code
+            this.caller.asyncCall(conf.query.queryListEndpoints, [], false).
+            then(json =>
+                this.registerEndpoints(json)
+            );
+        }
+
     }
 
     class QueryHandlers {
@@ -814,7 +919,8 @@
         constructor() {
             this.display = new Display();
             this.userInput = new UserInput();
-            this.caller = new QueryCaller(this.userInput, this.display);
+            this.endpointInput = new EndpointInput();
+            this.caller = new QueryCaller(this.userInput, this.endpointInput, this.display);
             this.endpointHandler = new DynamicEndpointsHandler(this.caller, this.display);
         }
 
@@ -832,8 +938,13 @@
 
             Helpers.addClickEventListener(conf.tag.proxy_admin_panel, this.caller.getBasicQueryContentsHandler(conf.query.queryServiceConsole));
             Helpers.addClickEventListener(conf.tag.crude_dashboard, this.caller.getBasicQueryHandler(conf.query.queryProxyStats));
+            Helpers.addClickEventListener(conf.tag.refresh_endpoints, this.endpointHandler.handle_refresh_endpoints);
 
             Helpers.addClickEventListener(conf.tag.rpc_methods, () => {this.display.update_main_display(Object.values(conf.query))});
+
+            Helpers.addClickEventListener(conf.tag.add_endpoint, this.caller.getManageEndpointQueryHandler(conf.query.addEndpoint, "Invalid input data - endpoint won't be registered"));
+            Helpers.addClickEventListener(conf.tag.remove_endpoint, this.caller.getRemoveEndpointQueryHandler(conf.query.removeEndpoint, "Invalid name - endpoint not removed"));
+            Helpers.addClickEventListener(conf.tag.update_endpoint, this.caller.getManageEndpointQueryHandler(conf.query.updateEndpoint, "Invalid input data - endpoint won't be updated"));
 
             Helpers.addDOMContentLoadedListener(this.endpointHandler.handle_init_endpoints);
         }
