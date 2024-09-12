@@ -788,9 +788,10 @@
         }
 
         handleBasicQuery(method, params = []) {
-            this.asyncCall(method, params).then((json) => this.display.update_main_display(json));
+            const call = this.asyncCall(method, params).then((json) => this.display.update_main_display(json));
             this.display.update_request_count(this.calls_count);
             this.display.update_last_processed_request(method);
+            return call;
         }
 
         updateConsoleView(json) {
@@ -813,10 +814,11 @@
             const ids = reader();
 
             if (validator(ids)) {
-                this.handleBasicQuery(method, paramFormatter(ids));
+                return this.handleBasicQuery(method, paramFormatter(ids));
             }
             else {
                 this.display.update_display_method_error(err_msg);
+                return Promise.resolve();
             }
         }
 
@@ -842,11 +844,11 @@
         }
 
         getRemoveEndpointQueryHandler(query, ...args) {
-            return () => {this.handleValidatedQuery(query, this.manageEndpointNameReader, this.keyValidator, this.keyParamToCallParam, ...args)};
+            return () => {return this.handleValidatedQuery(query, this.manageEndpointNameReader, this.keyValidator, this.keyParamToCallParam, ...args);};
         }
 
         getManageEndpointQueryHandler(query, ...args) {
-            return () => {this.handleValidatedQuery(query, this.manageEndpointReader, this.endpointValidator, this.manageEndpointToCallParam, ...args)};
+            return () => {return this.handleValidatedQuery(query, this.manageEndpointReader, this.endpointValidator, this.manageEndpointToCallParam, ...args);};
         }
 
     }
@@ -942,9 +944,23 @@
 
             Helpers.addClickEventListener(conf.tag.rpc_methods, () => {this.display.update_main_display(Object.values(conf.query))});
 
-            Helpers.addClickEventListener(conf.tag.add_endpoint, this.caller.getManageEndpointQueryHandler(conf.query.addEndpoint, "Invalid input data - endpoint won't be registered"));
-            Helpers.addClickEventListener(conf.tag.remove_endpoint, this.caller.getRemoveEndpointQueryHandler(conf.query.removeEndpoint, "Invalid name - endpoint not removed"));
-            Helpers.addClickEventListener(conf.tag.update_endpoint, this.caller.getManageEndpointQueryHandler(conf.query.updateEndpoint, "Invalid input data - endpoint won't be updated"));
+            const add_endpoint_function = this.caller.getManageEndpointQueryHandler(conf.query.addEndpoint, "Invalid input data - endpoint won't be registered");
+            const add_endpoint_handler = () => {
+                add_endpoint_function().then(this.endpointHandler.handle_refresh_endpoints());
+            }
+            Helpers.addClickEventListener(conf.tag.add_endpoint, add_endpoint_handler);
+
+            const remove_endpoint_function = this.caller.getRemoveEndpointQueryHandler(conf.query.removeEndpoint, "Invalid name - endpoint not removed");
+            const remove_endpoint_handler = () => {
+                remove_endpoint_function().then(this.endpointHandler.handle_refresh_endpoints());
+            }
+            Helpers.addClickEventListener(conf.tag.remove_endpoint, remove_endpoint_handler);
+
+            const update_endpoint_function = this.caller.getManageEndpointQueryHandler(conf.query.updateEndpoint, "Invalid input data - endpoint won't be updated");
+            const update_endpoint_handler = () => {
+                update_endpoint_function().then(this.endpointHandler.handle_refresh_endpoints());
+            }
+            Helpers.addClickEventListener(conf.tag.update_endpoint, update_endpoint_handler);
 
             Helpers.addDOMContentLoadedListener(this.endpointHandler.handle_init_endpoints);
         }
