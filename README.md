@@ -109,5 +109,5 @@ See the example below.
 ![Metamask](./admin/docs/metamask-1.png)
 
 In case of problems check, the best place to start the investigation is to check the network traffic,
-for instance with a web browser's dev tools/developers tools (Ctrl+Shift+C).
+for instance with the web browser's dev tools/developers tools (Ctrl+Shift+C).
 
