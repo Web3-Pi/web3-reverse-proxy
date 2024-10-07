@@ -100,7 +100,7 @@ A web client, scripting tools, backend servers etc.
 It is the same as with other Ethereum RPC providers: you need to use a user's access URL containing API key.
 The proxy supports CORS, which enables usage within web browsers.
 
-Users may wish to integrate with wallets, e.g. Metamask.
+Users may wish to integrate the proxy with wallet applications, e.g. Metamask.
 Below is the example of a proper configuration.
 It is convenient to create a duplicate of Mainnet network configuration.
 The only data that is specific is RPC URL that is access URL and points the proxy.
