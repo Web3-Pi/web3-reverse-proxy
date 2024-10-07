@@ -98,7 +98,7 @@ Remove endpoint at runtime by providing its **name**. For example, in order to r
 Any client can connet RPC Reverse Proxy. 
 A web client, scripting tools, backend servers etc. 
 It is the same as with other Ethereum RPC providers: you need to use a user's access URL containing API key.
-The proxy support CORS what enables usage within web browsers.
+The proxy supports CORS, which enables usage within web browsers.
 
 Users may wish to integrate with wallets, e.g. Metamask.
 Below is the example of proper configuration.
