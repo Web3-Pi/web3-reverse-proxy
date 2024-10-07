@@ -108,6 +108,6 @@ See the example below.
 
 ![Metamask](./admin/docs/metamask-1.png)
 
-In case of problems check, the best place to start the investigation is to check the network traffic,
+In case of any problems with the verification of the newly added network, the best place to start the investigation is to check the network traffic,
 for instance with the web browser's dev tools/developers tools (Ctrl+Shift+C).
 
