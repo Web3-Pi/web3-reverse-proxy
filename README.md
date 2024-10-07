@@ -106,7 +106,7 @@ It is convenient to create a duplicate of Mainnet network configuration.
 The only data that is specific is RPC URL that is access URL and points the proxy.
 See the example below.
 
-![Admin Panel](./admin/docs/screenshot_admin_example.jpg)
+![Metamask](./admin/docs/metamask-1.png)
 
 In case of problems check, the best place to start the investigation is to check the network traffic,
 for instance with a web browser's dev tools/developers tools (Ctrl+Shift+C).
