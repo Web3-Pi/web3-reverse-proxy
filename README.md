@@ -103,7 +103,7 @@ The proxy supports CORS, which enables usage within web browsers.
 Users may wish to integrate the proxy with wallet applications, e.g. Metamask.
 Below is the example of a proper configuration.
 It is convenient to create a duplicate of Mainnet network configuration.
-The only specific piece of setup is the RPC URL, which needs to be set to the proxy's RPC endpoint.
+The only specific piece of setup is the RPC URL, which needs to be set to the access URL (that contains proxy's RPC endpoint and user's API key).
 See the example below.
 
 ![Metamask](./admin/docs/metamask-1.png)
