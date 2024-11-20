@@ -88,7 +88,7 @@ Change existing endpoint's configuration at runtime by providing its **name** an
 Remove endpoint at runtime by providing its **name**. For example, in order to remove endpoint ***local*** :
 
 ```
-{"jsonrpc": "2.0", "method": "update_endpoint", "params": ["local"], "id": 0}
+{"jsonrpc": "2.0", "method": "remove_endpoint", "params": ["local"], "id": 0}
 ```
 
 **IMPORTANT:** Resulting changes are saved in local `.env` file for reuse.
