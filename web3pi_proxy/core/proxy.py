@@ -2,12 +2,18 @@ import queue
 import select
 import threading
 import traceback
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
 
 from web3pi_proxy.config.conf import Config
 from web3pi_proxy.core.inbound.server import InboundServer
 from web3pi_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
+from web3pi_proxy.core.sockets.poller import (
+    get_poller,
+    Poller,
+    POLLIN,
+)
 from web3pi_proxy.core.rpc.node.client_socket_pool import ClientSocketPool
 from web3pi_proxy.core.rpc.node.endpoint_pool.pool_manager import (
     EndpointConnectionPoolManager,
@@ -86,25 +92,26 @@ class Web3RPCProxy:
     def __close_client_connection(
         self,
         cs: ClientSocket,
-        client_poller: select.epoll,
+        client_poller: Poller,
         active_client_connections: ClientSocketPool,
     ):
-        active_client_connections.del_cs_in_use(cs.socket.fileno())
-        client_poller.unregister(cs.socket.fileno())
+        active_client_connections.del_cs_in_use(cs.fd)
+        client_poller.unregister(cs.fd)
         self.__close_client_socket(cs)
 
     def __manage_client_connection(
         self,
         keep_alive: bool,
         cs: ClientSocket,
-        client_poller: select.epoll,
+        client_poller: Poller,
         active_client_connections: ClientSocketPool,
     ) -> None:
         if keep_alive:
-            active_client_connections.set_cs_pending(cs.socket.fileno())
-            client_poller.modify(
-                cs.socket, select.EPOLLIN | select.EPOLLONESHOT
-            )  # TODO hangup? errors?
+            active_client_connections.set_cs_pending(cs.fd)
+            if getattr(select, "EPOLLONESHOT", None):
+                client_poller.modify(
+                    cs.socket, POLLIN | select.EPOLLONESHOT
+                )  # TODO hangup? errors?
         else:
             self.__close_client_connection(cs, client_poller, active_client_connections)
 
@@ -117,6 +124,8 @@ class Web3RPCProxy:
         add_cors = req.cors_origin is not None  # TODO CORS support here is very crude, needs improvement
 
         def response_handler(res: bytes):
+            if cs.socket.fileno() < 0:
+                return
             nonlocal add_cors
             if add_cors:
                 add_cors = False
@@ -130,7 +139,7 @@ class Web3RPCProxy:
     def handle_client(
         self,
         cs: ClientSocket,
-        client_poller: select.epoll,
+        client_poller: Poller,
         active_client_connections: ClientSocketPool,
     ) -> None:
         endpoint_connection_handler = None
@@ -240,20 +249,22 @@ class Web3RPCProxy:
             )
         )
 
-    def closing_cs(self, client_poller: select.epoll, queue_cs_for_close: queue.Queue):
+    def closing_cs(self, client_poller: Poller, queue_cs_for_close: queue.Queue):
         while True:
             cs = queue_cs_for_close.get()
-            client_poller.unregister(cs.socket.fileno())
+            client_poller.unregister(cs.fd)
             self.__close_client_socket(cs)
 
     def main_loop(self) -> None:
-        client_poller = select.epoll()
+        client_poller = get_poller()
         srv_socket = self.inbound_srv.server_s  # TODO async?
         client_poller.register(
-            srv_socket.socket, select.EPOLLIN
+            srv_socket.socket, POLLIN
         )  # TODO EPOLLHUP? EPOLLERR? EPOLLRDHUP?
         # TODO Implement Keep-Alive http header
         active_client_connections = ClientSocketPool()  # TODO close stale connections
+
+        fd_lock = defaultdict(threading.Lock)
 
         queue_cs_for_close = queue.Queue()
         t = threading.Thread(
@@ -272,17 +283,26 @@ class Web3RPCProxy:
                     pending_cs_size = pending_cs_size - 1
 
                 events = client_poller.poll(Config.BLOCKING_ACCEPT_TIMEOUT)
-                for fd, _ in events:
+                for fd, ev in events:
                     if fd == srv_socket.socket.fileno():
                         cs = srv_socket.accept_awaiting_connection()  # TODO connection hang up? errors?
                         active_client_connections.add_cs_pending(cs)
-                        client_poller.register(
-                            cs.socket, select.EPOLLIN | select.EPOLLONESHOT
-                        )  # TODO hangup? errors?
+                        try:
+                            client_poller.register(
+                                cs.socket, POLLIN | select.EPOLLONESHOT
+                            )  # TODO hangup? errors?
+                        except AttributeError:
+                            client_poller.register(cs.socket, POLLIN)
                     else:
-                        cs = active_client_connections.get_cs_and_set_in_use(
-                            fd
-                        )  # TODO what if does not exist
+                        with fd_lock[fd]:
+                            try:
+                                if active_client_connections.is_in_use(fd):
+                                    break
+                            except KeyError:
+                                break
+                            cs = active_client_connections.get_cs_and_set_in_use(
+                                fd
+                            )
                         # TODO connection hang up?
                         executor.submit(
                             self.handle_client,
