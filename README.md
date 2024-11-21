@@ -92,3 +92,22 @@ Remove endpoint at runtime by providing its **name**. For example, in order to r
 ```
 
 **IMPORTANT:** Resulting changes are saved in local `.env` file for reuse.
+
+## Wallet integration
+
+Any client can connet RPC Reverse Proxy. 
+A web client, scripting tools, backend servers etc. 
+It is the same as with other Ethereum RPC providers: you need to use a user's access URL containing API key.
+The proxy supports CORS, which enables usage within web browsers.
+
+Users may wish to integrate the proxy with wallet applications, e.g. Metamask.
+Below is the example of a proper configuration.
+It is convenient to create a duplicate of Mainnet network configuration.
+The only specific piece of setup is the RPC URL, which needs to be set to the access URL (that contains proxy's RPC endpoint and user's API key).
+See the example below.
+
+![Metamask](./admin/docs/metamask-1.png)
+
+In case of any problems with the verification of the newly added network, the best place to start the investigation is to check the network traffic,
+for instance with the web browser's dev tools/developers tools (Ctrl+Shift+C).
+
