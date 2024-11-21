@@ -2,7 +2,9 @@ import json
 from typing import Optional, Union
 
 from dotenv import dotenv_values, find_dotenv, set_key
+from peewee import PeeweeException
 
+from web3pi_proxy.config import Config
 from web3pi_proxy.core.rpc.node.endpoint_pool.pool_manager import (
     EndpointConnectionPoolManager,
     EndpointConnectionPool,
@@ -13,6 +15,7 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
     EndpointConnectionDescriptor,
 )
 from web3pi_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
+from web3pi_proxy.db.models import Endpoint
 
 
 class EndpointManagerService:
@@ -58,28 +61,48 @@ class EndpointManagerService:
         return nodes_data
 
     def add_endpoint(self, name: str, url: str) -> Union[RPCEndpoint, dict]:
+        if not Config.ETH_ENDPOINTS_STORE:
+            return {"error": "the endpoint cannot be stored"}
         descriptor = EndpointConnectionDescriptor.from_url(url)
         try:
             endpoint = self.endpoint_pool_manager.add_pool(name, descriptor)
         except PoolAlreadyExistsError as error:
             return {"error": error.message}
-        self.__save_endpoint_conf(name, url)
+        config = json.dumps({"name": name, "url": url})
+        try:
+            Endpoint.create(name=name, config=config)
+        except PeeweeException as error:
+            self.endpoint_pool_manager.remove_pool(name)  # TODO use db tx instead?
+            return {"error": str(error)}
         return endpoint
 
     def remove_endpoint(self, name: str) -> Union[RPCEndpoint, dict]:
+        if not Config.ETH_ENDPOINTS_STORE:
+            return {"error": "the endpoint cannot be stored"}
         try:
             endpoint = self.endpoint_pool_manager.remove_pool(name)
         except PoolDoesNotExistError as error:
             return {"error": error.message}
-        self.__save_endpoint_conf(name, None)
+        try:
+            Endpoint.delete().where(Endpoint.name == name).execute()
+        except PeeweeException as error:
+            return {"error": "(db inconsistent): " + str(error)}  # TODO handle inconsistency
         return endpoint
 
     def update_endpoint(self, name: str, url: str) -> Union[RPCEndpoint, dict]:
+        if not Config.ETH_ENDPOINTS_STORE:
+            return {"error": "the endpoint cannot be stored"}
         descriptor = EndpointConnectionDescriptor.from_url(url)
         try:
             self.endpoint_pool_manager.remove_pool(name)
         except PoolDoesNotExistError as error:
             return {"error": error.message}
         endpoint = self.endpoint_pool_manager.add_pool(name, descriptor)
-        self.__save_endpoint_conf(name, url)
+        try:
+            endpoint_db = Endpoint.get(Endpoint.name == name)
+            config = json.dumps({"name": name, "url": url})
+            endpoint_db.config = config
+            endpoint_db.save()
+        except PeeweeException as error:
+            return {"error": "(db inconsistent): " + str(error)}  # TODO handle inconsistency
         return endpoint

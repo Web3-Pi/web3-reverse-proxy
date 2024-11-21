@@ -208,21 +208,21 @@ class RPCServiceAdmin:
 
     def add_endpoint(self, name: str, url: str) -> ReturnType:
         res = self.endpoint_manager.add_endpoint(name, url)
-        if type(res) is dict:
+        if type(res) is dict:  # TODO not too good error handling
             return res
         self.register_endpoint_stats(res.get_name(), res.get_connection_stats())
         return {"message": f"Added and saved configuration for endpoint '{name}'"}
 
     def remove_endpoint(self, name: str) -> ReturnType:
         res = self.endpoint_manager.remove_endpoint(name)
-        if type(res) is dict:
+        if type(res) is dict:  # TODO not too good error handling
             return res
         self.remove_endpoint_stats(res.get_name())
         return {"message": f"Removed endpoint '{name}'"}
 
     def update_endpoint(self, name: str, url: str) -> ReturnType:
         res = self.endpoint_manager.update_endpoint(name, url)
-        if type(res) is dict:
+        if type(res) is dict:  # TODO not too good error handling
             return res
         self.update_endpoint_stats(res.get_name(), res.get_connection_stats())
         return {"message": f"Updated endpoint '{name}' with address {url}"}
