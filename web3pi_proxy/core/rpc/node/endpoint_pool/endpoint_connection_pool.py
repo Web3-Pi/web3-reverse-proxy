@@ -170,7 +170,7 @@ class EndpointConnectionPool(ConnectionPool):
     def __get_connection(self) -> EndpointConnection:
         return self.connections.get_nowait()
 
-    def new_connection(self) -> EndpointConnection:
+    def __new_connection(self) -> EndpointConnection:
         """Internal function, do not call directly"""
         def connection_factory() -> socket:  # TODO is it worth to move it to object level and reuse?
             return BaseSocket.create_socket(self.endpoint.conn_descr.host, self.endpoint.conn_descr.port)
@@ -189,7 +189,7 @@ class EndpointConnectionPool(ConnectionPool):
             self.__lock.release()
             self.__logger.debug("No existing connections available, establishing new connection")
             try:
-                connection = self.new_connection()
+                connection = self.__new_connection()
             except Exception as error:
                 self.stats.register_error_on_connection_creation()
                 raise error

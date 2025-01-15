@@ -34,7 +34,7 @@ class TunnelConnectionPool(EndpointConnectionPool, TunnelConnectionPoolIntf):
 
         TunnelService.register(self.tunnel_api_key, self)
 
-    def new_connection(self) -> EndpointConnection:
+    def __new_connection(self) -> EndpointConnection:
 
         def connection_factory() -> socket:  # TODO is it worth to move it to object level and reuse?
             self.__logger.debug("Creating socket")
