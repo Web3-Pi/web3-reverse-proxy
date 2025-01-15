@@ -59,6 +59,8 @@ class EndpointManagerService:
 
     def add_endpoint(self, name: str, url: str) -> Union[RPCEndpoint, dict]:
         descriptor = EndpointConnectionDescriptor.from_url(url)
+        if descriptor is None:
+            return {"error": "Invalid URL provided"}
         try:
             endpoint = self.endpoint_pool_manager.add_pool(name, descriptor)
         except PoolAlreadyExistsError as error:
@@ -76,6 +78,8 @@ class EndpointManagerService:
 
     def update_endpoint(self, name: str, url: str) -> Union[RPCEndpoint, dict]:
         descriptor = EndpointConnectionDescriptor.from_url(url)
+        if descriptor is None:
+            return {"error": "Invalid URL provided"}
         try:
             self.endpoint_pool_manager.remove_pool(name)
         except PoolDoesNotExistError as error:
