@@ -1,5 +1,5 @@
 import json
-from pathlib import Path
+from typing import Optional, Union
 
 from dotenv import dotenv_values, find_dotenv, set_key
 
@@ -25,7 +25,7 @@ class EndpointManagerService:
         for key, value in config.items():
             set_key(dotenv_path=env_file, key_to_set=key, value_to_set=value)
 
-    def __save_endpoint_conf(self, name: str, url: str | None):
+    def __save_endpoint_conf(self, name: str, url: Optional[str]):
         env = dotenv_values(".env")
         endpoints_config = json.loads(env["ETH_ENDPOINTS"])
 
@@ -57,8 +57,10 @@ class EndpointManagerService:
             nodes_data[endpoint.get_name()] = endpoint_entry
         return nodes_data
 
-    def add_endpoint(self, name: str, url: str) -> RPCEndpoint | dict:
-        descriptor = EndpointConnectionDescriptor.from_url(url)  # TODO from_dict
+    def add_endpoint(self, name: str, url: str) -> Union[RPCEndpoint, dict]:
+        descriptor = EndpointConnectionDescriptor.from_url(url) # TODO from_dict
+        if descriptor is None:
+            return {"error": "Invalid URL provided"}
         try:
             endpoint = self.endpoint_pool_manager.add_pool(name, descriptor)
         except PoolAlreadyExistsError as error:
@@ -66,7 +68,7 @@ class EndpointManagerService:
         self.__save_endpoint_conf(name, url)
         return endpoint
 
-    def remove_endpoint(self, name: str) -> RPCEndpoint | dict:
+    def remove_endpoint(self, name: str) -> Union[RPCEndpoint, dict]:
         try:
             endpoint = self.endpoint_pool_manager.remove_pool(name)
         except PoolDoesNotExistError as error:
@@ -74,8 +76,10 @@ class EndpointManagerService:
         self.__save_endpoint_conf(name, None)
         return endpoint
 
-    def update_endpoint(self, name: str, url: str) -> RPCEndpoint | dict:
-        descriptor = EndpointConnectionDescriptor.from_url(url)  # TODO from_dict
+    def update_endpoint(self, name: str, url: str) -> Union[RPCEndpoint, dict]:
+        descriptor = EndpointConnectionDescriptor.from_url(url)
+        if descriptor is None:
+            return {"error": "Invalid URL provided"}
         try:
             self.endpoint_pool_manager.remove_pool(name)
         except PoolDoesNotExistError as error:

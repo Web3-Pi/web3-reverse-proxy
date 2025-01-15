@@ -1,8 +1,8 @@
-# Web3Pi Reverse Proxy
+# Web3 Pi Reverse Proxy
 
-A reverse proxy for Geth intended for use within Web3Pi ecosystem.
+A reverse proxy for Geth intended for use within Web3 Pi ecosystem.
 
-Web3Pi Reverse Proxy comes out-of-the-box with several features:
+Web3 Pi Reverse Proxy comes out-of-the-box with several features:
  
  - Multiple geth nodes - you can hide multiple Geth nodes under single instance of reverse proxy
  - JSON-RPC parser - our custom parser validates JSON-RPC requests before they reach the nodes
@@ -20,7 +20,7 @@ Simply install `web3pi-proxy` package using your Python package manager, using *
 pip install web3pi-proxy
 ```
 
-Web3Pi Reverse Proxy expects you to provide **ETH_ENDPOINTS** environment variable to your system.
+Web3 Pi Reverse Proxy expects you to provide **ETH_ENDPOINTS** environment variable to your system.
 
 It should be a list of endpoint descriptors for JSON-RPC over HTTP communication with Geth.
 
@@ -88,7 +88,7 @@ Change existing endpoint's configuration at runtime by providing its **name** an
 Remove endpoint at runtime by providing its **name**. For example, in order to remove endpoint ***local*** :
 
 ```
-{"jsonrpc": "2.0", "method": "update_endpoint", "params": ["local"], "id": 0}
+{"jsonrpc": "2.0", "method": "remove_endpoint", "params": ["local"], "id": 0}
 ```
 
 **IMPORTANT:** Resulting changes are saved in local `.env` file for reuse.

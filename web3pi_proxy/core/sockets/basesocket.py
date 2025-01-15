@@ -15,10 +15,14 @@ class BaseSocket:
     HOST_IP_MAPPING = {}
 
     def __init__(self, _socket: socket.socket) -> None:
+        self.fd = _socket.fileno()
         self.socket = _socket
 
     def send_all(self, data):
-        return self.socket.sendall(data)
+        try:
+            return self.socket.sendall(data)
+        except BrokenPipeError:
+            self.__logger.error("Broken pipe while trying to write to a socket.")
 
     def recv(self, buf_size=Config.DEFAULT_RECV_BUF_SIZE):
         return self.socket.recv(buf_size)

@@ -7,8 +7,8 @@ import secrets
 import socketserver
 import string
 import threading
-import traceback
 from http.server import BaseHTTPRequestHandler
+from typing import Optional, Union
 
 from web3pi_proxy.config.conf import Config
 from web3pi_proxy.service.admin.serviceadmin import RPCServiceAdmin
@@ -109,7 +109,7 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
 
                 self.wfile.write(response.encode("UTF-8"))
 
-    def log_request(self, code: int | str = ..., size: int | str = ...) -> None:
+    def log_request(self, code: Union[int, str] = ..., size: Union[int, str] = ...) -> None:
         pass
 
     def do_POST(self):
