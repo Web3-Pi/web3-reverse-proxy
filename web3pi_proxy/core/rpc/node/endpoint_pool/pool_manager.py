@@ -93,15 +93,18 @@ class DamageController:
             self.__logger.debug(f"Endpoint `{pool.endpoint.name}`: okay.")
 
 
-class HttpResponseParserListenerSyncController:
+class SyncControllerResponseListener:
     body: bytes = b''
     block_number: int = 0
     block_timestamp: int = 0
     __logger = get_logger("SyncController")
 
     def __init__(self, __pool_name: str):
-        super().__init__()
         self.__pool_name = __pool_name
+
+    def on_status(self, status_code: int):
+        self.__logger.debug(f"SyncControllerResponseListener.on_status: {status_code}")
+
 
     def on_body(self, body: bytes):
         self.body = self.body + body
@@ -112,16 +115,13 @@ class HttpResponseParserListenerSyncController:
             result = block_data.get('result')
             if not result:
                 error = block_data.get('error')
-                if error:
-                    self.__logger.error(f"{self.__pool_name}: Sync test failed: {error}")
-                else:
-                    self.__logger.error(f"{self.__pool_name}: Sync test failed: reason unknown")
+                self.__logger.error(f"{self.__pool_name}: Sync test failed: {error or 'reason unknown'}")
                 return
             self.block_number = int(result['number'], 16)
             self.block_timestamp = int(result['timestamp'], 16)
         except Exception as error:
             self.__logger.error("%s: %s", error.__class__, error)
-            self.__logger.error(f"{self.__pool_name}: Failed to failed to parse sync test response")
+            self.__logger.error(f"{self.__pool_name}: Failed to parse sync test response")
 
 
 # TODO: Tune parameters
@@ -136,11 +136,11 @@ class SyncController:
         try:
             endpoint_connection_handler = pool.get(out_of_sync=True)
             req = RPCRequest()
-            req.headers = b'User-Agent: curl/8.0.1\r\nAccept: */*\r\nContent-Type: application/json\r\nContent-Length: 82\r\n'
+            req.headers = b'Accept: */*\r\nContent-Type: application/json\r\nContent-Length: 82\r\n'
             req.content = b'{"method":"eth_getBlockByNumber","params":["latest",false],"id":1,"jsonrpc":"2.0"}'
             endpoint_connection_handler.send(req)
 
-            response_listener = HttpResponseParserListenerSyncController(pool.endpoint.name)
+            response_listener = SyncControllerResponseListener(pool.endpoint.name)
             response_parser = HttpResponseParser(response_listener)
 
             def response_handler(res: bytes):
