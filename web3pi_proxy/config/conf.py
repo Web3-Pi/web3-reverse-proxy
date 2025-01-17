@@ -83,6 +83,7 @@ class AppConfig:
     ADMIN_LISTEN_PORT: int = 6561
     # empty value means to generate a new random
     ADMIN_AUTH_TOKEN: str = ""
+    ADMIN_CORS_ALLOW_ORIGIN: str = "*"
 
     # default pickle database to store stats
     DB_FILE: str = "web3pi_proxy.sqlite3"
