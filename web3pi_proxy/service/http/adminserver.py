@@ -74,6 +74,10 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
             return updated_page.encode("utf-8")
 
     def do_GET(self):
+        self.send_header("Access-Control-Allow-Origin", Config.ADMIN_CORS_ALLOW_ORIGIN)
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
         if self.path == "/favicon.ico":
             self.send_response(200)
             self.send_header("Content-Type", "image/x-icon")
@@ -112,6 +116,10 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
         pass
 
     def do_POST(self):
+        self.send_header("Access-Control-Allow-Origin", Config.ADMIN_CORS_ALLOW_ORIGIN)
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
         # TODO: Expand JSON-RPC support
         assert isinstance(self.server, AdminHTTPServer)
         admin = self.server.admin
@@ -156,6 +164,13 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         self.wfile.write(json.dumps(res if res is not None else {}).encode())
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", Config.ADMIN_CORS_ALLOW_ORIGIN)
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.end_headers()
 
     def get_auth_token(self) -> str:
         return self.headers.get("Authorization", "").partition(" ")[-1]
