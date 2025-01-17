@@ -74,10 +74,6 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
             return updated_page.encode("utf-8")
 
     def do_GET(self):
-        self.send_header("Access-Control-Allow-Origin", Config.ADMIN_CORS_ALLOW_ORIGIN)
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
         if self.path == "/favicon.ico":
             self.send_response(200)
             self.send_header("Content-Type", "image/x-icon")
@@ -89,8 +85,10 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
             if self.server.auth.authenticate(auth_token):
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
+                self.send_header("Access-Control-Allow-Origin", Config.ADMIN_CORS_ALLOW_ORIGIN)
+                self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+                self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
                 self.end_headers()
-
                 self.wfile.write(self.get_valid_host_page(auth_token))
 
                 # # Test how a web browser handles partial update of a web page
@@ -116,10 +114,6 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
         pass
 
     def do_POST(self):
-        self.send_header("Access-Control-Allow-Origin", Config.ADMIN_CORS_ALLOW_ORIGIN)
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
         # TODO: Expand JSON-RPC support
         assert isinstance(self.server, AdminHTTPServer)
         admin = self.server.admin
@@ -161,6 +155,9 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
 
         self.send_response(http_status)
         self.send_header("Content-type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", Config.ADMIN_CORS_ALLOW_ORIGIN)
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
 
         self.wfile.write(json.dumps(res if res is not None else {}).encode())
