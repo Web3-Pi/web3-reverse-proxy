@@ -39,36 +39,38 @@ poetry install
 
 ## Configuration
 
-You can define the following environment variables, and you can place them in the `.env` file:
+You can define the following environment variables, and you can place them in the .env file (all are optional):
 
-- **LOG_LEVEL**: Specifies the logging level. Default is `INFO`.
-- **DEFAULT_RECV_BUF_SIZE**: Buffer size for socket receiving. Default is `8192`.
-- **PUBLIC_SERVICE**: Whether the service is public. Default is `False`.
-- **USE_UPNP**: Enables UPnP if `PUBLIC_SERVICE` is `True`. Default is `True`.
-- **UPNP_DISCOVERY_TIMEOUT**: Timeout for UPnP discovery in seconds. Default is `2.5`.
-- **UPNP_LEASE_TIME**: Lease time for UPnP in seconds. Default is `18000` (5 hours).
-- **PROXY_LISTEN_ADDRESS**: Address for the proxy to listen on. Default is `0.0.0.0`.
-- **PROXY_CONNECTION_ADDRESS**: Address clients use to connect to the proxy. Default is `None` (auto-resolved).
-- **PROXY_LISTEN_PORT**: Port for the proxy to listen on. Default is `6512`.
-- **NUM_PROXY_WORKERS**: Number of workers handling proxy connections. Default is `150`.
-- **MAX_PENDING_CLIENT_SOCKETS**: Maximum number of pending client sockets. Default is `10000`.
-- **MAX_CONCURRENT_CONNECTIONS**: Maximum number of concurrent connections. Default is `21`.
-- **IDLE_CONNECTION_TIMEOUT**: Timeout for idle connections in seconds. Default is `300`.
-- **SSL_ENABLED**: Whether SSL is enabled. Default is `False`.
-- **SSL_CERT_FILE**: Path to SSL certificate file. Default is `cert.pem`.
-- **SSL_KEY_FILE**: Path to SSL key file. Default is `key.pem`.
-- **ETH_ENDPOINTS**: A JSON list of endpoint descriptors for Ethereum nodes. Example: `[{"name": "rpi4", "url": "http://localhost:8545/"}]`. If defined, this list becomes static and cannot be managed via the admin panel. Leaving it undefined enables endpoint management via a local database.
-- **CACHE_ENABLED**: Whether caching is enabled. Default is `False`.
-- **CACHE_EXPIRY_MS**: Cache expiry time in milliseconds. Default is `300000` (5 minutes).
-- **JSON_RPC_REQUEST_PARSER_ENABLED**: Enables JSON-RPC request parsing. Default is `True`.
-- **STATS_UPDATE_DELTA**: Update interval for stats in seconds. Default is `12`.
-- **ADMIN_LISTEN_ADDRESS**: Address for the admin panel to listen on. Default is `0.0.0.0`.
-- **ADMIN_CONNECTION_ADDRESS**: Address clients use to connect to the admin panel. Default is `None` (auto-resolved).
-- **ADMIN_LISTEN_PORT**: Port for the admin panel to listen on. Default is `6561`.
-- **ADMIN_AUTH_TOKEN**: Admin authentication token. Default is generated randomly at runtime.
-- **DB_FILE**: Path to the database file. Default is `web3pi_proxy.sqlite3`.
-- **MODE**: Proxy mode (`DEV`, `SIM`, `PROD`). Default is `PROD`.
-- **LOADBALANCER**: Load balancer strategy (`RandomLoadBalancer`, `LeastBusyLoadBalancer`, `ConstantLoadBalancer`). Default is `LeastBusyLoadBalancer`.
+| Variable                        | Description                                                                                                                                                 | Default                                |
+|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|
+| `LOG_LEVEL`                     | Specifies the logging level.                                                                                                                               | `INFO`                                 |
+| `ADMIN_AUTH_TOKEN`              | Admin authentication token.                  | Randomly generated                    |
+| `ETH_ENDPOINTS`                 | A JSON list of endpoint descriptors for Ethereum nodes. Example: `[{"name": "rpi4", "url": "http://localhost:8545/"}]`. If defined, this list becomes static and cannot be managed via the admin panel. Leaving it undefined enables endpoint management via a local database. | `None`                                |
+| `DEFAULT_RECV_BUF_SIZE`         | Buffer size for socket receiving.                                                                                                                          | `8192`                                |
+| `PUBLIC_SERVICE`                | Whether the service is public.                                                                                                                             | `False`                               |
+| `USE_UPNP`                      | Enables UPnP if `PUBLIC_SERVICE` is `True`.                                                                                                                | `True`                                |
+| `UPNP_DISCOVERY_TIMEOUT`        | Timeout for UPnP discovery in seconds.                                                                                                                     | `2.5`                                 |
+| `UPNP_LEASE_TIME`               | Lease time for UPnP in seconds.                                                                                                                            | `18000` (5 hours)                     |
+| `PROXY_LISTEN_ADDRESS`          | Address for the proxy to listen on.                                                                                                                        | `0.0.0.0`                             |
+| `PROXY_CONNECTION_ADDRESS`      | Address clients use to connect to the proxy. Default is `None` (auto-resolved).                                                                             | `None`                                |
+| `PROXY_LISTEN_PORT`             | Port for the proxy to listen on.                                                                                                                            | `6512`                                |
+| `NUM_PROXY_WORKERS`             | Number of workers handling proxy connections.                                                                                                              | `150`                                 |
+| `MAX_PENDING_CLIENT_SOCKETS`    | Maximum number of pending client sockets.                                                                                                                  | `10000`                               |
+| `MAX_CONCURRENT_CONNECTIONS`    | Maximum number of concurrent connections.                                                                                                                  | `21`                                  |
+| `IDLE_CONNECTION_TIMEOUT`       | Timeout for idle connections in seconds.                                                                                                                   | `300`                                 |
+| `SSL_ENABLED`                   | Whether SSL is enabled.                                                                                                                                    | `False`                               |
+| `SSL_CERT_FILE`                 | Path to SSL certificate file.                                                                                                                              | `cert.pem`                            |
+| `SSL_KEY_FILE`                  | Path to SSL key file.                                                                                                                                      | `key.pem`                             |
+| `CACHE_ENABLED`                 | Whether caching is enabled.                                                                                                                                | `False`                               |
+| `CACHE_EXPIRY_MS`               | Cache expiry time in milliseconds.                                                                                                                         | `300000` (5 minutes)                  |
+| `JSON_RPC_REQUEST_PARSER_ENABLED` | Enables JSON-RPC request parsing.                                                                                                                          | `True`                                |
+| `STATS_UPDATE_DELTA`            | Update interval for stats in seconds.                                                                                                                      | `12`                                  |
+| `ADMIN_LISTEN_ADDRESS`          | Address for the admin panel to listen on.                                                                                                                  | `0.0.0.0`                             |
+| `ADMIN_CONNECTION_ADDRESS`      | Address clients use to connect to the admin panel. Default is `None` (auto-resolved).                                                                       | `None`                                |
+| `ADMIN_LISTEN_PORT`             | Port for the admin panel to listen on.                                                                                                                     | `6561`                                |
+| `DB_FILE`                       | Path to the database file.                                                                                                                                 | `web3pi_proxy.sqlite3`                |
+| `MODE`                          | Proxy mode (`DEV`, `SIM`, `PROD`).                                                                                                                          | `PROD`                                |
+| `LOADBALANCER`                  | Load balancer strategy (`RandomLoadBalancer`, `LeastBusyLoadBalancer`, `ConstantLoadBalancer`).                                                             | `LeastBusyLoadBalancer`               |
 
 
 ## Run
