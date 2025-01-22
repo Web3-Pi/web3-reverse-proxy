@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from web3pi_proxy.config.conf import Config
 
 import urllib3.util
 
@@ -12,6 +13,12 @@ class EndpointConnectionDescriptor:
     auth_key: str
     is_ssl: bool
     url: str
+
+    def is_local_tunnel(self) -> bool:
+        if Config.LOCAL_TUNNEL_DOMAIN is None:
+            return False
+        parsed = urllib3.util.parse_url(self.url)
+        return parsed.host.endswith(Config.LOCAL_TUNNEL_DOMAIN)
 
     @classmethod
     def from_url(cls, url) -> EndpointConnectionDescriptor | None:
