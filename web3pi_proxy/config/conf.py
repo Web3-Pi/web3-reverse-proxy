@@ -109,6 +109,8 @@ class AppConfig:
     # if provided, endpoints that match this domain will be treated as local tunnels
     # and communicate over localhost.
     LOCAL_TUNNEL_DOMAIN: Optional[str] = None
+    # look for local tunels at this port:
+    LOCAL_TUNNEL_PORT: int = 80
 
     def __init__(self):
         env = {
