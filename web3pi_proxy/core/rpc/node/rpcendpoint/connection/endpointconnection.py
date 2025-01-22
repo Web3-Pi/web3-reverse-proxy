@@ -12,6 +12,7 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.connection.sender import RequestSend
 from web3pi_proxy.core.rpc.node.rpcendpoint.endpointimpl import RPCEndpoint
 from web3pi_proxy.core.sockets.basesocket import BaseSocket
 from web3pi_proxy.utils.logger import get_logger
+from web3pi_proxy.config.conf import Config
 
 
 class EndpointConnection:
@@ -53,7 +54,7 @@ class EndpointConnection:
 
     def __create_socket(self) -> BaseSocket:
         if self.conn_descr.is_local_tunnel():
-            return BaseSocket.create_local_tunnel_socket(self.conn_descr.port)
+            return BaseSocket.create_local_tunnel_socket(Config.LOCAL_TUNNEL_PORT)
         return BaseSocket.create_socket(
             self.conn_descr.host, self.conn_descr.port, self.conn_descr.is_ssl
         )
