@@ -106,6 +106,10 @@ class AppConfig:
 
     LOADBALANCER: str = "LeastBusyLoadBalancer"
 
+    # if provided, endpoints that match this domain will be treated as local tunnels
+    # and communicate over localhost.
+    LOCAL_TUNNEL_DOMAIN: Optional[str] = None
+
     def __init__(self):
         env = {
             **dotenv_values(".env"),  # load shared development variables
@@ -142,10 +146,22 @@ class AppConfig:
                 var_type = get_type_hints(AppConfig)[field]
                 if var_type == bool:
                     value = _parse_bool(env_value)
+                # if it's a union, find the first non-None type inside the union
+                elif getattr(var_type, "__origin__", None) is Union:
+                    value = (
+                        AppConfig.get_first_non_none_type(var_type)(env_value)
+                        if env_value is not None
+                        else None
+                    )
                 else:
                     value = var_type(env_value)
 
             self.__setattr__(field, value)
+
+    @staticmethod
+    def get_first_non_none_type(union_type):
+        """Given a union type, return the first non-None type."""
+        return next(arg for arg in union_type.__args__ if arg is not type(None))
 
     @staticmethod
     def _resolve_connection_address(listen_address: str, connection_address: Optional[str] = None):
