@@ -126,6 +126,7 @@ class EndpointConnectionPool(ConnectionPool):
     class PoolStatus(str, enum.Enum):
         ACTIVE = "ACTIVE"
         DISABLED = "DISABLED"
+        OUT_OF_SYNC = "OUT_OF_SYNC"
         CLOSING = "CLOSING"
         CLOSED = "CLOSED"
 
@@ -180,9 +181,12 @@ class EndpointConnectionPool(ConnectionPool):
         self.status = status
         self.__logger.debug("Changed %s status to %s", str(self), status)
 
-    def get(self) -> EndpointConnectionHandler:
+    def get(self, out_of_sync: bool = False) -> EndpointConnectionHandler:
         self.__lock.acquire()
-        if not self.is_active():
+        if not out_of_sync and not self.is_active():
+            self.__lock.release()
+            raise Exception("the pool is disabled")  # TODO better exception
+        if out_of_sync and not self.is_out_of_sync() and not self.is_active():
             self.__lock.release()
             raise Exception("the pool is disabled")  # TODO better exception
         if self.connections.empty():
@@ -226,6 +230,9 @@ class EndpointConnectionPool(ConnectionPool):
     def is_active(self):
         return self.status == self.PoolStatus.ACTIVE
 
+    def is_out_of_sync(self):
+        return self.status == self.PoolStatus.OUT_OF_SYNC
+
     def is_open(self):
         return self.status == self.PoolStatus.ACTIVE.value or self.status == self.PoolStatus.DISABLED.value
 
@@ -238,6 +245,16 @@ class EndpointConnectionPool(ConnectionPool):
                 self.connection_close_queue.put(self.__get_connection())
             self.stats = PoolStats()
         self.__logger.info("Pool has been disabled")
+
+    def out_of_sync(self):
+        with self.__lock:
+            if self.status == self.PoolStatus.CLOSED or self.status == self.PoolStatus.CLOSING:
+                raise Exception("Tried to set out of sync after close")  # TODO better exception
+            self.__update_status(self.PoolStatus.OUT_OF_SYNC)
+            while not self.connections.empty():
+                self.connection_close_queue.put(self.__get_connection())
+            self.stats = PoolStats()
+        self.__logger.info("Pool has been set out of sync")
 
     def activate(self):
         with self.__lock:

@@ -8,6 +8,7 @@ from dotenv import dotenv_values
 
 IPV6_LOOPBACK = "::1"
 
+
 class ProxyMode(Enum):
     DEV = "DEV"
     SIM = "SIM"
@@ -58,10 +59,10 @@ class AppConfig:
 
     # Endpoints
     ETH_ENDPOINTS: List[dict] = [
-        {"name": "eop-1", "url": "http://eop-1.local:8545/"},
         # {"name": "rpi4 geth2", "url": "http://geth-2.local:8545/"},
         # {"name": "infura-1", "url": "https://mainnet.infura.io/v3/<YOUR_INFURA_KEY>"}
     ]
+    ETH_ENDPOINTS_STORE: bool = True
 
     CACHE_ENABLED: bool = False
     CACHE_EXPIRY_MS: int = 300000
@@ -123,6 +124,9 @@ class AppConfig:
             # Cast env var value to expected type
             if field == "ETH_ENDPOINTS":
                 value = json.loads(env_value)
+                self.ETH_ENDPOINTS_STORE = False
+            elif field == "ETH_ENDPOINTS_STORE":
+                raise Exception("ETH_ENDPOINTS_STORE is auto field")
             elif field == "MODE":
                 try:
                     value = ProxyMode(env_value.upper())

@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 from web3pi_proxy.config.conf import Config
@@ -13,6 +14,7 @@ from web3pi_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
 from web3pi_proxy.core.rpc.request.middleware.requestmiddlewaredescr import (
     RequestMiddlewareDescr,
 )
+from web3pi_proxy.db.models import Endpoint
 from web3pi_proxy.service.factories.requestmiddlewarefactory import (
     RPCRequestMiddlewareFactory,
 )
@@ -95,8 +97,15 @@ class ServiceComponentsProvider:
     def create_default_web3_rpc_proxy(
         cls, ssm: SampleStateManager, proxy_listen_address, proxy_listen_port, num_proxy_workers: int
     ) -> Web3RPCProxy:
+        if Config.ETH_ENDPOINTS_STORE:
+            eth_endpoints = []
+            uuu = Endpoint.select(Endpoint.config)
+            for eth_endpoint_data in Endpoint.select(Endpoint.config):
+                eth_endpoints.append(json.loads(eth_endpoint_data.config))
+        else:
+            eth_endpoints = Config.ETH_ENDPOINTS
         # Create default components
-        connection_pool = cls.create_default_connection_pool(Config.ETH_ENDPOINTS, Config.LOADBALANCER)
+        connection_pool = cls.create_default_connection_pool(eth_endpoints, Config.LOADBALANCER)
 
         return cls.create_web3_rpc_proxy(
             ssm, connection_pool, proxy_listen_address, proxy_listen_port, num_proxy_workers
