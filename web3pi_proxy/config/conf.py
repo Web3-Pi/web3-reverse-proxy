@@ -111,6 +111,8 @@ class AppConfig:
     LOCAL_TUNNEL_DOMAIN: Optional[str] = None
     # look for local tunels at this port:
     LOCAL_TUNNEL_PORT: int = 80
+    # address to bind to for local tunnels
+    LOCAL_TUNNEL_ADDRESS: str = "127.0.0.1"
 
     def __init__(self):
         env = {
@@ -136,10 +138,18 @@ class AppConfig:
                 try:
                     value = ProxyMode(env_value.upper())
                 except ValueError:
-                    print("Unrecognized MODE", env_value, "available modes: DEV, SIM, PROD")
+                    print(
+                        "Unrecognized MODE",
+                        env_value,
+                        "available modes: DEV, SIM, PROD",
+                    )
                     raise Exception("Unrecognized MODE")
             elif field == "LOADBALANCER":
-                if env_value in ["RandomLoadBalancer", "LeastBusyLoadBalancer", "ConstantLoadBalancer"]:
+                if env_value in [
+                    "RandomLoadBalancer",
+                    "LeastBusyLoadBalancer",
+                    "ConstantLoadBalancer",
+                ]:
                     value = env_value
                 else:
                     print("Unrecognized LOADBALANCER, switching to the default")
@@ -166,7 +176,9 @@ class AppConfig:
         return next(arg for arg in union_type.__args__ if arg is not type(None))
 
     @staticmethod
-    def _resolve_connection_address(listen_address: str, connection_address: Optional[str] = None):
+    def _resolve_connection_address(
+        listen_address: str, connection_address: Optional[str] = None
+    ):
         """Return the connection address.
 
         Returns the `connection_address` if set explicitly.
@@ -181,18 +193,23 @@ class AppConfig:
         if connection_address:
             return connection_address
         try:
-            if socket.inet_pton(socket.AF_INET, listen_address) == socket.INADDR_ANY.to_bytes(4, "big"):
-                return socket.inet_ntop(socket.AF_INET, socket.INADDR_LOOPBACK.to_bytes(4, "big"))
+            if socket.inet_pton(
+                socket.AF_INET, listen_address
+            ) == socket.INADDR_ANY.to_bytes(4, "big"):
+                return socket.inet_ntop(
+                    socket.AF_INET, socket.INADDR_LOOPBACK.to_bytes(4, "big")
+                )
         except OSError:
             pass
         try:
-            if socket.inet_pton(socket.AF_INET6, listen_address) == socket.INADDR_ANY.to_bytes(16, "big"):
+            if socket.inet_pton(
+                socket.AF_INET6, listen_address
+            ) == socket.INADDR_ANY.to_bytes(16, "big"):
                 return IPV6_LOOPBACK
         except OSError:
             pass
 
         return listen_address
-
 
     @property
     def proxy_connection_address(self):
