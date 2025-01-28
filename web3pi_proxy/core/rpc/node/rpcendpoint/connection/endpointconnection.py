@@ -71,3 +71,8 @@ class EndpointConnection:
         self, request_bytes: bytearray, response_bytes: bytearray
     ) -> None:
         self.endpoint.update_stats(request_bytes, response_bytes)
+
+    def update_endpoint_error_stats(
+            self, no_errors: int, no_verification_errors: int
+    ) -> None:
+        self.endpoint.update_errors_stats(no_errors, no_verification_errors)

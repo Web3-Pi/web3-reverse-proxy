@@ -6,9 +6,12 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
 
+from mypy.nodes import node_kinds
+
 from web3pi_proxy.config.conf import Config
 from web3pi_proxy.core.inbound.server import InboundServer
 from web3pi_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
+from web3pi_proxy.core.rpc.node.endpoint_pool.trusted_node_verifier import TrustedNodeVerifier
 from web3pi_proxy.core.sockets.poller import (
     get_poller,
     Poller,
@@ -44,6 +47,7 @@ class Web3RPCProxy:
         middlewares: RequestMiddlewareDescr,
         connection_pool: EndpointConnectionPoolManager,
         state_updater: StateUpdater,
+        trusted_node_verifier: TrustedNodeVerifier
     ) -> None:
 
         self.request_reader = middlewares.instantiate()
@@ -59,6 +63,8 @@ class Web3RPCProxy:
         self.__print_post_init_info(proxy_listen_address, proxy_listen_port)
 
         self.num_workers = num_proxy_workers
+
+        self.trusted_node_verifier = trusted_node_verifier
 
     @classmethod
     def __print_pre_init_info(
@@ -143,6 +149,7 @@ class Web3RPCProxy:
         active_client_connections: ClientSocketPool,
     ) -> None:
         endpoint_connection_handler = None
+        trusted_connection_handler = None
         try:
             req, err = self.request_reader.read_request(cs, RPCRequest())
 
@@ -170,6 +177,8 @@ class Web3RPCProxy:
 
             # if self.is_cache_available:  # TODO cache
             #     self.read_cache()
+
+            # Main node handling
             try:
                 endpoint_connection_handler = self.connection_pool.get_connection(req)
             except Exception as error:
@@ -183,26 +192,56 @@ class Web3RPCProxy:
                 )
                 return
 
-            try:
-                endpoint_connection_handler.send(req)
-            except (
-                BrokenConnectionError
-            ):  # TODO: Pick up new connection from pool if fresh connection failed
-                self.__logger.error(
-                    f"Failed to send request with {endpoint_connection_handler}"
-                )
-                cs.send_all(
-                    ErrorResponses.connection_error(req.id)
-                )  # TODO: detect wether client connection is closed
-                self.__manage_client_connection(
-                    req.keep_alive, cs, client_poller, active_client_connections
-                )
-                endpoint_connection_handler.close()
-                return
+            if Config.ENABLE_TRUSTED_NODE_VERIFICATION:
+                # Trusted node handling
+                try:
+                    trusted_connection_handler = self.connection_pool.get_trusted_node_connection()
+                except Exception as error:
+                    self.__logger.error("%s: %s", error.__class__, error)
+                    self.__logger.error("Failed to establish trusted endpoint connection")
+                    self.__logger.error("Stack trace:\n%s",
+                                        traceback.format_exc())
+                    trusted_connection_handler = None
 
-            response_handler = self.__create_response_handler(
-                endpoint_connection_handler, cs, req
-            )
+            # Parallel request sending
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                fut_main = executor.submit(endpoint_connection_handler.send, req)
+                fut_trusted = (
+                    executor.submit(trusted_connection_handler.send, req)
+                    if Config.ENABLE_TRUSTED_NODE_VERIFICATION and trusted_connection_handler
+                    else None
+                )
+
+                try:
+                    main_response = fut_main.result()
+                    trusted_response = fut_trusted.result() if fut_trusted else None
+                except Exception as e:
+                    self.__logger.error(f"Error during request handling: {e}")
+                    cs.send_all(ErrorResponses.connection_error(req.id))
+                    endpoint_connection_handler.update_error_stats(1)
+                    endpoint_connection_handler.close()
+
+                    if trusted_connection_handler:
+                        trusted_connection_handler.close()
+                    self.__manage_client_connection(
+                        req.keep_alive, cs, client_poller, active_client_connections
+                    )
+                    return
+
+                print(f"main_response: {main_response}")
+                print(f"trusted_response: {trusted_response}")
+
+            if trusted_response and not self.trusted_node_verifier.verify(req, main_response, trusted_response):
+                endpoint_connection_handler.update_error_stats(0, 1)
+                self.__logger.error("""Trusted node response does not match node response""")
+                response_handler = self.__create_response_handler(
+                    trusted_connection_handler, cs, req
+                )
+            else:
+                response_handler = self.__create_response_handler(
+                    endpoint_connection_handler, cs, req
+                )
+
             try:
                 endpoint_connection_handler.receive(response_handler)
             except (

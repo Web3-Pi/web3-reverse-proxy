@@ -101,6 +101,9 @@ class EndpointConnectionHandler(ConnectionHandler):
     def update_response_stats(self, response_bytes: bytearray) -> None:
         self.connection.update_endpoint_stats(bytearray(), response_bytes)
 
+    def update_error_stats(self, no_errors: int, no_verification_errors: int = 0) -> None:
+        self.connection.update_endpoint_error_stats(no_errors, no_verification_errors)
+
     def release(self) -> None:
         if self.connection is not None:
             self.connection_pool.put(self.connection)

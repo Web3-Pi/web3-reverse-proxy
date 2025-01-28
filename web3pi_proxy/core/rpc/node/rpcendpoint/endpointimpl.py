@@ -30,6 +30,10 @@ class RPCEndpoint:
         self.conn_stats.update_request_bytes(request_bytes)
         self.conn_stats.update_response_bytes(response_bytes)
 
+    def update_errors_stats(self, no_errors: int, no_verification_errors: int) -> None:
+        self.conn_stats.update_errors(no_errors)
+        self.conn_stats.update_verification_errors(no_verification_errors)
+
     @classmethod
     def create(cls, name: str, conn_descr: EndpointConnectionDescriptor) -> RPCEndpoint:
         return RPCEndpoint(name, conn_descr)
