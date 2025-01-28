@@ -90,3 +90,14 @@ class BaseSocket:
         res = BaseSocket(s_dst)
 
         return res
+
+    @classmethod
+    def create_local_tunnel_socket(cls) -> BaseSocket:
+        cls.__logger.debug("Creating local tunnel socket")
+
+        s_dst = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s_dst.connect((Config.LOCAL_TUNNEL_ADDRESS, Config.LOCAL_TUNNEL_PORT))
+
+        res = BaseSocket(s_dst)
+
+        return res

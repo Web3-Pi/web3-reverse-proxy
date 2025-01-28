@@ -62,7 +62,7 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
             # if Config.PUBLIC_SERVICE:
             #     ip = my_public_ip()
             raw_page = f.read().decode("utf-8")
-            host = f'return "http://{host}/";'
+            host = f'return "{Config.ADMIN_USE_HTTPS and "https" or "http"}://{host}/";'
             host_re = r"//HOST_MARKER_S[\s\w.]+.+\s+//HOST_MARKER_E"
             auth_token_expr = f'return "{auth_token}";'
             auth_token_re = r"//TOKEN_MARKER_S[\s\w.]+.+\s+//TOKEN_MARKER_E"
@@ -85,8 +85,10 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
             if self.server.auth.authenticate(auth_token):
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
+                self.send_header("Access-Control-Allow-Origin", Config.ADMIN_CORS_ALLOW_ORIGIN)
+                self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+                self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
                 self.end_headers()
-
                 self.wfile.write(self.get_valid_host_page(auth_token))
 
                 # # Test how a web browser handles partial update of a web page
@@ -108,7 +110,9 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
 
                 self.wfile.write(response.encode("UTF-8"))
 
-    def log_request(self, code: Union[int, str] = ..., size: Union[int, str] = ...) -> None:
+    def log_request(
+        self, code: Union[int, str] = ..., size: Union[int, str] = ...
+    ) -> None:
         pass
 
     def do_POST(self):
@@ -153,9 +157,19 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
 
         self.send_response(http_status)
         self.send_header("Content-type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", Config.ADMIN_CORS_ALLOW_ORIGIN)
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
 
         self.wfile.write(json.dumps(res if res is not None else {}).encode())
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", Config.ADMIN_CORS_ALLOW_ORIGIN)
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.end_headers()
 
     def get_auth_token(self) -> str:
         return self.headers.get("Authorization", "").partition(" ")[-1]
