@@ -156,8 +156,7 @@
             </form>
             <ul class="nav nav-pills nav-stacked">
                 <li><a href="#" id="query_user_billing_plan"><i class="glyphicon glyphicon-usd" style="color:darkgreen"></i> User Billing Plan</a></li>
-                <li><a href="#" id="query_user_billing_status"><i class="glyphicon glyphicon-stats" style="color:darkgreen"></i> User Billing Stats</a></li>
-            </ul>
+                <li><a href="#" id="query_user_billing_status"><i class="glyphicon glyphicon-stats" style="color:darkgreen"></i> User Billing Stats</a></li>            </ul>
             <hr>
 
             <form class="navbar-form" name="manage_api_key_form" onkeydown="return event.key != 'Enter';">
@@ -172,50 +171,70 @@
                 <small class="lab-l">Free Bytes</small>
                 <label for="free_bytes"></label><input id="free_bytes" type="number" class="form-control pull-right" placeholder="E.g., 10000" style="width: 130px; height: 25px;">
             </form>
-            <form class="navbar-form" name="manage_priority_form">
-                <small class="lab-l">User Priority</small>
-                <label for="user_priority"></label><input id="user_priority" type="number" class="form-control pull-right deselect reset-cursor" value="2" min="0" max="2"  onkeydown="return false" style="width: 75px; height: 25px;">
-            </form>
-            <form class="navbar-form" name="manage_constant_pool_form">
-                <small class="lab-l">Constant Pool</small>
-                <label for="constant_pool"></label><input id="constant_pool" type="text" class="form-control pull-right deselect reset-cursor" placeholder="A pool name, optional" style="width: 150px; height: 25px;">
-            </form>
+            <script language="JavaScript">
+                function showOtherParams() {
+                    var x = document.getElementById("other-params");
+                    if (x.style.display === "none") {
+                        x.style.display = "block";
+                    } else {
+                        x.style.display = "none";
+                    }
+                }
+            </script>
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="#" id="show-other-params" onclick="showOtherParams()"><i class="glyphicon glyphicon-option-horizontal pull-right"></i></a></li>
+            </ul>
+            <div id="other-params" style="display: none">
+                <form class="navbar-form" name="manage_priority_form">
+                    <small class="lab-l">User Priority</small>
+                    <label for="user_priority"></label><input id="user_priority" type="number" class="form-control pull-right deselect reset-cursor" value="2" min="0" max="2"  onkeydown="return false" style="width: 75px; height: 25px;">
+                </form>
+                <form class="navbar-form" name="manage_constant_pool_form">
+                    <small class="lab-l">Constant Pool</small>
+                    <label for="constant_pool"></label><input id="constant_pool" type="text" class="form-control pull-right deselect reset-cursor" placeholder="A pool name, optional" style="width: 150px; height: 25px;">
+                </form>
+            </div>
             <ul class="nav nav-pills nav-stacked">
                 <li><a href="#" id="register_user"><i class="glyphicon glyphicon-plus" style="color:red"></i> Add User</a></li>
                 <li><a href="#" id="remove_user"><i class="glyphicon glyphicon-trash" style="color:red"></i> Remove User</a></li>
                 <li><a href="#" id="update_user_plan"><i class="glyphicon glyphicon-refresh" style="color:red"></i> Update User</a></li>
             </ul>
-
         </div><!-- /span-3 -->
 
-        <div class="col-md-9">
+        <div class="col-md-6">
             <!-- column 2 -->
             <a href="#" id="crude_dashboard"><strong><i class="glyphicon glyphicon-dashboard"></i> Crude dashboard</strong></a>
             <hr>
-            <div class="row">
-
-                <!-- center left-->
-                <div class="col-md-9">
-                    <div class="well reset-cursor">Processed proxy queries<span class="badge pull-right" id="num_processed_requests">0</span></div>
-                    <hr>
-                    <div class="panel panel-default">
-                        <div class="well reset-cursor">Last processed request <span class="label label-default label-large pull-right" id="last_processed_request" style="font-size:small;"></span></div>
-                        <div class="panel-body">
-                            <small>Proxy response</small>
-                            <div class="form-outline"><label for="json_display" class="hidden"></label><textarea class="form-control json-display" rows="21" id="json_display" readonly></textarea></div>
-                        </div><!--/panel-body-->
-                    </div><!--/panel-->
-                </div><!--/col-->
-                <!--center-right-->
-
-                <div class="col-md-3" id ="terre">
-                    <div class="well reset-cursor">Active endpoints <span class="badge pull-right" id="num_active_endpoints">0</span></div>
-                    <hr id="endpoints_placeholder">
-                </div> <!--/col-span-3-->
-
-            </div><!--/row-->
+            <div class="well reset-cursor">Processed proxy queries<span class="badge pull-right" id="num_processed_requests">0</span></div>
+            <hr>
+            <div class="panel panel-default">
+                <div class="well reset-cursor">Last processed request <span class="label label-default label-large pull-right" id="last_processed_request" style="font-size:small;"></span></div>
+                <div class="panel-body">
+                    <small>Proxy response</small>
+                    <div class="form-outline"><label for="json_display" class="hidden"></label><textarea class="form-control json-display" rows="21" id="json_display" readonly></textarea></div>
+                </div><!--/panel-body-->
+            </div><!--/panel-->
         </div><!--/col-span-9-->
 
+        <div class="col-md-3" id ="terre">
+            <a href="#" id="refresh_endpoints"><strong><i class="glyphicon glyphicon-cog"></i> Endpoints</strong></a>
+            <hr>
+            <div class="well reset-cursor">Active endpoints <span class="badge pull-right" id="num_active_endpoints">0</span></div>
+            <hr id="endpoints_placeholder">
+            <form class="navbar-form" name="endpoint_name_form" onkeydown="return event.key != 'Enter';">
+                <small class="lab-l">Name</small>
+                <label for="endpoint_name"></label><input id="endpoint_name" type="text" class="form-control pull-right" placeholder="Endpoint Name" style="width: 150px; height: 25px;">
+            </form>
+            <form class="navbar-form" name="endpoint_url_form">
+                <small class="lab-l">URL</small>
+                <label for="endpoint_url"></label><input id="endpoint_url" type="text" class="form-control pull-right" placeholder="Endpoint URL" style="width: 150px; height: 25px;">
+            </form>
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="#" id="add_endpoint"><i class="glyphicon glyphicon-plus" style="color:red"></i> Add Endpoint</a></li>
+                <li><a href="#" id="remove_endpoint"><i class="glyphicon glyphicon-trash" style="color:red"></i> Remove Endpoint</a></li>
+                <li><a href="#" id="update_endpoint"><i class="glyphicon glyphicon-refresh" style="color:red"></i> Update Endpoint</a></li>
+            </ul>
+        </div> <!--/col-span-3-->
     </div><!--/row-->
     <!-- /upper section -->
 </div><!--/container-->
@@ -252,9 +271,17 @@
             remove_user: 'remove_user',
             update_user_plan: 'update_user_plan',
 
+            endpoint_name: 'endpoint_name',
+            endpoint_url: 'endpoint_url',
+
+            add_endpoint: 'add_endpoint',
+            remove_endpoint: 'remove_endpoint',
+            update_endpoint: 'update_endpoint',
+
             proxy_admin_panel: 'proxy_admin_panel',
             rpc_methods: "rpc_methods",
             crude_dashboard: 'crude_dashboard',
+            refresh_endpoints: 'refresh_endpoints',
             query_list_endpoints: 'query_list_endpoints',
             query_endpoint_stats: 'query_endpoint_stats',
 
@@ -270,6 +297,10 @@
             registerUser: "register_user",
             removeUser: "remove_user",
             updateUserPlan: "update_user_plan",
+
+            addEndpoint: "add_endpoint",
+            removeEndpoint: "remove_endpoint",
+            updateEndpoint: "update_endpoint",
 
             queryProxyStats: "query_proxy_stats",
             queryListEndpoints: "query_list_endpoints",
@@ -401,6 +432,23 @@
             return userdata.free_calls >= 0 && userdata.free_bytes >= 0;
         }
 
+        static isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        static validate_endpoint_data(endpointdata) {
+            if (!this.is_valid_key(endpointdata.name) || endpointdata.url.length === 0) {
+                return false;
+            }
+
+            return this.isValidUrl(endpointdata.url);
+        }
+
         static FieldReader = class {
             constructor(eltId) {
                 this.elt = Helpers.getElt(eltId)
@@ -478,6 +526,28 @@
                 free_bytes: this.dbManageFreeBytes(),
                 user_priority: this.dbManageUserPriority(),
                 constant_pool: this.dbManageConstantPool()
+            }
+        }
+    }
+
+    class EndpointInput {
+        constructor() {
+            this.endpoint_name = new Helpers.FieldReader(conf.tag.endpoint_name);
+            this.endpoint_url = new Helpers.FieldReader(conf.tag.endpoint_url);
+        }
+
+        endpointName() {
+            return this.endpoint_name.read().trim();
+        }
+
+        endpointUrl() {
+            return this.endpoint_url.read().trim();
+        }
+
+        manageEndpointData() {
+            return {
+                name: this.endpointName(),
+                url: this.endpointUrl()
             }
         }
     }
@@ -574,10 +644,11 @@
             #endpointHTML(name, endpoint, viewIds) {
                 const deltaMillis = Helpers.millisSincePythonTimestamp(endpoint.started_at_timestamp);
 
-                let cardColor = "bg-c-blue";
-
-                if (name.toLowerCase().includes("infura")) {
-                    cardColor = "bg-c-pink";
+                let cardColor = "bg-c-pink";
+                if (endpoint.status == "ACTIVE") {
+                    cardColor = "bg-c-blue";
+                } else if (endpoint.status == "OUT_OF_SYNC") {
+                    cardColor = "bg-c-yellow";
                 }
 
                 return `<div class="card ${cardColor} order-card">
@@ -600,6 +671,10 @@
                 const html = this.#endpointHTML(name, endpoint, viewIds);
 
                 endpointsPanel.insertAdjacentHTML('afterend', html);
+            }
+
+            removeEndpointView(name) {
+                Helpers.getElt(name).parentElement.remove();
             }
 
         }
@@ -627,6 +702,11 @@
             this.display.view.appendEndpointView(name, endpoint, ids);
         }
 
+        removeEndpoint(name) {
+            delete this.endpoints[name];
+            this.display.view.removeEndpointView(name);
+        }
+
         addClickListener(name, listener) {
             Helpers.addClickEventListener(name, listener);
         }
@@ -645,10 +725,11 @@
 
     class QueryCaller {
 
-        constructor(userInput, display) {
+        constructor(userInput, endpointInput, display) {
             this.calls_count = 0;
 
             this.userInput = userInput;
+            this.endpointInput = endpointInput;
             this.display = display;
         }
 
@@ -658,6 +739,10 @@
 
         manageDBKeyReader = () => {
             return this.userInput.dbManageAPIKey();
+        }
+
+        manageEndpointNameReader = () => {
+            return this.endpointInput.endpointName();
         }
 
         keyValidator = (key) => {
@@ -676,8 +761,20 @@
             return Helpers.validate_user_data(user);
         }
 
+        manageEndpointReader = () => {
+            return this.endpointInput.manageEndpointData();
+        }
+
+        endpointValidator = (endpoint) => {
+            return Helpers.validate_endpoint_data(endpoint);
+        }
+
         manageDBUserToCallParam = (user) => {
             return Object.values(user);
+        }
+
+        manageEndpointToCallParam = (endpoint) => {
+            return Object.values(endpoint);
         }
 
         async callPOST(method, params) {
@@ -692,9 +789,10 @@
         }
 
         handleBasicQuery(method, params = []) {
-            this.asyncCall(method, params).then((json) => this.display.update_main_display(json));
+            const call = this.asyncCall(method, params).then((json) => this.display.update_main_display(json));
             this.display.update_request_count(this.calls_count);
             this.display.update_last_processed_request(method);
+            return call;
         }
 
         updateConsoleView(json) {
@@ -717,10 +815,11 @@
             const ids = reader();
 
             if (validator(ids)) {
-                this.handleBasicQuery(method, paramFormatter(ids));
+                return this.handleBasicQuery(method, paramFormatter(ids));
             }
             else {
                 this.display.update_display_method_error(err_msg);
+                return Promise.resolve();
             }
         }
 
@@ -745,10 +844,19 @@
             return () => {this.handleValidatedQuery(query, this.manageDBUserReader, this.userValidator, this.manageDBUserToCallParam, ...args)};
         }
 
+        getRemoveEndpointQueryHandler(query, ...args) {
+            return () => {return this.handleValidatedQuery(query, this.manageEndpointNameReader, this.keyValidator, this.keyParamToCallParam, ...args);};
+        }
+
+        getManageEndpointQueryHandler(query, ...args) {
+            return () => {return this.handleValidatedQuery(query, this.manageEndpointReader, this.endpointValidator, this.manageEndpointToCallParam, ...args);};
+        }
+
     }
 
     class DynamicEndpointsHandler {
         constructor(caller, display) {
+            this.endpointKeys = [];
             this.display = display;
             this.caller = caller;
 
@@ -777,6 +885,7 @@
             let activeEndpoints = 0;
             const endpoints = Object.keys(json);
             endpoints.reverse().forEach(endpointKey => {
+                this.endpointKeys.push(endpointKey);
                 this.dynamicContent.addEndpoint(endpointKey, json[endpointKey]);
                 this.dynamicContent.addClickListener(endpointKey, () => {this.handleEndpointQuery(endpointKey)});
                 this.dynamicContent.addIntervalUpdater(() => {this.handleEndpointUpdateViewQuery(endpointKey)});
@@ -794,6 +903,18 @@
             );
         }
 
+        handle_refresh_endpoints = () => {
+            for (const endpointKey of this.endpointKeys) {
+                this.dynamicContent.removeEndpoint(endpointKey);
+            }
+            this.endpointKeys = [];
+            // handle_init_endpoints code
+            this.caller.asyncCall(conf.query.queryListEndpoints, [], false).
+            then(json =>
+                this.registerEndpoints(json)
+            );
+        }
+
     }
 
     class QueryHandlers {
@@ -801,7 +922,8 @@
         constructor() {
             this.display = new Display();
             this.userInput = new UserInput();
-            this.caller = new QueryCaller(this.userInput, this.display);
+            this.endpointInput = new EndpointInput();
+            this.caller = new QueryCaller(this.userInput, this.endpointInput, this.display);
             this.endpointHandler = new DynamicEndpointsHandler(this.caller, this.display);
         }
 
@@ -819,8 +941,27 @@
 
             Helpers.addClickEventListener(conf.tag.proxy_admin_panel, this.caller.getBasicQueryContentsHandler(conf.query.queryServiceConsole));
             Helpers.addClickEventListener(conf.tag.crude_dashboard, this.caller.getBasicQueryHandler(conf.query.queryProxyStats));
+            Helpers.addClickEventListener(conf.tag.refresh_endpoints, this.endpointHandler.handle_refresh_endpoints);
 
             Helpers.addClickEventListener(conf.tag.rpc_methods, () => {this.display.update_main_display(Object.values(conf.query))});
+
+            const add_endpoint_function = this.caller.getManageEndpointQueryHandler(conf.query.addEndpoint, "Invalid input data - endpoint won't be registered");
+            const add_endpoint_handler = () => {
+                add_endpoint_function().then(this.endpointHandler.handle_refresh_endpoints());
+            }
+            Helpers.addClickEventListener(conf.tag.add_endpoint, add_endpoint_handler);
+
+            const remove_endpoint_function = this.caller.getRemoveEndpointQueryHandler(conf.query.removeEndpoint, "Invalid name - endpoint not removed");
+            const remove_endpoint_handler = () => {
+                remove_endpoint_function().then(this.endpointHandler.handle_refresh_endpoints());
+            }
+            Helpers.addClickEventListener(conf.tag.remove_endpoint, remove_endpoint_handler);
+
+            const update_endpoint_function = this.caller.getManageEndpointQueryHandler(conf.query.updateEndpoint, "Invalid input data - endpoint won't be updated");
+            const update_endpoint_handler = () => {
+                update_endpoint_function().then(this.endpointHandler.handle_refresh_endpoints());
+            }
+            Helpers.addClickEventListener(conf.tag.update_endpoint, update_endpoint_handler);
 
             Helpers.addDOMContentLoadedListener(this.endpointHandler.handle_init_endpoints);
         }

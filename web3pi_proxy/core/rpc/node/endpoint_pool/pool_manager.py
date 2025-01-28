@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 import select
 import socket
 
 import time
 from threading import RLock, Thread
 from typing import List, Tuple
+from httptools import HttpResponseParser
 
 from web3pi_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import (
     EndpointConnectionPool,
@@ -69,10 +71,6 @@ class DamageController:
             and failure_rate >= self.__FAILURE_RATE_THRESHOLD
         )
 
-    def __is_outdated(self, _pool: EndpointConnectionPool) -> bool:
-        # TODO: Implement
-        return False
-
     def __suspend_pool(self, pool) -> None:
         if not pool.is_active():
             return
@@ -97,14 +95,114 @@ class DamageController:
                     daemon=True,
                 ).start()
 
-            if self.__is_outdated(pool):
-                self.__logger.warning(f"Endpoint `{pool.endpoint.name}`: falling behind")
-
             self.__logger.debug(f"Endpoint `{pool.endpoint.name}`: okay.")
+
+
+class SyncControllerResponseListener:
+    body: bytes = b''
+    block_number: int = 0
+    block_timestamp: int = 0
+    __logger = get_logger("SyncController")
+
+    def __init__(self, __pool_name: str):
+        self.__pool_name = __pool_name
+
+    def on_status(self, status_code: int):
+        self.__logger.debug(f"SyncControllerResponseListener.on_status: {status_code}")
+
+
+    def on_body(self, body: bytes):
+        self.body = self.body + body
+
+    def on_message_complete(self):
+        try:
+            block_data = json.loads(self.body)
+            result = block_data.get('result')
+            if not result:
+                error = block_data.get('error')
+                self.__logger.error(f"{self.__pool_name}: Sync test failed: {error or 'reason unknown'}")
+                return
+            self.block_number = int(result['number'], 16)
+            self.block_timestamp = int(result['timestamp'], 16)
+        except Exception as error:
+            self.__logger.error("%s: %s", error.__class__, error)
+            self.__logger.error(f"{self.__pool_name}: Failed to parse sync test response")
+
+
+# TODO: Tune parameters
+class SyncController:
+    __SUSPENSION_TIMEOUT_SECONDS = 60
+    __MAX_DELAY_SECONDS = 60
+
+    __logger = get_logger("SyncController")
+
+    def __test_pool(self, pool: EndpointConnectionPool) -> bool | None:
+        endpoint_connection_handler: EndpointConnectionHandler | None = None
+        try:
+            endpoint_connection_handler = pool.get(out_of_sync=True)
+            req = RPCRequest()
+            req.headers = b'Accept: */*\r\nContent-Type: application/json\r\nContent-Length: 82\r\n'
+            req.content = b'{"method":"eth_getBlockByNumber","params":["latest",false],"id":1,"jsonrpc":"2.0"}'
+            endpoint_connection_handler.send(req)
+
+            response_listener = SyncControllerResponseListener(pool.endpoint.name)
+            response_parser = HttpResponseParser(response_listener)
+
+            def response_handler(res: bytes):
+                nonlocal response_parser
+                response_parser.feed_data(res)
+
+            endpoint_connection_handler.receive(response_handler)
+
+            current_timestamp = int(time.time())
+            block_timestamp = response_listener.block_timestamp
+            if block_timestamp == 0:
+                return None  # no logs, failure already logged by the listener
+            if block_timestamp + self.__MAX_DELAY_SECONDS > current_timestamp:
+                return True
+            else:
+                self.__logger.warning(f"{pool.endpoint.name}: The node out of sync")
+                return False
+        except Exception as error:
+            self.__logger.error("%s: %s", error.__class__, error)
+            self.__logger.error(f"{pool.endpoint.name}: Failed to run sync test")
+            return None
+        finally:
+            if endpoint_connection_handler:
+                endpoint_connection_handler.release()  # safe: does not throw an exception
+
+    def __suspend_pool(self, pool) -> None:
+        if not pool.is_active():
+            return
+        pool.out_of_sync()
+        while True:
+            time.sleep(self.__SUSPENSION_TIMEOUT_SECONDS)
+            test_result = self.__test_pool(pool)
+            if test_result is not None and test_result:
+                pool.activate()
+                break
+            else:
+                continue
+
+    def check_pools(self, pools: List[EndpointConnectionPool]):
+        for pool in pools:
+            test_result = self.__test_pool(pool)
+            if test_result is not None and not test_result:
+                self.__logger.warning(
+                    f"Endpoint `{pool.endpoint.name}`: sync test: out of sync."
+                )
+                Thread(
+                    target=self.__suspend_pool,
+                    args=[pool],
+                    daemon=True,
+                ).start()
+
+            self.__logger.debug(f"Endpoint `{pool.endpoint.name}`: sync test okay.")
 
 
 class EndpointConnectionPoolManager:
     __DAMAGE_CONTROLLER_TIMEOUT_SECONDS = 10  # 600
+    __SYNC_CONTROLLER_TIMEOUT_SECONDS = 60
     __logger = get_logger(f"EndpointConnectionPoolManager")
 
     def __init__(
@@ -114,6 +212,7 @@ class EndpointConnectionPoolManager:
     ):
         self.load_balancer = load_balancer
         self.damage_controller = DamageController()
+        self.sync_controller = SyncController()
         self.pools: dict[str, EndpointConnectionPool] = {}
         self.__lock = RLock()
 
@@ -127,6 +226,12 @@ class EndpointConnectionPoolManager:
             daemon=True,
         )
         self.damage_controller_thread.start()
+
+        self.sync_controller_thread = Thread(
+            target=self.__sync_control,
+            daemon=True,
+        )
+        self.sync_controller_thread.start()
 
     @property
     def endpoints(self) -> List[RPCEndpoint]:
@@ -154,6 +259,14 @@ class EndpointConnectionPoolManager:
                 active_pools = self.__get_active_pools()
             self.damage_controller.check_connections(active_pools)
             time.sleep(self.__DAMAGE_CONTROLLER_TIMEOUT_SECONDS)
+
+    def __sync_control(self):
+        while True:
+            self.__logger.debug("Running sync check on endpoint connections")
+            with self.__lock:
+                active_pools = self.__get_active_pools()
+            self.sync_controller.check_pools(active_pools)
+            time.sleep(self.__SYNC_CONTROLLER_TIMEOUT_SECONDS)
 
     def add_pool(
         self, name: str, conn_descr: EndpointConnectionDescriptor

@@ -1,4 +1,3 @@
-import colorful
 import hashlib
 import json
 import random
@@ -7,8 +6,10 @@ import secrets
 import socketserver
 import string
 import threading
-import traceback
 from http.server import BaseHTTPRequestHandler
+from typing import Union
+
+import colorful
 
 from web3pi_proxy.config.conf import Config
 from web3pi_proxy.service.admin.serviceadmin import RPCServiceAdmin
@@ -109,7 +110,7 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
 
                 self.wfile.write(response.encode("UTF-8"))
 
-    def log_request(self, code: int | str = ..., size: int | str = ...) -> None:
+    def log_request(self, code: Union[int, str] = ..., size: Union[int, str] = ...) -> None:
         pass
 
     def do_POST(self):
@@ -133,14 +134,14 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
                         res = admin.call_by_method(
                             json_data["method"], json_data.get("params", [])
                         )
-                    except KeyError:
+                    except KeyError as error:
                         http_status = 400
                         msg = f"Unknown method: {method}"
-                        self.__logger.error(msg)
+                        self.__logger.error("Error occurred in method '%s': %s", method, error, exc_info=True)
                         res = {"error": msg}
                     except Exception as error:
                         http_status = 500
-                        self.__logger.error(error.with_traceback)
+                        self.__logger.error("Error occurred in method '%s': %s", method, error, exc_info=True)
                         res = {"error": "Server error"}
                 else:
                     http_status = 400

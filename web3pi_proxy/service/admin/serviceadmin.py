@@ -17,7 +17,7 @@ class RPCServiceAdmin:
     CONSOLE_CONTENTS = "console_contents"
     USERS_API_KEYS = "users_api_keys"
 
-    ReturnType = Dict[str, Any] | None
+    ReturnType = Optional[Dict[str, Any]]
 
     billing_service: BasicBillingService
     activity_ledger: SimpleActivityLedger
@@ -135,7 +135,7 @@ class RPCServiceAdmin:
             return self.query_list_registered_users()
 
     def register_user_flat(
-        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int, constant_pool: str | None
+        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int, constant_pool: Optional[str]
     ) -> ReturnType:
         if constant_pool == "":
             constant_pool = None
@@ -159,7 +159,7 @@ class RPCServiceAdmin:
             return self.query_user_plan(user_api_key)
 
     def update_user_plan_flat(
-        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int, constant_pool: str | None
+        self, user_api_key: str, free_calls: int, free_bytes: int, priority: int, constant_pool: Optional[str]
     ) -> ReturnType:
         if constant_pool == "":
             constant_pool = None
@@ -206,23 +206,25 @@ class RPCServiceAdmin:
     def get_endpoints(self) -> ReturnType:
         return self.endpoint_manager.get_endpoints()
 
-    def add_endpoint(self, name: str, url: str) -> ReturnType:
-        res = self.endpoint_manager.add_endpoint(name, url)
-        if type(res) is dict:
+    def add_endpoint(self, name: str, url: str, connection_type: str, auth_token: str | None) -> ReturnType:
+        res = self.endpoint_manager.add_endpoint(
+            {"name": name, "url": url, "connection_type": connection_type, "auth_token": auth_token}
+            )
+        if type(res) is dict:  # TODO not too good error handling
             return res
         self.register_endpoint_stats(res.get_name(), res.get_connection_stats())
         return {"message": f"Added and saved configuration for endpoint '{name}'"}
 
     def remove_endpoint(self, name: str) -> ReturnType:
         res = self.endpoint_manager.remove_endpoint(name)
-        if type(res) is dict:
+        if type(res) is dict:  # TODO not too good error handling
             return res
         self.remove_endpoint_stats(res.get_name())
         return {"message": f"Removed endpoint '{name}'"}
 
-    def update_endpoint(self, name: str, url: str) -> ReturnType:
-        res = self.endpoint_manager.update_endpoint(name, url)
-        if type(res) is dict:
+    def update_endpoint(self, name: str, url: str, connection_type: str, auth_token: str | None) -> ReturnType:
+        res = self.endpoint_manager.update_endpoint({"name": name, "url": url, "connection_type": connection_type, "auth_token": auth_token})
+        if type(res) is dict:  # TODO not too good error handling
             return res
         self.update_endpoint_stats(res.get_name(), res.get_connection_stats())
         return {"message": f"Updated endpoint '{name}' with address {url}"}

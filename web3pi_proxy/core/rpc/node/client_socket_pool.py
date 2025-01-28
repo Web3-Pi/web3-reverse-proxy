@@ -35,13 +35,17 @@ class ClientSocketPool:
         # assert all_client_connections.get(cs.socket.fileno()) is None
         with self.lock:
             entry = ClientSocketPoolEntry(cs)
-            self.all_client_connections[cs.socket.fileno()] = entry
+            self.all_client_connections[cs.fd] = entry
             if self.head is None:  # and self.tail is None
                 self.tail = entry
             else:
                 self.head.prev = entry
             self.head = entry
             self.size = self.size + 1
+
+    def is_in_use(self, fd: int) -> bool:
+        with self.lock:
+            return self.all_client_connections[fd].in_use
 
     def get_cs_and_set_in_use(self, fd: int) -> ClientSocket:
         """Searches for a client socket, it must be in pending status, is changed to in_use status and returned"""
@@ -92,7 +96,7 @@ class ClientSocketPool:
             tail_entry = self.tail
             self.tail = tail_entry.prev
             self.size = self.size - 1
-            del self.all_client_connections[tail_entry.cs.socket.fileno()]
+            del self.all_client_connections[tail_entry.cs.fd]
             return tail_entry.cs
 
     def get_size(self) -> int:

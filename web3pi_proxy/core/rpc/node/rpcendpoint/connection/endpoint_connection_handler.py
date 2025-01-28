@@ -29,6 +29,14 @@ class BrokenFreshConnectionError(BrokenConnectionError):
 class ReconnectError(BrokenConnectionError):
     message = "Error while attempting reconnect"
 
+def _acquired_connection(func: Callable) -> Callable:
+    def decorator(instance: "EndpointConnectionHandler", *args, **kwargs):
+        if instance.connection is None:
+            raise ConnectionReleasedError
+        return func(instance, *args, **kwargs)
+
+    return decorator
+
 
 class EndpointConnectionHandler(ConnectionHandler):
     def __init__(
@@ -44,15 +52,6 @@ class EndpointConnectionHandler(ConnectionHandler):
 
         self.__logger = get_logger(f"EndpointConnectionHandler.{id(self)}")
         self.__logger.debug(f"Created handler for connection {connection}")
-
-    @staticmethod
-    def _acquired_connection(func: Callable) -> Callable:
-        def decorator(instance: "EndpointConnectionHandler", *args, **kwargs):
-            if instance.connection is None:
-                raise ConnectionReleasedError
-            return func(instance, *args, **kwargs)
-
-        return decorator
 
     @_acquired_connection
     def send(self, req: RPCRequest) -> bytearray:
