@@ -57,24 +57,26 @@ class EndpointManagerService:
             endpoint_entry["auth_key"] = endpoint.conn_descr.auth_key
             endpoint_entry["is_ssl"] = endpoint.conn_descr.is_ssl
             endpoint_entry["url"] = endpoint.conn_descr.url
+            endpoint_entry["type"] = endpoint.conn_descr.connection_type
             nodes_data[endpoint.get_name()] = endpoint_entry
         return nodes_data
 
-    def add_endpoint(self, name: str, url: str) -> Union[RPCEndpoint, dict]:
+    def add_endpoint(self, conf: dict) -> Union[RPCEndpoint, dict]:
         if not Config.ETH_ENDPOINTS_STORE:
             return {"error": "the endpoint cannot be stored"}
-        descriptor = EndpointConnectionDescriptor.from_url(url)
-        if descriptor is None:
-            return {"error": "Invalid URL provided"}
         try:
-            endpoint = self.endpoint_pool_manager.add_pool(name, descriptor)
+            descriptor = EndpointConnectionDescriptor.from_dict(conf)
+        except Exception as error:
+            return {"error": str(error)}
+        try:
+            endpoint = self.endpoint_pool_manager.add_pool(conf['name'], descriptor)
         except PoolAlreadyExistsError as error:
             return {"error": error.message}
-        config = json.dumps({"name": name, "url": url})
+        config = json.dumps(conf)
         try:
-            Endpoint.create(name=name, config=config)
+            Endpoint.create(name=conf['name'], config=config)
         except PeeweeException as error:
-            self.endpoint_pool_manager.remove_pool(name)  # TODO use db tx instead?
+            self.endpoint_pool_manager.remove_pool(conf['name'])  # TODO use db tx instead?
             return {"error": str(error)}
         return endpoint
 
@@ -91,20 +93,22 @@ class EndpointManagerService:
             return {"error": "(db inconsistent): " + str(error)}  # TODO handle inconsistency
         return endpoint
 
-    def update_endpoint(self, name: str, url: str) -> Union[RPCEndpoint, dict]:
+    def update_endpoint(self, conf: dict) -> Union[RPCEndpoint, dict]:
         if not Config.ETH_ENDPOINTS_STORE:
             return {"error": "the endpoint cannot be stored"}
-        descriptor = EndpointConnectionDescriptor.from_url(url)
-        if descriptor is None:
-            return {"error": "Invalid URL provided"}
         try:
-            self.endpoint_pool_manager.remove_pool(name)
+            descriptor = EndpointConnectionDescriptor.from_dict(conf)
+        except Exception as error:
+            return {"error": str(error)}
+        try:
+            self.endpoint_pool_manager.remove_pool(conf['name'])
         except PoolDoesNotExistError as error:
             return {"error": error.message}
+        name = conf['name']
         endpoint = self.endpoint_pool_manager.add_pool(name, descriptor)
         try:
             endpoint_db = Endpoint.get(Endpoint.name == name)
-            config = json.dumps({"name": name, "url": url})
+            config = json.dumps(conf)
             endpoint_db.config = config
             endpoint_db.save()
         except PeeweeException as error:

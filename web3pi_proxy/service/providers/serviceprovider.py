@@ -99,7 +99,6 @@ class ServiceComponentsProvider:
     ) -> Web3RPCProxy:
         if Config.ETH_ENDPOINTS_STORE:
             eth_endpoints = []
-            uuu = Endpoint.select(Endpoint.config)
             for eth_endpoint_data in Endpoint.select(Endpoint.config):
                 eth_endpoints.append(json.loads(eth_endpoint_data.config))
         else:

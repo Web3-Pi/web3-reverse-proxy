@@ -66,13 +66,13 @@ class RPCAdminCalls:
         return cls.create_method_call_dict(cls.GET_ENDPOINTS)
 
     @classmethod
-    def get_add_endpoint(cls, name: str, url: str) -> dict:
-        return cls.create_method_call_dict(cls.ADD_ENDPOINT, name, url)
+    def get_add_endpoint(cls, config: dict) -> dict:
+        return cls.create_method_call_dict(cls.ADD_ENDPOINT, config)
 
     @classmethod
     def get_remove_endpoint(cls, name: str) -> dict:
         return cls.create_method_call_dict(cls.REMOVE_ENDPOINT, name)
 
     @classmethod
-    def get_update_endpoint(cls, name: str, url: str) -> dict:
-        return cls.create_method_call_dict(cls.UPDATE_ENDPOINT, name, url)
+    def get_update_endpoint(cls, config: dict) -> dict:
+        return cls.create_method_call_dict(cls.UPDATE_ENDPOINT, config)

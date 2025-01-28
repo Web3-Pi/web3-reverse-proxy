@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 import enum
 import urllib3.util
@@ -44,14 +45,14 @@ class EndpointConnectionDescriptor:
             else:
                 return None
 
-        return EndpointConnectionDescriptor(host, int(port), auth_key, is_ssl, url, dict(), ConnectionType.DIRECT)
+        return EndpointConnectionDescriptor(host, int(port), "", is_ssl, url, dict(), ConnectionType.DIRECT)
 
     @classmethod
     def from_dict(cls, conf: dict) -> EndpointConnectionDescriptor | None:
         url: str = conf["url"]
         conn_descr = cls.from_url(url)
         if not conn_descr:
-            return None
+            raise Exception(f"Invalid url provided: {url}")
         connection_type: str = conf.get("connection_type")
         if connection_type:
             try:
@@ -61,7 +62,9 @@ class EndpointConnectionDescriptor:
         else:
             conn_descr.connection_type = ConnectionType.DIRECT
         conn_descr.extras = conf.copy()
+        conn_descr.auth_key = conf.get("auth_key") or ""
         del conn_descr.extras["name"]
         del conn_descr.extras["url"]
         conn_descr.extras.pop("connection_type", None)
+        print(f"Connection descriptor: {conn_descr}")
         return conn_descr

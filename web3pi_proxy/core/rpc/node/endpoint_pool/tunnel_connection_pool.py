@@ -19,8 +19,8 @@ class TunnelConnectionPool(EndpointConnectionPool, TunnelConnectionPoolIntf):
         super().__init__(endpoint)
         self.__logger = get_logger(f"TunnelConnectionPool.{id(self)}")
 
-        self.tunnel_api_key = endpoint.conn_descr.extras["tunnel_service_auth_key"]
-        self.tunnel_proxy_establish_port: int = endpoint.conn_descr.extras["tunnel_proxy_establish_port"]
+        self.tunnel_api_key = endpoint.conn_descr.extras["auth_token"]
+        self.tunnel_proxy_establish_port: int = endpoint.conn_descr.port
 
         tunnel_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tunnel_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -34,7 +34,7 @@ class TunnelConnectionPool(EndpointConnectionPool, TunnelConnectionPoolIntf):
 
         TunnelService.register(self.tunnel_api_key, self)
 
-    def __new_connection(self) -> EndpointConnection:
+    def _new_connection(self) -> EndpointConnection:
 
         def connection_factory() -> socket:  # TODO is it worth to move it to object level and reuse?
             self.__logger.debug("Creating socket")

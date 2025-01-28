@@ -1,4 +1,3 @@
-import colorful
 import hashlib
 import json
 import random
@@ -8,7 +7,9 @@ import socketserver
 import string
 import threading
 from http.server import BaseHTTPRequestHandler
-from typing import Optional, Union
+from typing import Union
+
+import colorful
 
 from web3pi_proxy.config.conf import Config
 from web3pi_proxy.service.admin.serviceadmin import RPCServiceAdmin
@@ -133,14 +134,14 @@ class AdminServerRequestHandler(BaseHTTPRequestHandler):
                         res = admin.call_by_method(
                             json_data["method"], json_data.get("params", [])
                         )
-                    except KeyError:
+                    except KeyError as error:
                         http_status = 400
                         msg = f"Unknown method: {method}"
-                        self.__logger.error(msg)
+                        self.__logger.error("Error occurred in method '%s': %s", method, error, exc_info=True)
                         res = {"error": msg}
                     except Exception as error:
                         http_status = 500
-                        self.__logger.error(error.with_traceback)
+                        self.__logger.error("Error occurred in method '%s': %s", method, error, exc_info=True)
                         res = {"error": "Server error"}
                 else:
                     http_status = 400

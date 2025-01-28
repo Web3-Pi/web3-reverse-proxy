@@ -22,6 +22,7 @@ class TunnelServiceImpl:
                 self.__initialize__()
                 self.__initialized = True
             self.__registry[api_key] = tunnel_connection_pool
+            self.__logger.debug(f"Registered tunnel service for {api_key}")
 
     def unregister(self, api_key: str, tunnel_connection_pool: TunnelConnectionPoolIntf):
         with self.__lock:

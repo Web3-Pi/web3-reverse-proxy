@@ -206,8 +206,10 @@ class RPCServiceAdmin:
     def get_endpoints(self) -> ReturnType:
         return self.endpoint_manager.get_endpoints()
 
-    def add_endpoint(self, name: str, url: str) -> ReturnType:
-        res = self.endpoint_manager.add_endpoint(name, url)
+    def add_endpoint(self, name: str, url: str, connection_type: str, auth_token: str | None) -> ReturnType:
+        res = self.endpoint_manager.add_endpoint(
+            {"name": name, "url": url, "connection_type": connection_type, "auth_token": auth_token}
+            )
         if type(res) is dict:  # TODO not too good error handling
             return res
         self.register_endpoint_stats(res.get_name(), res.get_connection_stats())
@@ -220,8 +222,8 @@ class RPCServiceAdmin:
         self.remove_endpoint_stats(res.get_name())
         return {"message": f"Removed endpoint '{name}'"}
 
-    def update_endpoint(self, name: str, url: str) -> ReturnType:
-        res = self.endpoint_manager.update_endpoint(name, url)
+    def update_endpoint(self, name: str, url: str, connection_type: str, auth_token: str | None) -> ReturnType:
+        res = self.endpoint_manager.update_endpoint({"name": name, "url": url, "connection_type": connection_type, "auth_token": auth_token})
         if type(res) is dict:  # TODO not too good error handling
             return res
         self.update_endpoint_stats(res.get_name(), res.get_connection_stats())
