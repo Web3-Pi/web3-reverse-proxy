@@ -106,9 +106,7 @@ class AppConfig:
 
     LOADBALANCER: str = "LeastBusyLoadBalancer"
 
-    # enable or disable trusted node mirroring
     ENABLE_TRUSTED_NODE_VERIFICATION: bool = False
-    # URL of the trusted node
     TRUSTED_NODE_URL: str = None
 
     def __init__(self):
