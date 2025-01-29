@@ -5,9 +5,6 @@ import traceback
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
-
-from mypy.nodes import node_kinds
-
 from web3pi_proxy.config.conf import Config
 from web3pi_proxy.core.inbound.server import InboundServer
 from web3pi_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
@@ -73,6 +70,10 @@ class Web3RPCProxy:
 
         print(f"Starting {Config.PROXY_NAME}, version {Config.PROXY_VER}")
         print(f"Provided request middleware chain: {rr}")
+        if Config.ENABLE_TRUSTED_NODE_VERIFICATION:
+            print(f"Trusted node verification enabled with node URL: {Config.TRUSTED_NODE_URL}")
+        else:
+            print(f"Trusted node verification disabled")
 
         endpoints = cp.endpoints
         print(
@@ -126,10 +127,37 @@ class Web3RPCProxy:
         endpoint_connection_handler: EndpointConnectionHandler,
         cs: ClientSocket,
         req: RPCRequest,
+        trusted_connection_handler: EndpointConnectionHandler | None
     ) -> Callable:
         add_cors = req.cors_origin is not None  # TODO CORS support here is very crude, needs improvement
 
+        def get_trusted_response():
+            result_holder = {"result": None}
+            def callback(trusted_res: bytes):
+                self.__logger.debug(f"Trusted response received: {trusted_res}")
+                result_holder["result"] = trusted_res
+            trusted_connection_handler.receive(callback)
+            return result_holder["result"]
+
         def response_handler(res: bytes):
+            if trusted_connection_handler:
+                executor = ThreadPoolExecutor(max_workers=1)
+                trusted_response_future = executor.submit(get_trusted_response)
+                try:
+                    trusted_response = trusted_response_future.result()
+                    self.__logger.debug(f"Trusted response processed: {trusted_response}")
+                except Exception as e:
+                    self.__logger.error(f"Error receiving trusted response. {e}")
+                    trusted_connection_handler.close()
+                    trusted_response = None
+            else:
+                trusted_response = None
+
+
+            if trusted_response and not self.trusted_node_verifier.verify(req, res, trusted_response):
+                self.__logger.error("""Trusted node response does not match node response""")
+                endpoint_connection_handler.update_error_stats(0, 1)
+
             if cs.socket.fileno() < 0:
                 return
             nonlocal add_cors
@@ -197,50 +225,39 @@ class Web3RPCProxy:
                 try:
                     trusted_connection_handler = self.connection_pool.get_trusted_node_connection()
                 except Exception as error:
-                    self.__logger.error("%s: %s", error.__class__, error)
-                    self.__logger.error("Failed to establish trusted endpoint connection")
-                    self.__logger.error("Stack trace:\n%s",
-                                        traceback.format_exc())
+                    self.__logger.error(f"Failed to establish trusted endpoint connection. {error}")
                     trusted_connection_handler = None
 
-            # Parallel request sending
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                fut_main = executor.submit(endpoint_connection_handler.send, req)
-                fut_trusted = (
-                    executor.submit(trusted_connection_handler.send, req)
-                    if Config.ENABLE_TRUSTED_NODE_VERIFICATION and trusted_connection_handler
-                    else None
+            try:
+                endpoint_connection_handler.send(req)
+            except (
+                    BrokenConnectionError
+            ):  # TODO: Pick up new connection from pool if fresh connection failed
+                self.__logger.error(
+                    f"Failed to send request with {endpoint_connection_handler}"
                 )
+                cs.send_all(
+                    ErrorResponses.connection_error(req.id)
+                )  # TODO: detect wether client connection is closed
+                endpoint_connection_handler.update_error_stats(1)
+                self.__manage_client_connection(
+                    req.keep_alive, cs, client_poller, active_client_connections
+                )
+                endpoint_connection_handler.close()
+                return
 
+            if trusted_connection_handler:
                 try:
-                    main_response = fut_main.result()
-                    trusted_response = fut_trusted.result() if fut_trusted else None
-                except Exception as e:
-                    self.__logger.error(f"Error during request handling: {e}")
-                    cs.send_all(ErrorResponses.connection_error(req.id))
-                    endpoint_connection_handler.update_error_stats(1)
-                    endpoint_connection_handler.close()
-
-                    if trusted_connection_handler:
-                        trusted_connection_handler.close()
-                    self.__manage_client_connection(
-                        req.keep_alive, cs, client_poller, active_client_connections
+                    trusted_connection_handler.send(req)
+                except BrokenConnectionError:
+                    self.__logger.error(
+                        f"Failed to send request to trusted node with {trusted_connection_handler}"
                     )
-                    return
+                    trusted_connection_handler = None
 
-                print(f"main_response: {main_response}")
-                print(f"trusted_response: {trusted_response}")
-
-            if trusted_response and not self.trusted_node_verifier.verify(req, main_response, trusted_response):
-                endpoint_connection_handler.update_error_stats(0, 1)
-                self.__logger.error("""Trusted node response does not match node response""")
-                response_handler = self.__create_response_handler(
-                    trusted_connection_handler, cs, req
-                )
-            else:
-                response_handler = self.__create_response_handler(
-                    endpoint_connection_handler, cs, req
-                )
+            response_handler = self.__create_response_handler(
+                endpoint_connection_handler, cs, req, trusted_connection_handler
+            )
 
             try:
                 endpoint_connection_handler.receive(response_handler)
@@ -271,8 +288,7 @@ class Web3RPCProxy:
             endpoint_connection_handler.release()
 
         except Exception as e:
-            traceback.print_exc()
-            self.__logger.error(e)
+            self.__logger.error("Error while handling the client request", exc_info=True)
             print(
                 f"Error while handling the client request {e}"
             )  # TODO is this a good error handling?

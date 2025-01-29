@@ -78,5 +78,5 @@ class EndpointConnectionStats:
             "bytes_sent": self.no_bytes_sent,
             "bytes_received": self.no_bytes_received,
             "errors_no": self._no_errors,
-            "trusted_verification_errors_no": self._no_verification_errors,
+            "verification_errors_no": self._no_verification_errors,
         }
