@@ -143,7 +143,10 @@ class Web3RPCProxy:
             def on_response_received(trusted_res: bytes):
                 self.__logger.debug(f"Trusted response received: {trusted_res}")
                 nonlocal result
-                result = trusted_res
+                if result is None:
+                    result = trusted_res
+                else:
+                    result += trusted_res
 
             trusted_connection_handler.receive(on_response_received)
             return result

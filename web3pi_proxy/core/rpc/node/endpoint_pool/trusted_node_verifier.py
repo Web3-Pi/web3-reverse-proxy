@@ -57,7 +57,12 @@ class TrustedNodeVerifier:
 
     def __parse_headers(self, raw_response: bytes) -> dict:
         try:
-            headers_raw, _ = raw_response.split(b"\r\n\r\n", 1)
+            if b"\r\n\r\n" in raw_response:
+                headers_raw, _ = raw_response.split(b"\r\n\r\n", 1)
+            else:
+                raise ValueError(
+                    "Response does not contain valid HTTP header-body separator (\\r\\n\\r\\n)."
+                )
             headers_lines = headers_raw.split(b"\r\n")[1:]
 
             headers = {}
