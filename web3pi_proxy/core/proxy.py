@@ -8,7 +8,9 @@ from typing import Callable
 from web3pi_proxy.config.conf import Config
 from web3pi_proxy.core.inbound.server import InboundServer
 from web3pi_proxy.core.interfaces.rpcrequest import RequestReaderMiddleware
-from web3pi_proxy.core.rpc.node.endpoint_pool.trusted_node_verifier import TrustedNodeVerifier
+from web3pi_proxy.core.rpc.node.endpoint_pool.trusted_node_verifier import (
+    TrustedNodeVerifier,
+)
 from web3pi_proxy.core.sockets.poller import (
     get_poller,
     Poller,
@@ -44,7 +46,7 @@ class Web3RPCProxy:
         middlewares: RequestMiddlewareDescr,
         connection_pool: EndpointConnectionPoolManager,
         state_updater: StateUpdater,
-        trusted_node_verifier: TrustedNodeVerifier
+        trusted_node_verifier: TrustedNodeVerifier,
     ) -> None:
 
         self.request_reader = middlewares.instantiate()
@@ -71,7 +73,9 @@ class Web3RPCProxy:
         print(f"Starting {Config.PROXY_NAME}, version {Config.PROXY_VER}")
         print(f"Provided request middleware chain: {rr}")
         if Config.ENABLE_TRUSTED_NODE_VERIFICATION:
-            print(f"Trusted node verification enabled with node URL: {Config.TRUSTED_NODE_URL}")
+            print(
+                f"Trusted node verification enabled with node URL: {Config.TRUSTED_NODE_URL}"
+            )
         else:
             print(f"Trusted node verification disabled")
 
@@ -127,15 +131,19 @@ class Web3RPCProxy:
         endpoint_connection_handler: EndpointConnectionHandler,
         cs: ClientSocket,
         req: RPCRequest,
-        trusted_connection_handler: EndpointConnectionHandler | None
+        trusted_connection_handler: EndpointConnectionHandler | None,
     ) -> Callable:
-        add_cors = req.cors_origin is not None  # TODO CORS support here is very crude, needs improvement
+        add_cors = (
+            req.cors_origin is not None
+        )  # TODO CORS support here is very crude, needs improvement
 
         def get_trusted_response():
             result_holder = {"result": None}
+
             def callback(trusted_res: bytes):
                 self.__logger.debug(f"Trusted response received: {trusted_res}")
                 result_holder["result"] = trusted_res
+
             trusted_connection_handler.receive(callback)
             return result_holder["result"]
 
@@ -145,7 +153,9 @@ class Web3RPCProxy:
                 trusted_response_future = executor.submit(get_trusted_response)
                 try:
                     trusted_response = trusted_response_future.result()
-                    self.__logger.debug(f"Trusted response processed: {trusted_response}")
+                    self.__logger.debug(
+                        f"Trusted response processed: {trusted_response}"
+                    )
                 except Exception as e:
                     self.__logger.error(f"Error receiving trusted response. {e}")
                     trusted_connection_handler.close()
@@ -153,9 +163,12 @@ class Web3RPCProxy:
             else:
                 trusted_response = None
 
-
-            if trusted_response and not self.trusted_node_verifier.verify(req, res, trusted_response):
-                self.__logger.error("""Trusted node response does not match node response""")
+            if trusted_response and not self.trusted_node_verifier.verify(
+                req, res, trusted_response
+            ):
+                self.__logger.error(
+                    """Trusted node response does not match node response"""
+                )
                 endpoint_connection_handler.update_error_stats(0, 1)
 
             if cs.socket.fileno() < 0:
@@ -163,9 +176,15 @@ class Web3RPCProxy:
             nonlocal add_cors
             if add_cors:
                 add_cors = False
-                res = res.replace(b"\r\n", b"\r\nAccess-Control-Allow-Origin: " + req.cors_origin + b"\r\n", 1)
+                res = res.replace(
+                    b"\r\n",
+                    b"\r\nAccess-Control-Allow-Origin: " + req.cors_origin + b"\r\n",
+                    1,
+                )
             cs.send_all(res)
-            endpoint_connection_handler.update_response_stats(res)  # TODO do we need bytearray here?
+            endpoint_connection_handler.update_response_stats(
+                res
+            )  # TODO do we need bytearray here?
             self.state_updater.record_rpc_response(req, res)
 
         return response_handler
@@ -194,10 +213,10 @@ class Web3RPCProxy:
                 )
                 return
 
-            if req.http_method == b"OPTIONS":  # TODO CORS are always included, is that right?
-                cs.send_all(
-                    OptionsResponses.options_response(req)
-                )
+            if (
+                req.http_method == b"OPTIONS"
+            ):  # TODO CORS are always included, is that right?
+                cs.send_all(OptionsResponses.options_response(req))
                 self.__manage_client_connection(
                     req.keep_alive, cs, client_poller, active_client_connections
                 )
@@ -208,6 +227,7 @@ class Web3RPCProxy:
 
             # Main node handling
             try:
+
                 endpoint_connection_handler = self.connection_pool.get_connection(req)
             except Exception as error:
                 self.__logger.error("%s: %s", error.__class__, error)
@@ -223,15 +243,19 @@ class Web3RPCProxy:
             if Config.ENABLE_TRUSTED_NODE_VERIFICATION:
                 # Trusted node handling
                 try:
-                    trusted_connection_handler = self.connection_pool.get_trusted_node_connection()
+                    trusted_connection_handler = (
+                        self.connection_pool.get_trusted_node_connection()
+                    )
                 except Exception as error:
-                    self.__logger.error(f"Failed to establish trusted endpoint connection. {error}")
+                    self.__logger.error(
+                        f"Failed to establish trusted endpoint connection. {error}"
+                    )
                     trusted_connection_handler = None
 
             try:
                 endpoint_connection_handler.send(req)
             except (
-                    BrokenConnectionError
+                BrokenConnectionError
             ):  # TODO: Pick up new connection from pool if fresh connection failed
                 self.__logger.error(
                     f"Failed to send request with {endpoint_connection_handler}"
@@ -288,7 +312,9 @@ class Web3RPCProxy:
             endpoint_connection_handler.release()
 
         except Exception as e:
-            self.__logger.error("Error while handling the client request", exc_info=True)
+            self.__logger.error(
+                "Error while handling the client request", exc_info=True
+            )
             print(
                 f"Error while handling the client request {e}"
             )  # TODO is this a good error handling?
@@ -297,7 +323,9 @@ class Web3RPCProxy:
                 endpoint_connection_handler.release()
 
     @classmethod
-    def __print_post_init_info(cls, proxy_listen_address, proxy_listen_port: int) -> None:
+    def __print_post_init_info(
+        cls, proxy_listen_address, proxy_listen_port: int
+    ) -> None:
         print(
             "Proxy initialized and listening on {}".format(
                 f"{proxy_listen_address}:{proxy_listen_port}"
@@ -340,7 +368,9 @@ class Web3RPCProxy:
                 events = client_poller.poll(Config.BLOCKING_ACCEPT_TIMEOUT)
                 for fd, ev in events:
                     if fd == srv_socket.socket.fileno():
-                        cs = srv_socket.accept_awaiting_connection()  # TODO connection hang up? errors?
+                        cs = (
+                            srv_socket.accept_awaiting_connection()
+                        )  # TODO connection hang up? errors?
                         active_client_connections.add_cs_pending(cs)
                         try:
                             client_poller.register(
@@ -355,9 +385,7 @@ class Web3RPCProxy:
                                     break
                             except KeyError:
                                 break
-                            cs = active_client_connections.get_cs_and_set_in_use(
-                                fd
-                            )
+                            cs = active_client_connections.get_cs_and_set_in_use(fd)
                         # TODO connection hang up?
                         executor.submit(
                             self.handle_client,
