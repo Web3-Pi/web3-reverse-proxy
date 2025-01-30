@@ -12,6 +12,7 @@ from web3pi_proxy.core.rpc.node.endpoint_pool.endpoint_connection_pool import (
 from web3pi_proxy.core.rpc.node.endpoint_pool.load_balancers import (
     LoadBalancer,
 )
+from web3pi_proxy.core.rpc.node.endpoint_pool.trusted_node_verifier import TrustedNodeVerifier
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
     EndpointConnectionDescriptor,
 )
@@ -204,6 +205,7 @@ class EndpointConnectionPoolManager:
         self,
         descriptors: List[Tuple[str, EndpointConnectionDescriptor]],
         load_balancer: LoadBalancer,
+        trusted_node_verifier: TrustedNodeVerifier or None
     ):
         self.load_balancer = load_balancer
         self.damage_controller = DamageController()
@@ -227,6 +229,19 @@ class EndpointConnectionPoolManager:
             daemon=True,
         )
         self.sync_controller_thread.start()
+
+        if trusted_node_verifier:
+            trusted_node_descr = trusted_node_verifier.get_trusted_node_connection_descriptor()
+            endpoint = RPCEndpoint.create('TRUSTED_NODE', trusted_node_descr)
+            self.trusted_node_pool =  EndpointConnectionPool(endpoint)
+        else:
+            self.trusted_node_pool = None
+
+
+    def get_trusted_node_connection(self) -> EndpointConnectionHandler:
+        if self.trusted_node_pool is None:
+            raise ValueError("Trusted node is not configured")
+        return self.trusted_node_pool.get()
 
     @property
     def endpoints(self) -> List[RPCEndpoint]:

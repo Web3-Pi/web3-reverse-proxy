@@ -106,6 +106,9 @@ class AppConfig:
 
     LOADBALANCER: str = "LeastBusyLoadBalancer"
 
+    ENABLE_TRUSTED_NODE_VERIFICATION: bool = False
+    TRUSTED_NODE_URL: str = None
+
     def __init__(self):
         env = {
             **dotenv_values(".env"),  # load shared development variables

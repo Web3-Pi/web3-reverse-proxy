@@ -8,6 +8,7 @@ from web3pi_proxy.core.rpc.node.endpoint_pool import load_balancers
 from web3pi_proxy.core.rpc.node.endpoint_pool.pool_manager import (
     EndpointConnectionPoolManager,
 )
+from web3pi_proxy.core.rpc.node.endpoint_pool.trusted_node_verifier import TrustedNodeVerifier
 from web3pi_proxy.core.rpc.node.rpcendpoint.connection.connectiondescr import (
     EndpointConnectionDescriptor,
 )
@@ -40,7 +41,7 @@ class ServiceComponentsProvider:
         return RPCRequestMiddlewareFactory.create_default_descr(cli, call)
 
     @classmethod
-    def create_default_connection_pool(cls, endpoint_config: List[dict], loadbalancer_class: str):
+    def create_default_connection_pool(cls, endpoint_config: List[dict], loadbalancer_class: str, trusted_node_verifier: TrustedNodeVerifier):
         descriptors = [
             (
                 entrypoint["name"],
@@ -57,7 +58,8 @@ class ServiceComponentsProvider:
             load_balancer = load_balancers.ConstantLoadBalancer()
         else:
             raise Exception("fatal: inconsistent LOADBALANCER configuration")
-        return EndpointConnectionPoolManager(descriptors, load_balancer)
+            
+        return EndpointConnectionPoolManager(descriptors, load_balancer, trusted_node_verifier)
 
     @classmethod
     def create_default_response_handler(cls) -> RPCResponseHandler:
@@ -71,6 +73,7 @@ class ServiceComponentsProvider:
         proxy_address: str,
         proxy_port: int,
         num_proxy_workers: int,
+        trusted_node_verifier: TrustedNodeVerifier
     ) -> Web3RPCProxy:
         # Create default components
         middlewares = cls.configure_default_reader_middlewares(ssm)
@@ -83,6 +86,7 @@ class ServiceComponentsProvider:
             middlewares,
             connection_pool,
             ssm.get_service_state_updater_instance(),
+            trusted_node_verifier
         )
 
         # Pass proxy stats to StateManager, so that it may be queried
@@ -99,16 +103,23 @@ class ServiceComponentsProvider:
     ) -> Web3RPCProxy:
         if Config.ETH_ENDPOINTS_STORE:
             eth_endpoints = []
-            uuu = Endpoint.select(Endpoint.config)
             for eth_endpoint_data in Endpoint.select(Endpoint.config):
                 eth_endpoints.append(json.loads(eth_endpoint_data.config))
         else:
             eth_endpoints = Config.ETH_ENDPOINTS
+
+        trusted_node_verifier = (
+            TrustedNodeVerifier(Config.TRUSTED_NODE_URL)
+            if Config.ENABLE_TRUSTED_NODE_VERIFICATION
+            else None
+        )
+
         # Create default components
-        connection_pool = cls.create_default_connection_pool(eth_endpoints, Config.LOADBALANCER)
+        connection_pool = cls.create_default_connection_pool(eth_endpoints, Config.LOADBALANCER, trusted_node_verifier)
+
 
         return cls.create_web3_rpc_proxy(
-            ssm, connection_pool, proxy_listen_address, proxy_listen_port, num_proxy_workers
+            ssm, connection_pool, proxy_listen_address, proxy_listen_port, num_proxy_workers, trusted_node_verifier
         )
 
     @classmethod
