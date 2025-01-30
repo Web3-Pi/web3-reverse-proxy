@@ -138,14 +138,15 @@ class Web3RPCProxy:
         )  # TODO CORS support here is very crude, needs improvement
 
         def get_trusted_response():
-            result_holder = {"result": None}
+            result = None
 
-            def callback(trusted_res: bytes):
+            def on_response_received(trusted_res: bytes):
                 self.__logger.debug(f"Trusted response received: {trusted_res}")
-                result_holder["result"] = trusted_res
+                nonlocal result
+                result = trusted_res
 
-            trusted_connection_handler.receive(callback)
-            return result_holder["result"]
+            trusted_connection_handler.receive(on_response_received)
+            return result
 
         def response_handler(res: bytes):
             if trusted_connection_handler:
